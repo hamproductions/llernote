@@ -1,5 +1,6 @@
 import { Badge } from '~/components/ui/badge';
 import { useSeriesById } from '~/hooks/useData';
+import { getSeriesShortName } from '~/utils/series-short';
 
 export function SeriesBadge({ seriesId, size = 'sm' }: { seriesId: string; size?: 'sm' | 'md' }) {
   const seriesById = useSeriesById();
@@ -12,7 +13,7 @@ export function SeriesBadge({ seriesId, size = 'sm' }: { seriesId: string; size?
       size={size}
       title={series.name}
     >
-      {series.name}
+      {getSeriesShortName(seriesId, series.name)}
     </Badge>
   );
 }

@@ -7,137 +7,274 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
 import { Tabs } from '~/components/ui/tabs';
+import { Badge } from '~/components/ui/badge';
 import { EventCard } from '~/components/events/EventCard';
+import { SeriesBadge } from '~/components/events/SeriesBadge';
+import { AttendanceButtons } from '~/components/events/AttendanceButtons';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
+import { NativeSelect } from '~/components/events/NativeSelect';
 import { Metadata } from '~/components/layout/Metadata';
 import { usePerformance, usePerformances, useSeriesById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
+import { isFutureEvent } from '~/utils/event-filter';
+import { legLabel } from '~/components/events/TourCard';
 import type { Performance } from '~/types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-function MonthCalendar({
-  onSelectDay,
-  selectedDay
-}: {
-  onSelectDay: (day: string) => void;
-  selectedDay?: string;
-}) {
+function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
   const { t, i18n } = useTranslation();
   const performances = usePerformances();
   const seriesById = useSeriesById();
+  const { get } = useAttendance();
   const today = new Date();
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  const [selectedDay, setSelectedDay] = useState<string>();
 
+  const monthPrefix = `${year}-${pad(month + 1)}`;
+  const monthEvents = useMemo(
+    () =>
+      performances
+        .filter((p) => p.date.startsWith(monthPrefix))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    [performances, monthPrefix]
+  );
   const eventsByDay = useMemo(() => {
     const map = new Map<string, Performance[]>();
-    for (const p of performances) {
-      const list = map.get(p.date) ?? [];
-      list.push(p);
-      map.set(p.date, list);
+    for (const p of monthEvents) {
+      map.set(p.date, [...(map.get(p.date) ?? []), p]);
     }
     return map;
-  }, [performances]);
+  }, [monthEvents]);
 
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells: (string | null)[] = [
     ...Array.from({ length: firstDayOfWeek }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => `${year}-${pad(month + 1)}-${pad(i + 1)}`)
+    ...Array.from({ length: daysInMonth }, (_, i) => `${monthPrefix}-${pad(i + 1)}`)
   ];
-
+  const weekdays = [0, 1, 2, 3, 4, 5, 6].map((d) =>
+    new Date(2024, 8, 1 + d).toLocaleDateString(i18n.language, { weekday: 'short' })
+  );
   const monthLabel = new Date(year, month, 1).toLocaleDateString(i18n.language, {
     year: 'numeric',
     month: 'long'
   });
-  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-  const weekdays = [0, 1, 2, 3, 4, 5, 6].map((d) =>
-    new Date(2024, 8, 1 + d).toLocaleDateString(i18n.language, { weekday: 'short' })
-  );
 
   const changeMonth = (delta: number) => {
     const next = new Date(year, month + delta, 1);
     setYear(next.getFullYear());
     setMonth(next.getMonth());
+    setSelectedDay(undefined);
   };
 
+  const agendaEvents = selectedDay ? (eventsByDay.get(selectedDay) ?? []) : monthEvents;
+  const yearOptions = useMemo(() => {
+    const years = new Set(performances.map((p) => p.date.slice(0, 4)));
+    return [...years].sort().map((y) => ({ value: y, label: y }));
+  }, [performances]);
+
   return (
-    <Stack gap="3">
-      <HStack justifyContent="space-between">
-        <IconButton aria-label="Previous month" variant="ghost" onClick={() => changeMonth(-1)}>
-          <FaChevronLeft />
-        </IconButton>
-        <HStack gap="2">
-          <Text fontWeight="semibold">{monthLabel}</Text>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={() => {
-              setYear(today.getFullYear());
-              setMonth(today.getMonth());
-              onSelectDay(todayStr);
-            }}
+    <Grid gap="4" alignItems="start" gridTemplateColumns={{ base: '1fr', lg: '3fr 2fr' }}>
+      <Stack gap="2">
+        <HStack justifyContent="space-between">
+          <IconButton
+            aria-label="Previous month"
+            variant="ghost"
+            size="sm"
+            onClick={() => changeMonth(-1)}
           >
-            {t('common.today')}
-          </Button>
-        </HStack>
-        <IconButton aria-label="Next month" variant="ghost" onClick={() => changeMonth(1)}>
-          <FaChevronRight />
-        </IconButton>
-      </HStack>
-      <Grid gap="1" gridTemplateColumns="repeat(7, 1fr)">
-        {weekdays.map((d) => (
-          <Text key={d} color="fg.muted" fontSize="xs" textAlign="center">
-            {d}
-          </Text>
-        ))}
-        {cells.map((day, i) => {
-          const events = day ? (eventsByDay.get(day) ?? []) : [];
-          return (
-            <Box
-              key={day ?? `empty-${i}`}
-              onClick={() => day && onSelectDay(day)}
-              cursor={day ? 'pointer' : undefined}
-              borderColor={selectedDay === day ? 'accent.default' : 'border.subtle'}
-              borderRadius="l1"
-              borderWidth="1px"
-              minH="16"
-              p="1"
-              bgColor={day === todayStr ? 'accent.a3' : undefined}
-              opacity={day ? 1 : 0}
+            <FaChevronLeft />
+          </IconButton>
+          <HStack gap="2">
+            <Text fontWeight="semibold">{monthLabel}</Text>
+            <NativeSelect
+              aria-label={t('events.year')}
+              value={String(year)}
+              options={yearOptions}
+              onChange={(y) => {
+                if (y) {
+                  setYear(Number(y));
+                  setSelectedDay(undefined);
+                }
+              }}
+            />
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => {
+                setYear(today.getFullYear());
+                setMonth(today.getMonth());
+                setSelectedDay(undefined);
+              }}
             >
-              {day && (
-                <Stack gap="0.5">
-                  <Text color="fg.muted" fontSize="xs">
-                    {Number(day.slice(8))}
+              {t('common.today')}
+            </Button>
+          </HStack>
+          <IconButton
+            aria-label="Next month"
+            variant="ghost"
+            size="sm"
+            onClick={() => changeMonth(1)}
+          >
+            <FaChevronRight />
+          </IconButton>
+        </HStack>
+        <Grid gap="1" gridTemplateColumns="repeat(7, 1fr)">
+          {weekdays.map((d) => (
+            <Text key={d} color="fg.muted" fontSize="xs" textAlign="center">
+              {d}
+            </Text>
+          ))}
+          {cells.map((day, i) => {
+            const events = day ? (eventsByDay.get(day) ?? []) : [];
+            const isToday = day === todayStr;
+            const isSelected = day === selectedDay;
+            return (
+              <Box
+                key={day ?? `empty-${i}`}
+                onClick={() =>
+                  day && events.length > 0 && setSelectedDay(isSelected ? undefined : day)
+                }
+                cursor={day && events.length > 0 ? 'pointer' : undefined}
+                borderColor={isSelected ? 'accent.default' : isToday ? 'accent.8' : 'border.subtle'}
+                borderRadius="l1"
+                borderWidth="1px"
+                minH={{ base: '12', md: '20' }}
+                p="1"
+                bgColor={events.length > 0 ? 'bg.default' : 'transparent'}
+                opacity={day ? 1 : 0}
+                _hover={day && events.length > 0 ? { borderColor: 'accent.8' } : undefined}
+              >
+                {day && (
+                  <Stack gap="0.5">
+                    <Text
+                      color={isToday ? 'accent.default' : 'fg.muted'}
+                      fontSize="xs"
+                      fontWeight={isToday ? 'bold' : undefined}
+                    >
+                      {Number(day.slice(8))}
+                    </Text>
+                    <Stack hideBelow="md" gap="0.5">
+                      {events.slice(0, 2).map((p) => (
+                        <Box
+                          key={p.id}
+                          title={p.tourName}
+                          style={{
+                            backgroundColor: `${seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'}33`,
+                            borderLeft: `2px solid ${seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'}`
+                          }}
+                          borderRadius="sm"
+                          px="1"
+                        >
+                          <Text fontSize="2xs" lineClamp={1}>
+                            {p.tourName}
+                          </Text>
+                        </Box>
+                      ))}
+                      {events.length > 2 && (
+                        <Text color="fg.muted" fontSize="2xs">
+                          +{events.length - 2}
+                        </Text>
+                      )}
+                    </Stack>
+                    <HStack hideFrom="md" gap="0.5" flexWrap="wrap">
+                      {events.slice(0, 4).map((p) => (
+                        <Box
+                          key={p.id}
+                          style={{
+                            backgroundColor:
+                              seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'
+                          }}
+                          borderRadius="full"
+                          w="1.5"
+                          h="1.5"
+                        />
+                      ))}
+                    </HStack>
+                  </Stack>
+                )}
+              </Box>
+            );
+          })}
+        </Grid>
+      </Stack>
+
+      <Stack gap="2">
+        <HStack justifyContent="space-between" alignItems="baseline">
+          <Text fontWeight="semibold">{selectedDay ?? monthLabel}</Text>
+          <HStack gap="2">
+            {selectedDay && (
+              <Button size="xs" variant="ghost" onClick={() => setSelectedDay(undefined)}>
+                {t('common.clear')}
+              </Button>
+            )}
+            <Badge size="sm" variant="outline">
+              {t('events.results_count', { count: agendaEvents.length })}
+            </Badge>
+          </HStack>
+        </HStack>
+        {agendaEvents.length === 0 && (
+          <Text color="fg.muted" fontSize="sm">
+            {t('events.no_results')}
+          </Text>
+        )}
+        <Stack gap="1" maxH="70vh" overflowY="auto">
+          {agendaEvents.map((p) => {
+            const record = get(p.id);
+            const label = legLabel(p);
+            return (
+              <HStack
+                key={p.id}
+                onClick={() => onSelect(p)}
+                cursor="pointer"
+                gap="2"
+                borderColor="border.subtle"
+                borderRadius="l2"
+                borderWidth="1px"
+                p="2"
+                bgColor={
+                  record?.status === 'attended'
+                    ? 'accent.a2'
+                    : record?.status === 'interested'
+                      ? 'amber.a2'
+                      : 'bg.default'
+                }
+                _hover={{ borderColor: 'accent.8' }}
+              >
+                <Text
+                  flexShrink={0}
+                  color="fg.muted"
+                  fontSize="xs"
+                  fontVariantNumeric="tabular-nums"
+                >
+                  {p.date.slice(5).replace('-', '/')}
+                </Text>
+                <Stack flex="1" gap="0" minW="0">
+                  <Text fontSize="xs" fontWeight="medium" lineClamp={1}>
+                    {p.tourName}
+                    {label ? ` ${label}` : ''}
                   </Text>
-                  <HStack gap="0.5" flexWrap="wrap">
-                    {events.slice(0, 4).map((p) => (
-                      <Box
-                        key={p.id}
-                        title={p.tourName}
-                        style={{
-                          backgroundColor: seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'
-                        }}
-                        borderRadius="full"
-                        w="2"
-                        h="2"
-                      />
-                    ))}
-                    {events.length > 4 && (
-                      <Text color="fg.muted" fontSize="2xs">
-                        +{events.length - 4}
-                      </Text>
-                    )}
-                  </HStack>
+                  <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
+                    {p.venue}
+                  </Text>
                 </Stack>
-              )}
-            </Box>
-          );
-        })}
-      </Grid>
-    </Stack>
+                <HStack gap="1" flexShrink={0}>
+                  {p.seriesIds.slice(0, 1).map((id) => (
+                    <SeriesBadge key={id} seriesId={id} />
+                  ))}
+                </HStack>
+                <HStack onClick={(e) => e.stopPropagation()} gap="1" flexShrink={0}>
+                  <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} />
+                </HStack>
+              </HStack>
+            );
+          })}
+        </Stack>
+      </Stack>
+    </Grid>
   );
 }
 
@@ -168,11 +305,18 @@ function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
           <Heading as="h2" color="accent.default" fontSize="xl">
             {year}
           </Heading>
-          <Stack gap="3" borderColor="accent.a6" borderLeftWidth="2px" pl="4">
+          <Grid
+            gap="3"
+            alignItems="start"
+            gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}
+            borderColor="accent.a6"
+            borderLeftWidth="2px"
+            pl="4"
+          >
             {events.map((p) => (
               <EventCard key={p.id} performance={p} onClick={() => onSelect(p)} />
             ))}
-          </Stack>
+          </Grid>
         </Stack>
       ))}
     </Stack>
@@ -181,15 +325,8 @@ function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
 
 export default function Page() {
   const { t } = useTranslation();
-  const performances = usePerformances();
-  const [selectedDay, setSelectedDay] = useState<string>();
   const [selectedId, setSelectedId] = useState<string>();
   const selected = usePerformance(selectedId);
-
-  const dayEvents = useMemo(
-    () => (selectedDay ? performances.filter((p) => p.date === selectedDay) : []),
-    [performances, selectedDay]
-  );
 
   return (
     <>
@@ -205,22 +342,7 @@ export default function Page() {
             <Tabs.Indicator />
           </Tabs.List>
           <Tabs.Content value="calendar">
-            <Stack gap="4">
-              <MonthCalendar onSelectDay={setSelectedDay} selectedDay={selectedDay} />
-              {selectedDay && (
-                <Stack gap="3">
-                  <Text fontWeight="semibold">{selectedDay}</Text>
-                  {dayEvents.length === 0 && (
-                    <Text color="fg.muted" fontSize="sm">
-                      {t('events.no_results')}
-                    </Text>
-                  )}
-                  {dayEvents.map((p) => (
-                    <EventCard key={p.id} performance={p} onClick={() => setSelectedId(p.id)} />
-                  ))}
-                </Stack>
-              )}
-            </Stack>
+            <MonthView onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="timeline">
             <Timeline onSelect={(p) => setSelectedId(p.id)} />

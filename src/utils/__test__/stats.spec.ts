@@ -16,7 +16,8 @@ const performance = (
   venue,
   seriesIds,
   status: 'completed',
-  hasSetlist: true
+  hasSetlist: true,
+  category: 'live'
 });
 
 const record = (performanceId: string, status: 'attended' | 'interested'): AttendanceRecord => ({

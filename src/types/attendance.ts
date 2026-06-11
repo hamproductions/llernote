@@ -12,13 +12,29 @@ export interface AttendanceRecord {
   updatedAt: string;
 }
 
+export type MyPickSlot = 'cast' | 'song' | 'event';
+
+export type MyPickRow = { type: 'series'; id: string } | { type: 'artist'; id: string };
+
+export type MyPickColumn =
+  | { type: 'slot'; slot: MyPickSlot }
+  | { type: 'year'; year: number; slot: MyPickSlot };
+
+export interface MyPickConfig {
+  rows: MyPickRow[];
+  columns: MyPickColumn[];
+}
+
 export interface MyPick {
-  eventIds: string[];
-  artistIds: string[];
-  songIds: string[];
-  year?: number | null;
+  config?: MyPickConfig;
+  cells: Record<string, string | null>;
   updatedAt: string;
 }
+
+export const rowKey = (row: MyPickRow) => `${row.type}:${row.id}`;
+export const columnKey = (col: MyPickColumn) =>
+  col.type === 'slot' ? `slot:${col.slot}` : `year:${col.year}:${col.slot}`;
+export const cellKey = (row: MyPickRow, col: MyPickColumn) => `${rowKey(row)}|${columnKey(col)}`;
 
 export interface BackupData {
   version: number;

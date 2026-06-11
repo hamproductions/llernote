@@ -4,6 +4,7 @@ import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { NativeSelect } from './NativeSelect';
 import { useCharacters, useEventYears, useSeries } from '~/hooks/useData';
+import { getSeriesShortName } from '~/utils/series-short';
 import type { EventFilters } from '~/utils/event-filter';
 
 export function EventFiltersBar({
@@ -33,6 +34,12 @@ export function EventFiltersBar({
     { value: 'attended', label: t('events.status_attended') },
     { value: 'interested', label: t('events.status_going') },
     { value: 'none', label: t('events.status_none') }
+  ];
+
+  const categoryOptions = [
+    { value: 'live', label: t('events.category_live') },
+    { value: 'online', label: t('events.category_online') },
+    { value: 'tv', label: t('events.category_tv') }
   ];
 
   return (
@@ -65,6 +72,18 @@ export function EventFiltersBar({
             onChange({ ...filters, characterId: characterId || undefined })
           }
         />
+        <NativeSelect
+          aria-label={t('events.category')}
+          value={filters.category ?? ''}
+          placeholder={`${t('events.category')}: ${t('common.all')}`}
+          options={categoryOptions}
+          onChange={(category) =>
+            onChange({
+              ...filters,
+              category: (category || undefined) as EventFilters['category']
+            })
+          }
+        />
         {showAttendanceFilter && (
           <NativeSelect
             aria-label={t('events.attendance_filter')}
@@ -92,9 +111,10 @@ export function EventFiltersBar({
               size="xs"
               variant={active ? 'solid' : 'outline'}
               style={active ? { backgroundColor: s.color, color: 'white' } : { color: s.color }}
+              title={s.name}
               onClick={() => toggleSeries(s.id)}
             >
-              {s.name}
+              {getSeriesShortName(s.id, s.name)}
             </Button>
           );
         })}

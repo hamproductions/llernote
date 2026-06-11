@@ -63,7 +63,18 @@ export interface Performance {
   seriesIds: string[];
   status: PerformanceStatus;
   hasSetlist: boolean;
+  performanceName?: string;
+  concertName?: string;
+  openTime?: string;
+  startTime?: string;
+  tourType?: string;
+  audience?: boolean;
+  canceled?: boolean;
+  note?: string;
+  category: EventCategory;
 }
+
+export type EventCategory = 'live' | 'online' | 'tv';
 
 export type SetlistItemType = 'song' | 'mc' | 'custom' | 'vtr';
 

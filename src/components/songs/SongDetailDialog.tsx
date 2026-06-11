@@ -1,0 +1,136 @@
+import { useTranslation } from 'react-i18next';
+import { FaXmark, FaYoutube } from 'react-icons/fa6';
+import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
+import { Dialog } from '~/components/ui/dialog';
+import { IconButton } from '~/components/ui/icon-button';
+import { Button } from '~/components/ui/button';
+import { Text } from '~/components/ui/text';
+import { Badge } from '~/components/ui/badge';
+import { Link } from '~/components/ui/link';
+import { SeriesBadge } from '~/components/events/SeriesBadge';
+import { useArtistById } from '~/hooks/useData';
+import { getPicUrl } from '~/utils/assets';
+import type { Performance, Song } from '~/types';
+
+interface SongWithVideo extends Song {
+  musicVideo?: { videoId: string } | null;
+}
+
+export function SongDetailDialog({
+  song,
+  heardAt,
+  open,
+  onClose
+}: {
+  song?: Song;
+  heardAt: Performance[];
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const artistById = useArtistById();
+
+  if (!song) return null;
+
+  const artistNames = [
+    ...new Set((song.artists ?? []).map((a) => artistById.get(a.id)?.name).filter(Boolean))
+  ].join('・');
+  const videoId = (song as SongWithVideo).musicVideo?.videoId;
+
+  return (
+    <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
+      <Dialog.Backdrop />
+      <Dialog.Positioner>
+        <Dialog.Content maxW="lg" maxH="85vh" overflowY="auto">
+          <Stack gap="4" p="6">
+            <HStack gap="3" alignItems="flex-start">
+              <Box
+                flexShrink={0}
+                borderRadius="l2"
+                w="16"
+                h="16"
+                bgColor="bg.subtle"
+                overflow="hidden"
+              >
+                <img
+                  src={getPicUrl(song.id, 'thumbnail')}
+                  alt=""
+                  width="64"
+                  height="64"
+                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.visibility = 'hidden';
+                  }}
+                />
+              </Box>
+              <Stack gap="1" minW="0">
+                <Dialog.Title>{song.name}</Dialog.Title>
+                {artistNames && (
+                  <Text color="fg.muted" fontSize="sm">
+                    {artistNames}
+                  </Text>
+                )}
+                <Wrap gap="1">
+                  {song.seriesIds.map((id) => (
+                    <SeriesBadge key={id} seriesId={String(id)} />
+                  ))}
+                  {song.releasedOn && (
+                    <Badge size="sm" variant="outline">
+                      {song.releasedOn}
+                    </Badge>
+                  )}
+                </Wrap>
+              </Stack>
+            </HStack>
+
+            {videoId && (
+              <Link href={`https://www.youtube.com/watch?v=${videoId}`} target="_blank">
+                <Button size="xs" variant="outline">
+                  <FaYoutube />
+                  YouTube
+                </Button>
+              </Link>
+            )}
+
+            <Stack gap="2">
+              <HStack gap="2" alignItems="baseline">
+                <Text fontWeight="semibold">{t('songs.witnessed_at')}</Text>
+                <Text color="fg.muted" fontSize="sm">
+                  {t('songs.times_other', { count: heardAt.length })}
+                </Text>
+              </HStack>
+              {heardAt.length === 0 ? (
+                <Text color="fg.muted" fontSize="sm">
+                  {t('songs.never_heard')}
+                </Text>
+              ) : (
+                <Stack gap="1">
+                  {heardAt.map((p) => (
+                    <HStack key={p.id} gap="2" alignItems="baseline">
+                      <Text
+                        flexShrink={0}
+                        color="fg.muted"
+                        fontSize="xs"
+                        fontVariantNumeric="tabular-nums"
+                      >
+                        {p.date}
+                      </Text>
+                      <Text fontSize="sm" lineClamp={1}>
+                        {p.tourName}
+                      </Text>
+                    </HStack>
+                  ))}
+                </Stack>
+              )}
+            </Stack>
+          </Stack>
+          <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">
+            <IconButton aria-label={t('common.close')} variant="ghost" size="sm">
+              <FaXmark />
+            </IconButton>
+          </Dialog.CloseTrigger>
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Dialog.Root>
+  );
+}

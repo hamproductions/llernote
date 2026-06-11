@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import performanceInfo from '../../data/performance-info.json';
+import eventExtra from '../../data/event-extra.json';
 import setlistInfo from '../../data/performance-setlists.json';
 import songInfo from '../../data/song-info.json';
 import characterInfo from '../../data/character-info.json';
@@ -8,7 +9,21 @@ import seriesInfo from '../../data/series-info.json';
 import unitsInfo from '../../data/units.json';
 import type { Artist, Character, Performance, Series, Setlist, Song, Unit } from '~/types';
 
-const performances = performanceInfo as Performance[];
+const extraById = eventExtra as Record<string, Partial<Performance>>;
+
+const deriveCategory = (p: Partial<Performance>): Performance['category'] => {
+  if (p.tourType === 'TV出演') return 'tv';
+  if (p.tourType === 'バーチャルライブ' || p.tourType === '収録配信') return 'online';
+  if (p.audience === false) return 'online';
+  return 'live';
+};
+
+const performances: Performance[] = (performanceInfo as Omit<Performance, 'category'>[]).map(
+  (p) => {
+    const merged = { ...p, ...extraById[p.id] };
+    return { ...merged, category: deriveCategory(merged) };
+  }
+);
 const setlists = setlistInfo as unknown as Record<string, Setlist>;
 const songs = songInfo as unknown as Song[];
 const characters = characterInfo as unknown as Character[];
@@ -23,6 +38,7 @@ const artistById = new Map(artists.map((a) => [a.id, a]));
 const seriesById = new Map(series.map((s) => [s.id, s]));
 
 export const usePerformances = () => sortedPerformances;
+export const usePerformanceById = () => performanceById;
 export const usePerformance = (id: string | undefined) =>
   id !== undefined ? performanceById.get(id) : undefined;
 export const useSetlists = () => setlists;

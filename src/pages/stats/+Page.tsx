@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaDownload, FaFileExport, FaFileImport } from 'react-icons/fa6';
 import { saveAs } from 'file-saver';
@@ -7,13 +7,15 @@ import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { StatsCard } from '~/components/stats/StatsCard';
+import { NativeSelect } from '~/components/events/NativeSelect';
 import { Metadata } from '~/components/layout/Metadata';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useSetlists, usePerformances } from '~/hooks/useData';
+import { useEventYears, useSeries, useSetlists, usePerformances } from '~/hooks/useData';
 import { computeStats } from '~/utils/stats';
 import { downloadElementAsImage } from '~/utils/share';
 import { exportBackup, importBackup } from '~/utils/attendance/storage';
 import { useToaster } from '~/context/ToasterContext';
+import type { EventCategory } from '~/types';
 
 export default function Page() {
   const { t } = useTranslation();
@@ -21,17 +23,35 @@ export default function Page() {
   const { records } = useAttendance();
   const performances = usePerformances();
   const setlists = useSetlists();
+  const series = useSeries();
+  const years = useEventYears();
   const cardRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [year, setYear] = useState('');
+  const [seriesId, setSeriesId] = useState('');
+  const [category, setCategory] = useState('');
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
     [performances]
   );
 
+  const filteredRecords = useMemo(
+    () =>
+      records.filter((r) => {
+        const p = performanceById.get(r.performanceId);
+        if (!p) return false;
+        if (year && !p.date.startsWith(year)) return false;
+        if (seriesId && !p.seriesIds.includes(seriesId)) return false;
+        if (category && p.category !== (category as EventCategory)) return false;
+        return true;
+      }),
+    [records, performanceById, year, seriesId, category]
+  );
+
   const stats = useMemo(
-    () => computeStats(records, performanceById, setlists),
-    [records, performanceById, setlists]
+    () => computeStats(filteredRecords, performanceById, setlists),
+    [filteredRecords, performanceById, setlists]
   );
 
   const handleImport = async (file: File) => {
@@ -50,6 +70,33 @@ export default function Page() {
         <Heading as="h1" fontSize="2xl">
           {t('stats.title')}
         </Heading>
+        <HStack gap="2" flexWrap="wrap">
+          <NativeSelect
+            aria-label={t('events.year')}
+            value={year}
+            placeholder={`${t('events.year')}: ${t('common.all')}`}
+            options={years.map((y) => ({ value: y, label: y }))}
+            onChange={setYear}
+          />
+          <NativeSelect
+            aria-label={t('events.series')}
+            value={seriesId}
+            placeholder={`${t('events.series')}: ${t('common.all')}`}
+            options={series.map((s) => ({ value: s.id, label: s.name }))}
+            onChange={setSeriesId}
+          />
+          <NativeSelect
+            aria-label={t('events.category')}
+            value={category}
+            placeholder={`${t('events.category')}: ${t('common.all')}`}
+            options={[
+              { value: 'live', label: t('events.category_live') },
+              { value: 'online', label: t('events.category_online') },
+              { value: 'tv', label: t('events.category_tv') }
+            ]}
+            onChange={setCategory}
+          />
+        </HStack>
         {stats.attendedCount === 0 && stats.interestedCount === 0 ? (
           <Text color="fg.muted">{t('stats.empty')}</Text>
         ) : (

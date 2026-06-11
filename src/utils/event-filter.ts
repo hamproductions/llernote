@@ -7,6 +7,7 @@ export interface EventFilters {
   year?: string;
   attendance?: 'attended' | 'interested' | 'none';
   characterId?: string;
+  category?: Performance['category'];
 }
 
 export const EMPTY_FILTERS: EventFilters = {
@@ -35,6 +36,7 @@ export const filterEvents = (
       return false;
     }
     if (filters.year && !p.date.startsWith(filters.year)) return false;
+    if (filters.category && p.category !== filters.category) return false;
     if (filters.attendance) {
       const record = attendanceMap[p.id];
       const status = record && !record.deleted ? record.status : undefined;

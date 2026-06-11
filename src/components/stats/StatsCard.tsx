@@ -139,6 +139,21 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
             />
           </Stack>
         )}
+        {stats.byCategory.length > 0 && (
+          <Stack gap="2">
+            <Text fontSize="sm" fontWeight="semibold">
+              {t('events.category')}
+            </Text>
+            <BarList
+              items={stats.byCategory.map((c) => ({
+                key: c.category,
+                label: t(`events.category_${c.category}` as 'events.category_live'),
+                count: c.count
+              }))}
+              max={Math.max(...stats.byCategory.map((c) => c.count))}
+            />
+          </Stack>
+        )}
         {stats.byWatchType.length > 0 && (
           <Stack gap="2">
             <Text fontSize="sm" fontWeight="semibold">

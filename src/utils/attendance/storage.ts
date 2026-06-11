@@ -1,5 +1,11 @@
 import { LocalStorage } from '~/hooks/useLocalStorage';
-import type { AttendanceRecord, AttendanceStatus, BackupData, MyPick } from '~/types/attendance';
+import type {
+  AttendanceRecord,
+  AttendanceStatus,
+  BackupData,
+  MyPick,
+  MyPickConfig
+} from '~/types/attendance';
 
 const BACKUP_VERSION = 1;
 
@@ -99,14 +105,20 @@ export const getActiveRecords = (map: AttendanceMap): AttendanceRecord[] =>
 export const setMyPick = (patch: Partial<Omit<MyPick, 'updatedAt'>>) => {
   const prev = myPickStore.get();
   myPickStore.set({
-    eventIds: [],
-    artistIds: [],
-    songIds: [],
-    year: null,
+    cells: {},
     ...prev,
     ...patch,
     updatedAt: new Date().toISOString()
   });
+};
+
+export const setMyPickConfig = (config: MyPickConfig) => {
+  setMyPick({ config });
+};
+
+export const setMyPickCell = (key: string, id: string | null) => {
+  const prev = myPickStore.get();
+  setMyPick({ cells: { ...prev?.cells, [key]: id } });
 };
 
 export const exportBackup = (): BackupData => ({

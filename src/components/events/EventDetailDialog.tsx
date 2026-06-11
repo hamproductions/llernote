@@ -8,7 +8,9 @@ import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { Textarea } from '~/components/ui/textarea';
 import { Link } from '~/components/ui/link';
+import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from './SeriesBadge';
+import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { useAttendance } from '~/hooks/useAttendance';
@@ -38,20 +40,17 @@ function SetlistItemRow({
   if (item.type !== 'song') {
     return (
       <HStack gap="2" py="0.5">
-        <Text minW="8" color="fg.subtle" fontSize="sm" textAlign="right">
-          -
-        </Text>
-        <Text color="fg.muted" fontSize="sm">
+        <Box minW="8" />
+        <Badge size="sm" variant="outline" color="fg.muted">
           {item.title ?? item.customSongName ?? item.type.toUpperCase()}
-        </Text>
+        </Badge>
       </HStack>
     );
   }
   const song = item.songId ? songById.get(item.songId) : undefined;
-  const artistNames = (song?.artists ?? [])
-    .map((a) => artistById.get(a.id)?.name)
-    .filter(Boolean)
-    .join('・');
+  const artistNames = [
+    ...new Set((song?.artists ?? []).map((a) => artistById.get(a.id)?.name).filter(Boolean))
+  ].join('・');
   return (
     <HStack gap="2" alignItems="baseline" py="0.5">
       <Text
@@ -139,11 +138,24 @@ export function EventDetailDialog({
                 {performance.seriesIds.map((id) => (
                   <SeriesBadge key={id} seriesId={id} />
                 ))}
+                <CategoryBadge category={performance.category} tourType={performance.tourType} />
               </Wrap>
               <Dialog.Title>{performance.tourName}</Dialog.Title>
+              {(performance.concertName ?? performance.performanceName) && (
+                <Text fontSize="sm" fontWeight="medium">
+                  {[performance.concertName, performance.performanceName].filter(Boolean).join(' ')}
+                </Text>
+              )}
               <Text color="fg.muted" fontSize="sm">
                 {performance.venue}
+                {performance.openTime ? `・開場 ${performance.openTime}` : ''}
+                {performance.startTime ? `・開演 ${performance.startTime}` : ''}
               </Text>
+              {performance.note && (
+                <Text color="fg.subtle" fontSize="xs">
+                  {performance.note}
+                </Text>
+              )}
             </Stack>
 
             <Wrap gap="2">

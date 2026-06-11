@@ -1,24 +1,38 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa6';
-import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
+import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
-import { Badge } from '~/components/ui/badge';
-import { SeriesBadge } from '~/components/events/SeriesBadge';
+import { Input } from '~/components/ui/input';
+import { Button } from '~/components/ui/button';
+import { Pagination } from '~/components/ui/pagination';
+import { NativeSelect } from '~/components/events/NativeSelect';
+import { SongCard } from '~/components/songs/SongCard';
+import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
 import { useAttendance } from '~/hooks/useAttendance';
-import { usePerformances, useSetlists, useSongById } from '~/hooks/useData';
+import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
 import { tallySongs } from '~/utils/song-tally';
-import { getPicUrl } from '~/utils/assets';
+import type { Song } from '~/types';
+
+const PAGE_SIZE = 48;
+
+type HeardFilter = '' | 'heard' | 'unheard';
+type SortKey = 'count' | 'release' | 'name';
 
 export default function Page() {
   const { t } = useTranslation();
   const { records } = useAttendance();
+  const songs = useSongs();
+  const series = useSeries();
   const performances = usePerformances();
   const setlists = useSetlists();
-  const songById = useSongById();
-  const [expanded, setExpanded] = useState<string>();
+  const [search, setSearch] = useState('');
+  const [seriesId, setSeriesId] = useState('');
+  const [heardFilter, setHeardFilter] = useState<HeardFilter>('');
+  const [sort, setSort] = useState<SortKey>('count');
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Song>();
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
@@ -29,118 +43,169 @@ export default function Page() {
     () => tallySongs(records, performanceById, setlists),
     [records, performanceById, setlists]
   );
+  const tallyById = useMemo(() => new Map(tally.map((e) => [e.songId, e])), [tally]);
 
-  const total = tally.reduce((sum, entry) => sum + entry.count, 0);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const list = songs.filter((song) => {
+      if (q) {
+        const haystack =
+          `${song.name} ${song.phoneticName ?? ''} ${song.englishName ?? ''}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      if (seriesId && !song.seriesIds.map(String).includes(seriesId)) return false;
+      const heard = (tallyById.get(song.id)?.count ?? 0) > 0;
+      if (heardFilter === 'heard' && !heard) return false;
+      if (heardFilter === 'unheard' && heard) return false;
+      return true;
+    });
+    const count = (s: Song) => tallyById.get(s.id)?.count ?? 0;
+    if (sort === 'count') {
+      list.sort(
+        (a, b) => count(b) - count(a) || (b.releasedOn ?? '').localeCompare(a.releasedOn ?? '')
+      );
+    } else if (sort === 'release') {
+      list.sort((a, b) => (b.releasedOn ?? '').localeCompare(a.releasedOn ?? ''));
+    } else {
+      list.sort((a, b) => (a.phoneticName ?? a.name).localeCompare(b.phoneticName ?? b.name, 'ja'));
+    }
+    return list;
+  }, [songs, search, seriesId, heardFilter, sort, tallyById]);
+
+  const scopeSongs = useMemo(
+    () => (seriesId ? songs.filter((s) => s.seriesIds.map(String).includes(seriesId)) : songs),
+    [songs, seriesId]
+  );
+  const heardInScope = scopeSongs.filter((s) => (tallyById.get(s.id)?.count ?? 0) > 0).length;
+  const percent = scopeSongs.length ? Math.round((heardInScope / scopeSongs.length) * 100) : 0;
+
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const selectedHeardAt = selected ? (tallyById.get(selected.id)?.performances ?? []) : [];
 
   return (
     <>
       <Metadata title={`${t('songs.title')} - LLerNote`} helmet />
-      <Stack gap="4">
-        <Stack gap="1">
+      <Stack gap="3">
+        <HStack justifyContent="space-between" alignItems="baseline" flexWrap="wrap">
           <Heading as="h1" fontSize="2xl">
             {t('songs.title')}
           </Heading>
           <Text color="fg.muted" fontSize="sm">
-            {t('songs.subtitle')}
+            {t('songs.progress', { heard: heardInScope, total: scopeSongs.length, percent })}
           </Text>
-        </Stack>
-        {tally.length === 0 ? (
-          <Text color="fg.muted">{t('songs.empty')}</Text>
-        ) : (
-          <>
-            <Text color="fg.muted" fontSize="sm">
-              {t('songs.total_witnessed', { total, unique: tally.length })}
-            </Text>
-            <Grid
-              gap="2"
-              alignItems="start"
-              gridTemplateColumns={{ base: '1fr', xl: 'repeat(2, 1fr)' }}
+        </HStack>
+        <Box borderRadius="full" w="full" h="2" bgColor="bg.subtle" overflow="hidden">
+          <Box
+            style={{ width: `${percent}%` }}
+            borderRadius="full"
+            h="full"
+            bgColor="accent.default"
+          />
+        </Box>
+        <Box
+          borderColor="border.subtle"
+          borderRadius="l2"
+          borderWidth="1px"
+          p="3"
+          bgColor="bg.subtle"
+        >
+          <HStack gap="2" flexWrap="wrap">
+            <Box flex="1" minW="48">
+              <Input
+                size="sm"
+                value={search}
+                placeholder={t('songs.search_placeholder')}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </Box>
+            <NativeSelect
+              aria-label={t('events.series')}
+              value={seriesId}
+              placeholder={`${t('events.series')}: ${t('common.all')}`}
+              options={series.map((s) => ({ value: s.id, label: s.name }))}
+              onChange={(v) => {
+                setSeriesId(v);
+                setPage(1);
+              }}
+            />
+            <NativeSelect
+              aria-label={t('songs.heard_filter')}
+              value={heardFilter}
+              placeholder={`${t('songs.heard_filter')}: ${t('common.all')}`}
+              options={[
+                { value: 'heard', label: t('songs.heard') },
+                { value: 'unheard', label: t('songs.unheard') }
+              ]}
+              onChange={(v) => {
+                setHeardFilter(v as HeardFilter);
+                setPage(1);
+              }}
+            />
+            <NativeSelect
+              aria-label={t('songs.sort')}
+              value={sort}
+              options={[
+                { value: 'count', label: t('songs.sort_count') },
+                { value: 'release', label: t('songs.sort_release') },
+                { value: 'name', label: t('songs.sort_name') }
+              ]}
+              onChange={(v) => setSort(v as SortKey)}
+            />
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={() => {
+                setSearch('');
+                setSeriesId('');
+                setHeardFilter('');
+                setPage(1);
+              }}
             >
-              {tally.map((entry, i) => {
-                const song = songById.get(entry.songId);
-                const isExpanded = expanded === entry.songId;
-                return (
-                  <Box
-                    key={entry.songId}
-                    borderColor="border.subtle"
-                    borderRadius="l2"
-                    borderWidth="1px"
-                    overflow="hidden"
-                  >
-                    <HStack
-                      onClick={() => setExpanded(isExpanded ? undefined : entry.songId)}
-                      cursor="pointer"
-                      gap="3"
-                      p="3"
-                      _hover={{ bgColor: 'bg.subtle' }}
-                    >
-                      <Text
-                        minW="8"
-                        color={i < 3 ? 'accent.default' : 'fg.muted'}
-                        fontWeight="bold"
-                        fontVariantNumeric="tabular-nums"
-                        textAlign="right"
-                      >
-                        {i + 1}
-                      </Text>
-                      <Box
-                        flexShrink={0}
-                        borderRadius="l1"
-                        w="10"
-                        h="10"
-                        bgColor="bg.subtle"
-                        overflow="hidden"
-                      >
-                        <img
-                          src={getPicUrl(entry.songId, 'thumbnail')}
-                          alt=""
-                          loading="lazy"
-                          width="40"
-                          height="40"
-                          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      </Box>
-                      <Stack flex="1" gap="0" minW="0">
-                        <Text fontWeight="medium" lineClamp={1}>
-                          {song?.name ?? entry.songId}
-                        </Text>
-                        <HStack gap="1">
-                          {song?.seriesIds.map((id) => (
-                            <SeriesBadge key={id} seriesId={String(id)} />
-                          ))}
-                        </HStack>
-                      </Stack>
-                      <Badge size="sm" variant="solid">
-                        {t('songs.times_other', { count: entry.count })}
-                      </Badge>
-                      {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-                    </HStack>
-                    {isExpanded && (
-                      <Stack gap="1" px="4" pt="1" pb="3" bgColor="bg.subtle">
-                        <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
-                          {t('songs.witnessed_at')}
-                        </Text>
-                        {entry.performances.map((p) => (
-                          <HStack key={p.id} gap="2">
-                            <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
-                              {p.date}
-                            </Text>
-                            <Text fontSize="xs" lineClamp={1}>
-                              {p.tourName}
-                            </Text>
-                          </HStack>
-                        ))}
-                      </Stack>
-                    )}
-                  </Box>
-                );
-              })}
-            </Grid>
-          </>
+              {t('common.clear')}
+            </Button>
+          </HStack>
+        </Box>
+        <Text color="fg.muted" fontSize="sm">
+          {t('songs.results_count', { count: filtered.length })}
+        </Text>
+        {filtered.length === 0 && <Text color="fg.muted">{t('events.no_results')}</Text>}
+        <Grid
+          gap="2"
+          alignItems="start"
+          gridTemplateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', '2xl': 'repeat(3, 1fr)' }}
+        >
+          {pageItems.map((song) => (
+            <SongCard
+              key={song.id}
+              song={song}
+              heardCount={tallyById.get(song.id)?.count ?? 0}
+              onClick={() => setSelected(song)}
+            />
+          ))}
+        </Grid>
+        {filtered.length > PAGE_SIZE && (
+          <Center>
+            <Pagination
+              count={filtered.length}
+              pageSize={PAGE_SIZE}
+              siblingCount={1}
+              onPageChange={(details) => {
+                setPage(details.page);
+                window.scrollTo({ top: 0 });
+              }}
+              page={page}
+            />
+          </Center>
         )}
+        <SongDetailDialog
+          song={selected}
+          heardAt={selectedHeardAt}
+          open={selected !== undefined}
+          onClose={() => setSelected(undefined)}
+        />
       </Stack>
     </>
   );

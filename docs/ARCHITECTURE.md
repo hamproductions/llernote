@@ -42,7 +42,10 @@ src/
 - **localStorage over IndexedDB**: attendance records are ~200 bytes each; even 1000 events ≈ 200 KB, far below the 5 MB budget. The `SyncedStore` interface isolates the backend so it can be swapped later.
 - **Tombstones, not deletes**: removing a mark sets `deleted: true` + `updatedAt` instead of dropping the key. Required for conflict-free sync later (see SYNC.md).
 - **Cast filter is derived**: performances carry no artist IDs, so `performance-cast.ts` walks setlist → song → artist → character once (cached module-level) to answer "which casts appeared at this event".
-- **Share images**: `modern-screenshot`'s `domToBlob` on a real DOM node (StatsCard / MyPickCard) at 2× scale — no canvas drawing code to maintain.
+- **Share images**: `modern-screenshot`'s `domToBlob` on a real DOM node (StatsCard / MyPickGrid) at 2× scale — no canvas drawing code to maintain.
+- **Tour grouping**: events list groups performances by `tourName` (`utils/tour.ts`); legs render with real `concertName`/`performanceName` labels from `event-extra.json`. Row-major masonry via `useColumnCount` + round-robin column stacks.
+- **MyPick is a configurable grid**: rows = series or any artist (group/solo), columns = slot columns (cast/song/event) or year columns (addable left/right). Cells keyed `rowKey|columnKey` in one flat map (`types/attendance.ts` `cellKey`), so config changes never orphan unrelated cells.
+- **Songs page is a collection tracker**: all 884 songs with witnessed/unwitnessed state derived from `tallySongs`, completion percentage scoped to the active series filter.
 - **Setlist song numbering**: non-song items (MC/VTR/custom) get no number; numbering is precomputed per item id before render.
 
 ## Conventions
