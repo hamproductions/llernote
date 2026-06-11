@@ -1,4 +1,4 @@
-const CACHE = 'llernote-v1';
+const CACHE = 'llernote-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting());
@@ -25,7 +25,9 @@ self.addEventListener('fetch', (event) => {
         const cached = await cache.match(request);
         if (cached) return cached;
         const response = await fetch(request);
-        if (response.ok) cache.put(request, response.clone());
+        if (response.status === 200) {
+          event.waitUntil(cache.put(request, response.clone()));
+        }
         return response;
       })
     );
@@ -36,16 +38,18 @@ self.addEventListener('fetch', (event) => {
     caches.open(CACHE).then(async (cache) => {
       try {
         const response = await fetch(request);
-        if (response.ok) cache.put(request, response.clone());
+        if (response.status === 200) {
+          event.waitUntil(cache.put(request, response.clone()));
+        }
         return response;
-      } catch {
-        const cached = await cache.match(request);
+      } catch (error) {
+        const cached = await cache.match(request, { ignoreSearch: request.mode === 'navigate' });
         if (cached) return cached;
         if (request.mode === 'navigate') {
           const fallback = await cache.match('/');
           if (fallback) return fallback;
         }
-        throw new Error('offline');
+        throw error;
       }
     })
   );

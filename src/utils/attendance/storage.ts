@@ -6,6 +6,7 @@ import type {
   MyPick,
   MyPickConfig
 } from '~/types/attendance';
+import { columnKey, rowKey } from '~/types/attendance';
 
 const BACKUP_VERSION = 1;
 
@@ -18,10 +19,18 @@ class SyncedStore<T> {
   private loaded = false;
 
   constructor(
-    key: string,
+    public key: string,
     private empty: T
   ) {
     this.storage = new LocalStorage<T>(key);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event) => {
+        if (event.key !== key) return;
+        this.cache = this.storage.value ?? this.empty;
+        this.loaded = true;
+        this.notify();
+      });
+    }
   }
 
   get(): T {
@@ -62,15 +71,17 @@ export const setAttendance = (
   const map = attendanceStore.get();
   const now = new Date().toISOString();
   const prev = map[performanceId];
+  const base = prev && !prev.deleted ? prev : undefined;
   attendanceStore.set({
     ...map,
     [performanceId]: {
-      ...prev,
+      ...base,
+      watchType: status === 'attended' ? (base?.watchType ?? 'live') : base?.watchType,
       ...extra,
       performanceId,
       status,
       deleted: false,
-      createdAt: prev && !prev.deleted ? prev.createdAt : now,
+      createdAt: base?.createdAt ?? now,
       updatedAt: now
     }
   });
@@ -83,6 +94,9 @@ export const updateAttendance = (
   const map = attendanceStore.get();
   const prev = map[performanceId];
   if (!prev || prev.deleted) return;
+  if (typeof patch.memo === 'string') {
+    patch = { ...patch, memo: patch.memo.trim() || undefined };
+  }
   attendanceStore.set({
     ...map,
     [performanceId]: { ...prev, ...patch, updatedAt: new Date().toISOString() }
@@ -95,7 +109,13 @@ export const removeAttendance = (performanceId: string) => {
   if (!prev) return;
   attendanceStore.set({
     ...map,
-    [performanceId]: { ...prev, deleted: true, updatedAt: new Date().toISOString() }
+    [performanceId]: {
+      performanceId,
+      status: prev.status,
+      deleted: true,
+      createdAt: prev.createdAt,
+      updatedAt: new Date().toISOString()
+    }
   });
 };
 
@@ -113,12 +133,35 @@ export const setMyPick = (patch: Partial<Omit<MyPick, 'updatedAt'>>) => {
 };
 
 export const setMyPickConfig = (config: MyPickConfig) => {
-  setMyPick({ config });
+  const prev = myPickStore.get();
+  const validKeys = new Set(
+    config.rows.flatMap((row) => config.columns.map((col) => `${rowKey(row)}|${columnKey(col)}`))
+  );
+  const cells = Object.fromEntries(
+    Object.entries(prev?.cells ?? {}).filter(([key, value]) => value != null && validKeys.has(key))
+  );
+  setMyPick({ config, cells });
 };
 
 export const setMyPickCell = (key: string, id: string | null) => {
   const prev = myPickStore.get();
-  setMyPick({ cells: { ...prev?.cells, [key]: id } });
+  const cells = { ...prev?.cells };
+  if (id == null) delete cells[key];
+  else cells[key] = id;
+  setMyPick({ cells });
+};
+
+const VALID_STATUS = new Set<AttendanceStatus>(['attended', 'interested']);
+
+const isValidRecord = (record: unknown): record is AttendanceRecord => {
+  if (typeof record !== 'object' || record === null) return false;
+  const r = record as AttendanceRecord;
+  return (
+    typeof r.performanceId === 'string' &&
+    VALID_STATUS.has(r.status) &&
+    typeof r.updatedAt === 'string' &&
+    typeof r.createdAt === 'string'
+  );
 };
 
 export const exportBackup = (): BackupData => ({
@@ -129,12 +172,20 @@ export const exportBackup = (): BackupData => ({
 });
 
 export const importBackup = (data: BackupData) => {
-  if (typeof data !== 'object' || data === null || typeof data.attendance !== 'object') {
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    typeof data.attendance !== 'object' ||
+    data.attendance === null ||
+    typeof data.version !== 'number' ||
+    data.version > BACKUP_VERSION
+  ) {
     throw new Error('Invalid backup data');
   }
   const current = attendanceStore.get();
   const merged: AttendanceMap = { ...current };
   for (const [id, record] of Object.entries(data.attendance)) {
+    if (!isValidRecord(record)) continue;
     const existing = merged[id];
     if (!existing || record.updatedAt > existing.updatedAt) {
       merged[id] = record;
@@ -144,7 +195,21 @@ export const importBackup = (data: BackupData) => {
 
   const incomingPick = data.myPick;
   const currentPick = myPickStore.get();
-  if (incomingPick && (!currentPick || incomingPick.updatedAt > currentPick.updatedAt)) {
-    myPickStore.set(incomingPick);
+  if (
+    incomingPick &&
+    typeof incomingPick === 'object' &&
+    typeof incomingPick.cells === 'object' &&
+    incomingPick.cells !== null
+  ) {
+    if (!currentPick) {
+      myPickStore.set(incomingPick);
+    } else {
+      const newer = incomingPick.updatedAt > currentPick.updatedAt ? incomingPick : currentPick;
+      const older = newer === incomingPick ? currentPick : incomingPick;
+      myPickStore.set({
+        ...newer,
+        cells: { ...older.cells, ...newer.cells }
+      });
+    }
   }
 };

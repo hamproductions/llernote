@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCheck, FaMusic, FaXmark } from 'react-icons/fa6';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
@@ -123,6 +123,10 @@ export function PickDialog({
   const [search, setSearch] = useState('');
   const hasImages = items.some((item) => item.image);
 
+  useEffect(() => {
+    if (open) setSearch('');
+  }, [open]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return items.slice(0, 120);
@@ -170,6 +174,11 @@ export function PickDialog({
               onChange={(e) => setSearch(e.target.value)}
             />
             <Box flex="1" overflowY="auto">
+              {filtered.length === 0 && (
+                <Text py="8" color="fg.muted" fontSize="sm" textAlign="center">
+                  {t('common.no_results')}
+                </Text>
+              )}
               {hasImages ? (
                 <Grid
                   gap="2"

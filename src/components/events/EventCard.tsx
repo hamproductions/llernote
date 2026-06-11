@@ -8,6 +8,7 @@ import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
+import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
 
 export function EventCard({
@@ -24,7 +25,7 @@ export function EventCard({
 
   return (
     <Card.Root
-      onClick={onClick}
+      {...(onClick ? clickable(onClick) : {})}
       cursor={onClick ? 'pointer' : undefined}
       borderLeftWidth="4px"
       borderLeftColor={

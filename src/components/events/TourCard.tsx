@@ -5,13 +5,13 @@ import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { IconButton } from '~/components/ui/icon-button';
-import { Link } from '~/components/ui/link';
 import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
 import { eventernoteSearchUrl } from '~/utils/share';
+import { clickable } from '~/utils/clickable';
 import type { TourGroup } from '~/utils/tour';
 import type { Performance } from '~/types';
 
@@ -57,7 +57,7 @@ function LegRow({
 
   return (
     <HStack
-      onClick={() => onSelect(performance)}
+      {...clickable(() => onSelect(performance))}
       cursor="pointer"
       gap="2"
       justifyContent="space-between"
@@ -130,21 +130,23 @@ function CardHeader({ tour }: { tour: TourGroup }) {
         <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
           {dateRange}
         </Text>
-        <Link
-          href={eventernoteSearchUrl(first)}
-          target="_blank"
-          onClick={(e) => e.stopPropagation()}
+        <IconButton
+          asChild
+          aria-label={t('share.eventernote')}
+          title={t('share.eventernote')}
+          variant="ghost"
+          size="xs"
+          color="fg.muted"
         >
-          <IconButton
-            aria-label={t('share.eventernote')}
-            title={t('share.eventernote')}
-            variant="ghost"
-            size="xs"
-            color="fg.muted"
+          <a
+            href={eventernoteSearchUrl(first)}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
           >
             <FaArrowUpRightFromSquare />
-          </IconButton>
-        </Link>
+          </a>
+        </IconButton>
       </HStack>
       <Text fontSize="sm" fontWeight="semibold" lineHeight="tight">
         {tour.tourName}
@@ -174,7 +176,7 @@ export function TourCard({
     const record = get(first.id);
     return (
       <Card.Root
-        onClick={() => onSelect(first)}
+        {...clickable(() => onSelect(first))}
         cursor="pointer"
         borderLeftWidth="3px"
         borderLeftColor={
@@ -207,7 +209,7 @@ export function TourCard({
   return (
     <Card.Root>
       <Card.Body gap="2" p="3">
-        <Box onClick={() => onSelect(first)} cursor="pointer">
+        <Box {...clickable(() => onSelect(first))} cursor="pointer">
           <CardHeader tour={tour} />
         </Box>
         <Stack gap="1">

@@ -25,7 +25,13 @@
     "show_more": "Show more",
     "select_all": "Select All",
     "deselect_all": "Deselect All",
-    "today": "Today"
+    "today": "Today",
+    "previous": "Previous",
+    "next": "Next",
+    "open_menu": "Open menu",
+    "card_view": "Card view",
+    "table_view": "Table view",
+    "no_results": "No results"
   },
   "events": {
     "title": "Events",
@@ -56,8 +62,8 @@
     "memo": "Memo",
     "memo_placeholder": "Seat, impressions, notes...",
     "rating": "Rating",
-    "mark_attended": "Attended",
-    "mark_interested": "Interested",
+    "mark_attended": "Mark attended",
+    "mark_interested": "Add to going",
     "unmark": "Remove mark",
     "songs_count": "{{ count }} songs",
     "encore": "Encore",
@@ -68,10 +74,16 @@
     "cast_placeholder": "Filter by cast...",
     "year_from": "From year",
     "year_to": "To year",
-    "leg": "Show"
+    "leg": "Show",
+    "results_count_one": "{{ count }} event",
+    "first_witness": "First",
+    "doors": "Doors",
+    "start": "Start"
   },
   "calendar": {
-    "title": "Calendar"
+    "title": "Calendar",
+    "prev_month": "Previous month",
+    "next_month": "Next month"
   },
   "timeline": {
     "title": "Timeline",
@@ -123,7 +135,13 @@
     "add_row": "Add row",
     "add_year_left": "Year ←",
     "add_year_right": "Year →",
-    "year_slot": "Year cell"
+    "year_slot": "Year cell",
+    "share_url": "Share URL",
+    "shared_view": "You're viewing a shared MyPick.",
+    "make_own": "Make your own",
+    "row_series": "Series",
+    "row_group": "Group / Unit",
+    "row_solo": "Solo"
   },
   "songs": {
     "title": "Songs",
@@ -148,7 +166,9 @@
     "count": "Count",
     "last_seen": "Last seen",
     "first_seen": "First seen",
-    "total_witnessed": "{{ total }} performances of {{ unique }} unique songs"
+    "total_witnessed": "{{ total }} performances of {{ unique }} unique songs",
+    "results_count_one": "{{ count }} song",
+    "no_results": "No songs found"
   },
   "share": {
     "share": "Share",

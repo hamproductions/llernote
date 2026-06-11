@@ -19,7 +19,11 @@ const selectStyle = css({
   color: 'fg.default',
   fontSize: 'sm',
   bgColor: 'bg.default',
-  _focus: { outline: 'none', borderColor: 'accent.default' }
+  _focusVisible: {
+    outline: 'none',
+    borderColor: 'accent.default',
+    boxShadow: '0 0 0 1px var(--colors-accent-default)'
+  }
 });
 
 export function NativeSelect({

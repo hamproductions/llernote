@@ -133,12 +133,12 @@ export default function Page() {
               <Text color="fg.muted" fontSize="sm">
                 {t('home.get_started')}
               </Text>
-              <Link href={href('/events')}>
-                <Button size="sm">
+              <Button asChild size="sm">
+                <a href={href('/events')}>
                   {t('home.browse_events')}
                   <FaArrowRight />
-                </Button>
-              </Link>
+                </a>
+              </Button>
             </HStack>
           )}
         </Stack>
@@ -183,7 +183,7 @@ export default function Page() {
                 {t('home.next_up')}
               </Heading>
               <Link href={href('/calendar')}>
-                <Text color="accent.text" fontSize="sm">
+                <Text color="accent.default" fontSize="sm">
                   {t('home.view_all')} →
                 </Text>
               </Link>
@@ -216,7 +216,7 @@ export default function Page() {
                 {t('home.recent')}
               </Heading>
               <Link href={href('/calendar')}>
-                <Text color="accent.text" fontSize="sm">
+                <Text color="accent.default" fontSize="sm">
                   {t('home.view_all')} →
                 </Text>
               </Link>

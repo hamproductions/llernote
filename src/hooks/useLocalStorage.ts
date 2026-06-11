@@ -21,9 +21,8 @@ export class LocalStorage<T = unknown> {
   }
 
   set value(value: NullOrUndefinedAble<T>) {
-    if (value !== null) {
-      const val: string = JSON.stringify(value);
-      localStorage.setItem(this.key, val);
+    if (value != null) {
+      localStorage.setItem(this.key, JSON.stringify(value));
     } else {
       localStorage.removeItem(this.key);
     }
@@ -39,9 +38,7 @@ export const useLocalStorage = function <T>(
   initial: NullOrUndefinedAble<T> = undefined
 ): [NullOrUndefinedAble<T>, Dispatch<SetStateAction<NullOrUndefinedAble<T>>>] {
   const storage = useRef(new LocalStorage<T>(key));
-  const [data, setData] = useState<NullOrUndefinedAble<T>>(
-    () => (typeof window !== 'undefined' ? storage.current.value : initial) ?? initial
-  );
+  const [data, setData] = useState<NullOrUndefinedAble<T>>(initial);
 
   const setNewData: Dispatch<SetStateAction<NullOrUndefinedAble<T>>> = useCallback(
     (s: SetStateAction<NullOrUndefinedAble<T>>) => {
@@ -55,22 +52,26 @@ export const useLocalStorage = function <T>(
     []
   );
 
-  const updateValue = (updateKey: string) => (storageEvent: StorageEvent) => {
-    if (storageEvent.key === updateKey) {
-      setData(JSON.parse(storageEvent.newValue ?? ''));
-    }
-  };
-
   useEffect(() => {
-    setNewData(storage.current.value ?? initial);
+    const stored = storage.current.value;
+    if (stored != null) setData(stored);
     // oxlint-disable-next-line exhaustive-deps
   }, []);
 
   useEffect(() => {
-    window.addEventListener('storage', updateValue(key));
-    return () => {
-      window.removeEventListener('storage', updateValue(key));
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== key) return;
+      try {
+        setData(event.newValue !== null ? JSON.parse(event.newValue) : initial);
+      } catch {
+        setData(initial);
+      }
     };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+    };
+    // oxlint-disable-next-line exhaustive-deps
   }, [key]);
 
   return [data, setNewData];

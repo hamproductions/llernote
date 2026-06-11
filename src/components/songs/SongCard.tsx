@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { HStack, Stack } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
 import { localizedName } from '~/utils/names';
+import { clickable } from '~/utils/clickable';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
@@ -21,7 +22,7 @@ export function SongCard({
 
   return (
     <HStack
-      onClick={onClick}
+      {...clickable(onClick)}
       cursor="pointer"
       gap="3"
       borderColor={heard ? 'accent.7' : 'border.subtle'}
@@ -51,7 +52,7 @@ export function SongCard({
       </Stack>
       {heard ? (
         <Badge size="sm" variant="solid" flexShrink={0}>
-          {t('songs.times_other', { count: heardCount })}
+          {t('songs.times', { count: heardCount })}
         </Badge>
       ) : (
         <Badge size="sm" variant="outline" flexShrink={0} color="fg.subtle">

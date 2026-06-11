@@ -62,7 +62,7 @@ describe('computeStats', () => {
       setlists
     );
     expect(stats.attendedCount).toBe(2);
-    expect(stats.interestedCount).toBe(1);
+    expect(stats.interestedCount).toBe(0);
     expect(stats.songsWitnessed).toBe(4);
     expect(stats.uniqueSongs).toBe(3);
     expect(stats.venuesVisited).toBe(2);
@@ -77,6 +77,17 @@ describe('computeStats', () => {
   it('counts multi-series events in every series', () => {
     const stats = computeStats([record('3', 'attended')], performanceById, setlists);
     expect(stats.bySeries).toHaveLength(2);
+  });
+
+  it('counts interested only for future events', () => {
+    const future = performance('99', '2099-01-01');
+    const byId = new Map([...performanceById, ['99', future]]);
+    const stats = computeStats(
+      [record('99', 'interested'), record('1', 'interested')],
+      byId,
+      setlists
+    );
+    expect(stats.interestedCount).toBe(1);
   });
 
   it('handles empty input', () => {

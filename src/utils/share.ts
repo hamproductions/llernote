@@ -16,6 +16,8 @@ export const xShareUrl = (text: string, url?: string) => {
 export const downloadElementAsImage = async (element: HTMLElement, filename: string) => {
   const blob = await domToBlob(element, {
     scale: 2,
+    width: element.scrollWidth,
+    height: element.scrollHeight,
     backgroundColor: getComputedStyle(document.body).backgroundColor
   });
   if (blob) saveAs(blob, filename);

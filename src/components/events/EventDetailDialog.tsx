@@ -7,7 +7,6 @@ import { IconButton } from '~/components/ui/icon-button';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { Textarea } from '~/components/ui/textarea';
-import { Link } from '~/components/ui/link';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
@@ -44,7 +43,7 @@ function SetlistItemRow({
   showArtists: boolean;
   witnessInfo?: { count: number; isFirst: boolean };
 }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const songById = useSongById();
   const artistById = useArtistById();
   if (item.type !== 'song') {
@@ -82,7 +81,7 @@ function SetlistItemRow({
       </Text>
       {witnessInfo?.isFirst && (
         <Badge size="sm" variant="solid" flexShrink={0}>
-          初
+          {t('events.first_witness')}
         </Badge>
       )}
       {witnessInfo && witnessInfo.count > 1 && (
@@ -198,8 +197,8 @@ export function EventDetailDialog({
               )}
               <Text color="fg.muted" fontSize="sm">
                 {performance.venue}
-                {performance.openTime ? `・開場 ${performance.openTime}` : ''}
-                {performance.startTime ? `・開演 ${performance.startTime}` : ''}
+                {performance.openTime ? `・${t('events.doors')} ${performance.openTime}` : ''}
+                {performance.startTime ? `・${t('events.start')} ${performance.startTime}` : ''}
               </Text>
               {performance.note && (
                 <Text color="fg.subtle" fontSize="xs">
@@ -232,6 +231,7 @@ export function EventDetailDialog({
                       <IconButton
                         key={star}
                         aria-label={`${t('events.rating')} ${star}`}
+                        aria-pressed={record.rating != null && record.rating >= star}
                         variant="ghost"
                         size="xs"
                         onClick={() =>
@@ -253,6 +253,7 @@ export function EventDetailDialog({
                   <Textarea
                     size="sm"
                     rows={3}
+                    aria-label={t('events.memo')}
                     value={memo}
                     placeholder={t('events.memo_placeholder')}
                     onChange={(e) => setMemo(e.target.value)}
@@ -274,21 +275,22 @@ export function EventDetailDialog({
                 <FaCopy />
                 {t('share.copy_text')}
               </Button>
-              <Link
-                href={xShareUrl(`${formatEventShareText(performance)} #LLerNote`)}
-                target="_blank"
-              >
-                <Button size="xs" variant="outline">
+              <Button asChild size="xs" variant="outline">
+                <a
+                  href={xShareUrl(`${formatEventShareText(performance)} #LLerNote`)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <FaXTwitter />
                   {t('share.share_x')}
-                </Button>
-              </Link>
-              <Link href={eventernoteSearchUrl(performance)} target="_blank">
-                <Button size="xs" variant="outline">
+                </a>
+              </Button>
+              <Button asChild size="xs" variant="outline">
+                <a href={eventernoteSearchUrl(performance)} target="_blank" rel="noreferrer">
                   <FaArrowUpRightFromSquare />
                   {t('share.eventernote')}
-                </Button>
-              </Link>
+                </a>
+              </Button>
             </Wrap>
 
             <Stack gap="2">

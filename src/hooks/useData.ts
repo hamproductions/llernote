@@ -18,9 +18,21 @@ const deriveCategory = (p: Partial<Performance>): Performance['category'] => {
   return 'live';
 };
 
+const tourTypeByName = new Map<string, string>();
+for (const p of performanceInfo as Omit<Performance, 'category'>[]) {
+  const extra = extraById[p.id];
+  if (extra?.tourType && !tourTypeByName.has(p.tourName)) {
+    tourTypeByName.set(p.tourName, extra.tourType);
+  }
+}
+
 const performances: Performance[] = (performanceInfo as Omit<Performance, 'category'>[]).map(
   (p) => {
     const merged = { ...p, ...extraById[p.id] };
+    if (!merged.tourType && tourTypeByName.has(p.tourName)) {
+      merged.tourType = tourTypeByName.get(p.tourName);
+      if (merged.audience === undefined) merged.audience = true;
+    }
     return { ...merged, category: deriveCategory(merged) };
   }
 );

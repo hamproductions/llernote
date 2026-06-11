@@ -9,7 +9,7 @@ const config = defineConfig({
 
   hash: {
     className: true,
-    cssVar: true
+    cssVar: false
   },
 
   presets: [
@@ -27,20 +27,7 @@ const config = defineConfig({
   // Files to exclude
   exclude: [],
 
-  staticCss: {
-    recipes: {
-      // text: ['*']
-    },
-    css: [
-      {
-        properties: {
-          listStyleType: ['none', 'disc', 'decimal'],
-          fontWeight: ['bold'],
-          fontSize: ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl']
-        }
-      }
-    ]
-  },
+
   // Useful for theme customization
   theme: {
     extend: theme

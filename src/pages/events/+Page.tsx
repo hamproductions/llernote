@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { Center, HStack, Stack } from 'styled-system/jsx';
@@ -29,11 +29,12 @@ export default function Page() {
   const songById = useSongById();
   const artistById = useArtistById();
   const { map } = useAttendance();
-  const [filters, setFilters] = useState<EventFilters>(() => {
-    if (typeof window === 'undefined') return EMPTY_FILTERS;
+  const [filters, setFilters] = useState<EventFilters>(EMPTY_FILTERS);
+
+  useEffect(() => {
     const q = new URLSearchParams(window.location.search).get('q');
-    return q ? { ...EMPTY_FILTERS, search: q } : EMPTY_FILTERS;
-  });
+    if (q) setFilters((prev) => ({ ...prev, search: q }));
+  }, []);
   const [selected, setSelected] = useState<Performance>();
   const [page, setPage] = useState(1);
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-events-view', 'cards');
@@ -72,18 +73,24 @@ export default function Page() {
           </HStack>
           <HStack gap="1">
             <IconButton
-              aria-label="Card view"
+              aria-label={t('common.card_view')}
               variant={view === 'cards' ? 'subtle' : 'ghost'}
               size="sm"
-              onClick={() => setView('cards')}
+              onClick={() => {
+                setView('cards');
+                setPage(1);
+              }}
             >
               <FaTableCellsLarge />
             </IconButton>
             <IconButton
-              aria-label="Table view"
+              aria-label={t('common.table_view')}
               variant={view === 'table' ? 'subtle' : 'ghost'}
               size="sm"
-              onClick={() => setView('table')}
+              onClick={() => {
+                setView('table');
+                setPage(1);
+              }}
             >
               <FaTableList />
             </IconButton>
@@ -117,7 +124,7 @@ export default function Page() {
             <Pagination
               count={totalCount}
               pageSize={PAGE_SIZE}
-              siblingCount={1}
+              siblingCount={columns === 1 ? 0 : 1}
               onPageChange={(details) => {
                 setPage(details.page);
                 window.scrollTo({ top: 0 });

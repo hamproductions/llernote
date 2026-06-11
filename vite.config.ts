@@ -37,7 +37,7 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: isProduction,
+    sourcemap: isProduction ? 'hidden' : false,
     cssMinify: isProduction,
     minify: isProduction,
     commonjsOptions: {

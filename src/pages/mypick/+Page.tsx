@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaDownload, FaPlus } from 'react-icons/fa6';
+import { FaDownload, FaLink, FaPlus } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
@@ -24,7 +24,8 @@ import { setMyPickCell, setMyPickConfig } from '~/utils/attendance/storage';
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { getPicUrl } from '~/utils/assets';
 import { localizedName } from '~/utils/names';
-import { downloadElementAsImage } from '~/utils/share';
+import { copyTextToClipboard, downloadElementAsImage } from '~/utils/share';
+import { decodeMyPick, encodeMyPick, myPickShareUrl } from '~/utils/mypick-share';
 import { useToaster } from '~/context/ToasterContext';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
 import type { MyPickColumn, MyPickConfig, MyPickRow, MyPickSlot } from '~/types/attendance';
@@ -56,7 +57,16 @@ export default function Page() {
   const [yearSlot, setYearSlot] = useState<MyPickSlot>('song');
   const [exporting, setExporting] = useState(false);
 
-  const config = myPick?.config ?? DEFAULT_CONFIG;
+  const [shared, setShared] = useState<ReturnType<typeof decodeMyPick>>(null);
+
+  useEffect(() => {
+    const d = new URLSearchParams(window.location.search).get('d');
+    if (d) setShared(decodeMyPick(d));
+  }, []);
+
+  const config = shared
+    ? { rows: shared.rows, columns: shared.columns }
+    : (myPick?.config ?? DEFAULT_CONFIG);
 
   const performanceCharacters = useMemo(
     () => buildPerformanceCharacterMap(setlists, songById, artistById),
@@ -107,19 +117,19 @@ export default function Page() {
         return p.seriesIds.includes(row.id);
       })
       .map((p) => ({ id: p.id, label: p.tourName, sub: `${p.date} ${p.venue}` }));
-  }, [picking, characters, songs, performances, artistById, performanceCharacters]);
+  }, [picking, characters, songs, performances, artistById, performanceCharacters, i18n.language]);
 
-  const rowItems: PickItem[] = useMemo(
-    () => [
-      ...series.map((s) => ({ id: `series:${s.id}`, label: s.name, sub: 'シリーズ' })),
+  const rowItems: PickItem[] = useMemo(() => {
+    const existing = new Set(config.rows.map((r) => `${r.type}:${r.id}`));
+    return [
+      ...series.map((s) => ({ id: `series:${s.id}`, label: s.name, sub: t('mypick.row_series') })),
       ...artists.map((a) => ({
         id: `artist:${a.id}`,
         label: localizedName(i18n.language, a.name, a.englishName),
-        sub: a.characters.length > 1 ? 'グループ・ユニット' : 'ソロ'
+        sub: a.characters.length > 1 ? t('mypick.row_group') : t('mypick.row_solo')
       }))
-    ],
-    [series, artists, i18n.language]
-  );
+    ].filter((item) => !existing.has(item.id));
+  }, [series, artists, i18n.language, config.rows, t]);
 
   const updateConfig = (patch: Partial<MyPickConfig>) => {
     setMyPickConfig({ ...config, ...patch });
@@ -167,75 +177,116 @@ export default function Page() {
               {t('mypick.description')}
             </Text>
           </Stack>
-          <Button
-            size="sm"
-            onClick={async () => {
-              if (!gridRef.current) return;
-              setExporting(true);
-              await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
-              try {
-                await downloadElementAsImage(gridRef.current, 'llernote-mypick.png');
-                toast({ title: t('share.image_generated'), type: 'success' });
-              } finally {
-                setExporting(false);
-              }
-            }}
-          >
-            <FaDownload />
-            {t('mypick.generate_image')}
-          </Button>
+          <HStack gap="2">
+            {!shared && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  const encoded = encodeMyPick(
+                    myPick ?? { cells: {}, updatedAt: '' },
+                    config.rows,
+                    config.columns
+                  );
+                  await copyTextToClipboard(myPickShareUrl(encoded));
+                  toast({ title: t('share.copied'), type: 'success' });
+                }}
+              >
+                <FaLink />
+                {t('mypick.share_url')}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={async () => {
+                if (!gridRef.current) return;
+                setExporting(true);
+                await new Promise((resolve) =>
+                  requestAnimationFrame(() => setTimeout(resolve, 50))
+                );
+                try {
+                  await downloadElementAsImage(gridRef.current, 'llernote-mypick.png');
+                  toast({ title: t('share.image_generated'), type: 'success' });
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              <FaDownload />
+              {t('mypick.generate_image')}
+            </Button>
+          </HStack>
         </HStack>
 
-        <Box
-          borderColor="border.subtle"
-          borderRadius="l2"
-          borderWidth="1px"
-          p="3"
-          bgColor="bg.subtle"
-        >
-          <Wrap gap="2">
-            <Button size="xs" variant="outline" onClick={() => setAddingRow(true)}>
-              <FaPlus />
-              {t('mypick.add_row')}
+        {shared && (
+          <HStack
+            gap="3"
+            justifyContent="space-between"
+            borderColor="accent.7"
+            borderRadius="l2"
+            borderWidth="1px"
+            p="3"
+            bgColor="accent.a2"
+            flexWrap="wrap"
+          >
+            <Text fontSize="sm">{t('mypick.shared_view')}</Text>
+            <Button size="xs" onClick={() => (window.location.href = window.location.pathname)}>
+              {t('mypick.make_own')}
             </Button>
-            {(['cast', 'song', 'event'] as MyPickSlot[]).map((slot) => (
-              <Button
-                key={slot}
-                size="xs"
-                variant="outline"
-                onClick={() => addColumn({ type: 'slot', slot })}
-              >
+          </HStack>
+        )}
+        {!shared && (
+          <Box
+            borderColor="border.subtle"
+            borderRadius="l2"
+            borderWidth="1px"
+            p="3"
+            bgColor="bg.subtle"
+          >
+            <Wrap gap="2">
+              <Button size="xs" variant="outline" onClick={() => setAddingRow(true)}>
                 <FaPlus />
-                {t(`mypick.slot_${slot}`)}
+                {t('mypick.add_row')}
               </Button>
-            ))}
-            <HStack gap="1">
-              <NativeSelect
-                aria-label={t('mypick.year_slot')}
-                value={yearSlot}
-                options={(['song', 'cast', 'event'] as MyPickSlot[]).map((slot) => ({
-                  value: slot,
-                  label: t(`mypick.slot_${slot}`)
-                }))}
-                onChange={(slot) => setYearSlot(slot as MyPickSlot)}
-              />
-              <Button size="xs" variant="outline" onClick={() => addYear('left')}>
-                <FaPlus />
-                {t('mypick.add_year_left')}
-              </Button>
-              <Button size="xs" variant="outline" onClick={() => addYear('right')}>
-                <FaPlus />
-                {t('mypick.add_year_right')}
-              </Button>
-            </HStack>
-          </Wrap>
-        </Box>
+              {(['cast', 'song', 'event'] as MyPickSlot[]).map((slot) => (
+                <Button
+                  key={slot}
+                  size="xs"
+                  variant="outline"
+                  onClick={() => addColumn({ type: 'slot', slot })}
+                >
+                  <FaPlus />
+                  {t(`mypick.slot_${slot}`)}
+                </Button>
+              ))}
+              <HStack gap="1">
+                <NativeSelect
+                  aria-label={t('mypick.year_slot')}
+                  value={yearSlot}
+                  options={(['song', 'cast', 'event'] as MyPickSlot[]).map((slot) => ({
+                    value: slot,
+                    label: t(`mypick.slot_${slot}`)
+                  }))}
+                  onChange={(slot) => setYearSlot(slot as MyPickSlot)}
+                />
+                <Button size="xs" variant="outline" onClick={() => addYear('left')}>
+                  <FaPlus />
+                  {t('mypick.add_year_left')}
+                </Button>
+                <Button size="xs" variant="outline" onClick={() => addYear('right')}>
+                  <FaPlus />
+                  {t('mypick.add_year_right')}
+                </Button>
+              </HStack>
+            </Wrap>
+          </Box>
+        )}
 
         <MyPickGrid
           ref={gridRef}
-          myPick={myPick}
+          myPick={shared ? shared.myPick : myPick}
           rows={config.rows}
-          editable={!exporting}
+          editable={!shared && !exporting}
           onPickCell={(row, column) => setPicking({ row, column })}
           onClearCell={(key) => setMyPickCell(key, null)}
           onRemoveRow={(row) =>

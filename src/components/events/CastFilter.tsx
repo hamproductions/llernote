@@ -21,6 +21,7 @@ export function CastFilter({
   const characters = useCharacters();
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
   const blurTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const selected = selectedIds
@@ -40,13 +41,45 @@ export function CastFilter({
       .slice(0, 8);
   }, [characters, query, selectedIds]);
 
+  const open = focused && suggestions.length > 0;
+
+  const pick = (id: string) => {
+    onChange([...selectedIds, id]);
+    setQuery('');
+    setHighlighted(0);
+  };
+
   return (
     <Stack position="relative" flex="1" gap="1" minW="48" maxW="72">
       <Input
         size="sm"
         value={query}
         placeholder={t('events.cast_placeholder')}
-        onChange={(e) => setQuery(e.target.value)}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls="cast-filter-listbox"
+        aria-autocomplete="list"
+        aria-activedescendant={open ? `cast-option-${highlighted}` : undefined}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setHighlighted(0);
+        }}
+        onKeyDown={(e) => {
+          if (!open) return;
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setHighlighted((h) => Math.min(h + 1, suggestions.length - 1));
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setHighlighted((h) => Math.max(h - 1, 0));
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const target = suggestions[highlighted];
+            if (target) pick(target.id);
+          } else if (e.key === 'Escape') {
+            setFocused(false);
+          }
+        }}
         onFocus={() => {
           clearTimeout(blurTimer.current);
           setFocused(true);
@@ -55,8 +88,10 @@ export function CastFilter({
           blurTimer.current = setTimeout(() => setFocused(false), 150);
         }}
       />
-      {focused && suggestions.length > 0 && (
+      {open && (
         <Stack
+          id="cast-filter-listbox"
+          role="listbox"
           zIndex="10"
           position="absolute"
           top="100%"
@@ -73,18 +108,22 @@ export function CastFilter({
           overflow="hidden"
           overflowY="auto"
         >
-          {suggestions.map((c) => (
+          {suggestions.map((c, i) => (
             <HStack
               key={c.id}
+              id={`cast-option-${i}`}
+              role="option"
+              aria-selected={i === highlighted}
+              onMouseEnter={() => setHighlighted(i)}
               onMouseDown={(e) => {
                 e.preventDefault();
-                onChange([...selectedIds, c.id]);
-                setQuery('');
+                pick(c.id);
               }}
               cursor="pointer"
               gap="2"
               py="1.5"
               px="2"
+              bgColor={i === highlighted ? 'bg.subtle' : undefined}
               _hover={{ bgColor: 'bg.subtle' }}
             >
               <Box
@@ -118,18 +157,30 @@ export function CastFilter({
       )}
       {selected.length > 0 && (
         <Wrap gap="1">
-          {selected.map((c) => (
-            <Badge
-              key={c.id}
-              size="sm"
-              variant="solid"
-              onClick={() => onChange(selectedIds.filter((id) => id !== c.id))}
-              cursor="pointer"
-            >
-              {localizedName(i18n.language, c.fullName, c.englishName)}
-              <FaXmark size={10} />
-            </Badge>
-          ))}
+          {selected.map((c) => {
+            const name = localizedName(i18n.language, c.fullName, c.englishName);
+            return (
+              <Badge
+                key={c.id}
+                size="sm"
+                variant="solid"
+                role="button"
+                tabIndex={0}
+                aria-label={`${name} ${t('common.delete')}`}
+                onClick={() => onChange(selectedIds.filter((id) => id !== c.id))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onChange(selectedIds.filter((id) => id !== c.id));
+                  }
+                }}
+                cursor="pointer"
+              >
+                {name}
+                <FaXmark size={10} />
+              </Badge>
+            );
+          })}
         </Wrap>
       )}
     </Stack>

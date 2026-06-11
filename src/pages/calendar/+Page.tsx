@@ -18,6 +18,7 @@ import { usePerformance, usePerformances, useSeriesById } from '~/hooks/useData'
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
 import { legLabel } from '~/components/events/TourCard';
+import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -81,7 +82,7 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
       <Stack gap="2">
         <HStack justifyContent="space-between">
           <IconButton
-            aria-label="Previous month"
+            aria-label={t('calendar.prev_month')}
             variant="ghost"
             size="sm"
             onClick={() => changeMonth(-1)}
@@ -114,7 +115,7 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
             </Button>
           </HStack>
           <IconButton
-            aria-label="Next month"
+            aria-label={t('calendar.next_month')}
             variant="ghost"
             size="sm"
             onClick={() => changeMonth(1)}
@@ -135,9 +136,9 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
             return (
               <Box
                 key={day ?? `empty-${i}`}
-                onClick={() =>
-                  day && events.length > 0 && setSelectedDay(isSelected ? undefined : day)
-                }
+                {...(day && events.length > 0
+                  ? clickable(() => setSelectedDay(isSelected ? undefined : day), day)
+                  : {})}
                 cursor={day && events.length > 0 ? 'pointer' : undefined}
                 borderColor={isSelected ? 'accent.default' : isToday ? 'accent.8' : 'border.subtle'}
                 borderRadius="l1"
@@ -228,7 +229,7 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
             return (
               <HStack
                 key={p.id}
-                onClick={() => onSelect(p)}
+                {...clickable(() => onSelect(p))}
                 cursor="pointer"
                 gap="2"
                 borderColor="border.subtle"

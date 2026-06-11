@@ -25,7 +25,13 @@
     "show_more": "もっと見る",
     "select_all": "すべて選択",
     "deselect_all": "選択解除",
-    "today": "今日"
+    "today": "今日",
+    "previous": "前へ",
+    "next": "次へ",
+    "open_menu": "メニューを開く",
+    "card_view": "カード表示",
+    "table_view": "テーブル表示",
+    "no_results": "該当なし"
   },
   "events": {
     "title": "イベント",
@@ -56,8 +62,8 @@
     "memo": "メモ",
     "memo_placeholder": "座席、感想など...",
     "rating": "評価",
-    "mark_attended": "参加済みにする",
-    "mark_interested": "気になる",
+    "mark_attended": "参加を記録",
+    "mark_interested": "参戦予定に追加",
     "unmark": "登録解除",
     "songs_count": "{{ count }}曲",
     "encore": "アンコール",
@@ -68,10 +74,15 @@
     "cast_placeholder": "キャストで絞り込み...",
     "year_from": "開始年",
     "year_to": "終了年",
-    "leg": "公演"
+    "leg": "公演",
+    "first_witness": "初",
+    "doors": "開場",
+    "start": "開演"
   },
   "calendar": {
-    "title": "カレンダー"
+    "title": "カレンダー",
+    "prev_month": "前の月",
+    "next_month": "次の月"
   },
   "timeline": {
     "title": "タイムライン",
@@ -123,7 +134,13 @@
     "add_row": "行を追加",
     "add_year_left": "年を追加 ←",
     "add_year_right": "年を追加 →",
-    "year_slot": "年セルの種類"
+    "year_slot": "年セルの種類",
+    "share_url": "URLでシェア",
+    "shared_view": "シェアされたマイピックを表示中です。",
+    "make_own": "自分のマイピックを作る",
+    "row_series": "シリーズ",
+    "row_group": "グループ・ユニット",
+    "row_solo": "ソロ"
   },
   "songs": {
     "title": "楽曲",
@@ -148,7 +165,8 @@
     "count": "回数",
     "last_seen": "最終",
     "first_seen": "初回",
-    "total_witnessed": "{{ unique }}曲・のべ{{ total }}回"
+    "total_witnessed": "{{ unique }}曲・のべ{{ total }}回",
+    "no_results": "楽曲が見つかりません"
   },
   "share": {
     "share": "シェア",

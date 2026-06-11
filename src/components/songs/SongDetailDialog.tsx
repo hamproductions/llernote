@@ -7,7 +7,6 @@ import { IconButton } from '~/components/ui/icon-button';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
-import { Link } from '~/components/ui/link';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { useArtistById } from '~/hooks/useData';
 import { localizedName } from '~/utils/names';
@@ -81,19 +80,23 @@ export function SongDetailDialog({
             </HStack>
 
             {videoId && (
-              <Link href={`https://www.youtube.com/watch?v=${videoId}`} target="_blank">
-                <Button size="xs" variant="outline">
+              <Button asChild size="xs" variant="outline">
+                <a
+                  href={`https://www.youtube.com/watch?v=${videoId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <FaYoutube />
                   YouTube
-                </Button>
-              </Link>
+                </a>
+              </Button>
             )}
 
             <Stack gap="2">
               <HStack gap="2" alignItems="baseline">
                 <Text fontWeight="semibold">{t('songs.witnessed_at')}</Text>
                 <Text color="fg.muted" fontSize="sm">
-                  {t('songs.times_other', { count: heardAt.length })}
+                  {t('songs.times', { count: heardAt.length })}
                 </Text>
               </HStack>
               {heardAt.length === 0 ? (

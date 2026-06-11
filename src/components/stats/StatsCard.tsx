@@ -65,12 +65,12 @@ function MonthHeatmap({ byMonth, years }: { byMonth: Map<string, number>; years:
       <Grid gap="0.5" alignItems="center" gridTemplateColumns="2.5rem repeat(12, 1fr)">
         <Box />
         {Array.from({ length: 12 }, (_, m) => (
-          <Text key={m} color="fg.subtle" fontSize="2xs" textAlign="center">
+          <Text key={m} color="fg.muted" fontSize="xs" textAlign="center">
             {m + 1}
           </Text>
         ))}
         {allYears.map((year) => [
-          <Text key={year} color="fg.muted" fontSize="2xs" fontVariantNumeric="tabular-nums">
+          <Text key={year} color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
             {year}
           </Text>,
           ...Array.from({ length: 12 }, (_, m) => {

@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { Fragment, forwardRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaMusic, FaPlus, FaXmark } from 'react-icons/fa6';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
@@ -13,7 +13,10 @@ import {
 } from '~/hooks/useData';
 import { getPicUrl } from '~/utils/assets';
 import { getSeriesShortName } from '~/utils/series-short';
+import { seriesTextColor } from '~/utils/series-contrast';
+import { useColorModeContext } from '~/context/ColorModeContext';
 import { localizedName } from '~/utils/names';
+import { clickable } from '~/utils/clickable';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
 import type { MyPick, MyPickColumn, MyPickRow } from '~/types/attendance';
 
@@ -108,6 +111,7 @@ export const MyPickGrid = forwardRef<
   ref
 ) {
   const { t } = useTranslation();
+  const { colorMode } = useColorModeContext();
   const seriesById = useSeriesById();
   const artistById = useArtistById();
 
@@ -186,92 +190,98 @@ export const MyPickGrid = forwardRef<
           ))}
           {rows.map((row) => {
             const meta = rowMeta(row);
-            return [
-              <HStack
-                key={`${rowKey(row)}-label`}
-                style={{
-                  backgroundColor: `${meta.color}22`,
-                  borderLeft: `4px solid ${meta.color}`
-                }}
-                gap="1"
-                justifyContent="space-between"
-                borderRadius="l2"
-                py="1"
-                px="2"
-              >
-                <Text
-                  title={meta.full}
-                  style={{ color: meta.color }}
-                  fontSize="xs"
-                  fontWeight="bold"
-                  lineClamp={2}
+            return (
+              <Fragment key={rowKey(row)}>
+                <HStack
+                  style={{
+                    backgroundColor: `${meta.color}22`,
+                    borderLeft: `4px solid ${meta.color}`
+                  }}
+                  gap="1"
+                  justifyContent="space-between"
+                  borderRadius="l2"
+                  py="1"
+                  px="2"
                 >
-                  {meta.label}
-                </Text>
-                {editable && onRemoveRow && (
-                  <IconButton
-                    aria-label={t('common.delete')}
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => onRemoveRow(row)}
-                    minW="4"
-                    h="4"
-                    color="fg.subtle"
+                  <Text
+                    title={meta.full}
+                    style={{ color: seriesTextColor(meta.color, colorMode) }}
+                    fontSize="xs"
+                    fontWeight="bold"
+                    lineClamp={2}
                   >
-                    <FaXmark size={10} />
-                  </IconButton>
-                )}
-              </HStack>,
-              ...columns.map((col) => {
-                const key = cellKey(row, col);
-                const pickedId = myPick?.cells?.[key] ?? null;
-                return (
-                  <Box
-                    key={key}
-                    onClick={() => editable && onPickCell?.(row, col)}
-                    cursor={editable ? 'pointer' : undefined}
-                    position="relative"
-                    borderColor="border.subtle"
-                    borderRadius="l2"
-                    borderWidth="1px"
-                    minH="20"
-                    p="1.5"
-                    bgColor="bg.default"
-                    _hover={editable ? { borderColor: 'accent.8' } : undefined}
-                  >
-                    {pickedId ? (
-                      <CellContent column={col} pickedId={pickedId} />
-                    ) : editable ? (
-                      <Stack
-                        gap="0.5"
-                        justifyContent="center"
-                        alignItems="center"
-                        h="full"
-                        color="fg.subtle"
-                      >
-                        <FaPlus size={10} />
-                      </Stack>
-                    ) : null}
-                    {editable && pickedId && (
-                      <Box
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onClearCell?.(key);
-                        }}
-                        cursor="pointer"
-                        position="absolute"
-                        top="1"
-                        right="1"
-                        color="fg.subtle"
-                        _hover={{ color: 'fg.default' }}
-                      >
-                        <FaXmark size={11} />
-                      </Box>
-                    )}
-                  </Box>
-                );
-              })
-            ];
+                    {meta.label}
+                  </Text>
+                  {editable && onRemoveRow && (
+                    <IconButton
+                      aria-label={t('common.delete')}
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => onRemoveRow(row)}
+                      minW="4"
+                      h="4"
+                      color="fg.subtle"
+                    >
+                      <FaXmark size={10} />
+                    </IconButton>
+                  )}
+                </HStack>
+                {columns.map((col) => {
+                  const key = cellKey(row, col);
+                  const pickedId = myPick?.cells?.[key] ?? null;
+                  return (
+                    <Box
+                      key={key}
+                      {...(editable
+                        ? clickable(
+                            () => onPickCell?.(row, col),
+                            `${rowMeta(row).label} ${columnLabel(col)}`
+                          )
+                        : {})}
+                      cursor={editable ? 'pointer' : undefined}
+                      position="relative"
+                      borderColor="border.subtle"
+                      borderRadius="l2"
+                      borderWidth="1px"
+                      minH="20"
+                      p="1.5"
+                      bgColor="bg.default"
+                      _hover={editable ? { borderColor: 'accent.8' } : undefined}
+                    >
+                      {pickedId ? (
+                        <CellContent column={col} pickedId={pickedId} />
+                      ) : editable ? (
+                        <Stack
+                          gap="0.5"
+                          justifyContent="center"
+                          alignItems="center"
+                          h="full"
+                          color="fg.subtle"
+                        >
+                          <FaPlus size={10} />
+                        </Stack>
+                      ) : null}
+                      {editable && pickedId && (
+                        <Box
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onClearCell?.(key);
+                          }}
+                          cursor="pointer"
+                          position="absolute"
+                          top="1"
+                          right="1"
+                          color="fg.subtle"
+                          _hover={{ color: 'fg.default' }}
+                        >
+                          <FaXmark size={11} />
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Fragment>
+            );
           })}
         </Grid>
       </Stack>

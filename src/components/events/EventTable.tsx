@@ -4,13 +4,13 @@ import { FaArrowDown, FaArrowUp, FaArrowUpRightFromSquare, FaListUl } from 'reac
 import { HStack } from 'styled-system/jsx';
 import { Table } from '~/components/ui/table';
 import { IconButton } from '~/components/ui/icon-button';
-import { Link } from '~/components/ui/link';
 import { Text } from '~/components/ui/text';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { legLabel } from './TourCard';
 import { isFutureEvent } from '~/utils/event-filter';
 import { eventernoteSearchUrl } from '~/utils/share';
+import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
 
 export function EventTable({
@@ -57,7 +57,7 @@ export function EventTable({
         {rows.map((p, i) => (
           <Table.Row
             key={p.id}
-            onClick={() => onSelect(p)}
+            {...clickable(() => onSelect(p))}
             cursor="pointer"
             bgColor={i % 2 === 1 ? 'bg.subtle' : undefined}
             _hover={{ bgColor: 'accent.a2' }}
@@ -101,16 +101,17 @@ export function EventTable({
                     <FaListUl />
                   </IconButton>
                 )}
-                <Link href={eventernoteSearchUrl(p)} target="_blank">
-                  <IconButton
-                    aria-label={t('share.eventernote')}
-                    title={t('share.eventernote')}
-                    variant="ghost"
-                    size="xs"
-                  >
+                <IconButton
+                  asChild
+                  aria-label={t('share.eventernote')}
+                  title={t('share.eventernote')}
+                  variant="ghost"
+                  size="xs"
+                >
+                  <a href={eventernoteSearchUrl(p)} target="_blank" rel="noreferrer">
                     <FaArrowUpRightFromSquare />
-                  </IconButton>
-                </Link>
+                  </a>
+                </IconButton>
               </HStack>
             </Table.Cell>
           </Table.Row>

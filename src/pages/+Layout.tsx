@@ -1,5 +1,5 @@
 import { join } from 'path-browserify';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BiMenu, BiX } from 'react-icons/bi';
 import { Box, Container, HStack, Stack } from 'styled-system/jsx';
@@ -12,6 +12,7 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/styled/button';
 import { IconButton } from '~/components/ui/styled/icon-button';
 import { getAssetUrl } from '~/utils/assets';
+import { usePageContext } from 'vike-react/usePageContext';
 
 const NAV_ITEMS = [
   { path: '/', key: 'navigation.home', exact: true },
@@ -24,12 +25,9 @@ const NAV_ITEMS = [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
-  const [currentPath, setCurrentPath] = useState(import.meta.env.BASE_URL);
+  const { urlPathname } = usePageContext();
+  const currentPath = join(import.meta.env.BASE_URL, urlPathname);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    setCurrentPath(window.location.pathname);
-  }, [children]);
 
   function NavLinks() {
     return (
@@ -74,7 +72,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsDrawerOpen(true)}
-                aria-label="Open Menu"
+                aria-label={t('common.open_menu')}
               >
                 <BiMenu size={24} />
               </Button>

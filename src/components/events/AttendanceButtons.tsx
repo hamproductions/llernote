@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { FaRegStar, FaStar, FaCheck } from 'react-icons/fa6';
+import { FaCheck, FaPlus, FaStar } from 'react-icons/fa6';
 import { Button } from '~/components/ui/button';
 import { useAttendance } from '~/hooks/useAttendance';
 
@@ -22,6 +22,7 @@ export function AttendanceButtons({
       <Button
         size={size}
         variant={going ? 'solid' : 'outline'}
+        title={going ? t('events.unmark') : undefined}
         onClick={(e) => {
           e.stopPropagation();
           if (going) removeAttendance(performanceId);
@@ -29,8 +30,8 @@ export function AttendanceButtons({
         }}
         colorPalette="amber"
       >
-        {going ? <FaStar /> : <FaRegStar />}
-        {t('events.status_going')}
+        {going ? <FaStar /> : <FaPlus />}
+        {going ? t('events.status_going') : t('events.mark_interested')}
       </Button>
     );
   }
@@ -40,14 +41,15 @@ export function AttendanceButtons({
     <Button
       size={size}
       variant={attended ? 'solid' : 'outline'}
+      title={attended ? t('events.unmark') : undefined}
       onClick={(e) => {
         e.stopPropagation();
         if (attended) removeAttendance(performanceId);
         else setAttendance(performanceId, 'attended');
       }}
     >
-      <FaCheck />
-      {t('events.status_attended')}
+      {attended ? <FaCheck /> : <FaPlus />}
+      {attended ? t('events.status_attended') : t('events.mark_attended')}
     </Button>
   );
 }

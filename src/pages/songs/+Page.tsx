@@ -13,6 +13,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { useAttendance } from '~/hooks/useAttendance';
 import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
 import { tallySongs } from '~/utils/song-tally';
+import { useColumnCount } from '~/hooks/useColumnCount';
 import { foldKana } from '~/utils/event-filter';
 import type { Song } from '~/types';
 
@@ -34,6 +35,7 @@ export default function Page() {
   const [sort, setSort] = useState<SortKey>('count');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Song>();
+  const columns = useColumnCount();
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
@@ -173,7 +175,7 @@ export default function Page() {
         <Text color="fg.muted" fontSize="sm">
           {t('songs.results_count', { count: filtered.length })}
         </Text>
-        {filtered.length === 0 && <Text color="fg.muted">{t('events.no_results')}</Text>}
+        {filtered.length === 0 && <Text color="fg.muted">{t('songs.no_results')}</Text>}
         <Grid
           gap="2"
           alignItems="start"
@@ -193,7 +195,7 @@ export default function Page() {
             <Pagination
               count={filtered.length}
               pageSize={PAGE_SIZE}
-              siblingCount={1}
+              siblingCount={columns === 1 ? 0 : 1}
               onPageChange={(details) => {
                 setPage(details.page);
                 window.scrollTo({ top: 0 });

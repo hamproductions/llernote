@@ -7,6 +7,8 @@ import { NativeSelect } from './NativeSelect';
 import { CastFilter } from './CastFilter';
 import { useEventYears, useSeries } from '~/hooks/useData';
 import { getSeriesShortName } from '~/utils/series-short';
+import { seriesTextColor } from '~/utils/series-contrast';
+import { useColorModeContext } from '~/context/ColorModeContext';
 import type { EventCategory } from '~/types';
 import type { EventFilters } from '~/utils/event-filter';
 
@@ -23,6 +25,7 @@ export function EventFiltersBar({
   showAttendanceFilter?: boolean;
 }) {
   const { t } = useTranslation();
+  const { colorMode } = useColorModeContext();
   const series = useSeries();
   const years = useEventYears();
   const yearOptions = [...years].sort();
@@ -62,7 +65,16 @@ export function EventFiltersBar({
             value={filters.yearFrom ?? ''}
             placeholder={yearOptions[0]}
             options={yearOptions.map((y) => ({ value: y, label: y }))}
-            onChange={(yearFrom) => onChange({ ...filters, yearFrom: yearFrom || undefined })}
+            onChange={(yearFrom) =>
+              onChange({
+                ...filters,
+                yearFrom: yearFrom || undefined,
+                yearTo:
+                  yearFrom && filters.yearTo && filters.yearTo < yearFrom
+                    ? yearFrom
+                    : filters.yearTo
+              })
+            }
           />
           <Text color="fg.muted" fontSize="sm">
             〜
@@ -72,7 +84,16 @@ export function EventFiltersBar({
             value={filters.yearTo ?? ''}
             placeholder={yearOptions[yearOptions.length - 1]}
             options={yearOptions.map((y) => ({ value: y, label: y }))}
-            onChange={(yearTo) => onChange({ ...filters, yearTo: yearTo || undefined })}
+            onChange={(yearTo) =>
+              onChange({
+                ...filters,
+                yearTo: yearTo || undefined,
+                yearFrom:
+                  yearTo && filters.yearFrom && filters.yearFrom > yearTo
+                    ? yearTo
+                    : filters.yearFrom
+              })
+            }
           />
         </HStack>
         <Button
@@ -98,7 +119,11 @@ export function EventFiltersBar({
               key={s.id}
               size="xs"
               variant={active ? 'solid' : 'outline'}
-              style={active ? { backgroundColor: s.color, color: 'white' } : { color: s.color }}
+              style={
+                active
+                  ? { backgroundColor: s.color, color: 'white' }
+                  : { color: seriesTextColor(s.color, colorMode) }
+              }
               title={s.name}
               onClick={() => toggle('seriesIds', s.id)}
             >

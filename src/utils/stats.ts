@@ -28,7 +28,13 @@ export const computeStats = (
     .filter((x): x is { record: AttendanceRecord; performance: Performance } => !!x.performance)
     .sort((a, b) => a.performance.date.localeCompare(b.performance.date));
 
-  const interestedCount = records.filter((r) => r.status === 'interested').length;
+  const today = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  })();
+  const interestedCount = records.filter(
+    (r) => r.status === 'interested' && (performanceById.get(r.performanceId)?.date ?? '') >= today
+  ).length;
 
   const byYear = new Map<string, number>();
   const bySeries = new Map<string, number>();

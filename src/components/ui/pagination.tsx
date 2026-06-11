@@ -10,7 +10,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>((props, ref) 
   return (
     <StyledPagination.Root ref={ref} {...props}>
       <StyledPagination.PrevTrigger asChild>
-        <IconButton variant="ghost" aria-label="Next Page">
+        <IconButton variant="ghost" aria-label="Previous Page">
           <ChevronLeftIcon />
         </IconButton>
       </StyledPagination.PrevTrigger>
