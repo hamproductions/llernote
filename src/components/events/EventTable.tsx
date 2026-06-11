@@ -71,7 +71,7 @@ export function EventTable({
                 {p.date}
               </Table.Cell>
               <Table.Cell maxW="md">
-                <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
+                <Text fontSize="sm" fontWeight="medium">
                   {p.tourName}
                 </Text>
               </Table.Cell>

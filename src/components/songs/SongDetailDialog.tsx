@@ -1,15 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { FaXmark, FaYoutube } from 'react-icons/fa6';
-import { HStack, Stack, Wrap } from 'styled-system/jsx';
+import { FaXmark } from 'react-icons/fa6';
+import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
-import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { useArtistById } from '~/hooks/useData';
 import { localizedName } from '~/utils/names';
+import { clickable } from '~/utils/clickable';
 import type { Performance, Song } from '~/types';
 
 interface SongWithVideo extends Song {
@@ -20,12 +20,14 @@ export function SongDetailDialog({
   song,
   heardAt,
   open,
-  onClose
+  onClose,
+  onSelectEvent
 }: {
   song?: Song;
   heardAt: Performance[];
   open: boolean;
   onClose: () => void;
+  onSelectEvent?: (performance: Performance) => void;
 }) {
   const { t, i18n } = useTranslation();
   const artistById = useArtistById();
@@ -80,16 +82,28 @@ export function SongDetailDialog({
             </HStack>
 
             {videoId && (
-              <Button asChild size="xs" variant="outline">
-                <a
-                  href={`https://www.youtube.com/watch?v=${videoId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FaYoutube />
-                  YouTube
-                </a>
-              </Button>
+              <Box
+                style={{ aspectRatio: '16 / 9' }}
+                position="relative"
+                borderRadius="l2"
+                w="full"
+                overflow="hidden"
+              >
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+                  title={song.name}
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 0
+                  }}
+                />
+              </Box>
             )}
 
             <Stack gap="2">
@@ -104,9 +118,20 @@ export function SongDetailDialog({
                   {t('songs.never_heard')}
                 </Text>
               ) : (
-                <Stack gap="1">
+                <Stack gap="0.5">
                   {heardAt.map((p) => (
-                    <HStack key={p.id} gap="2" alignItems="baseline">
+                    <HStack
+                      key={p.id}
+                      {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}
+                      cursor={onSelectEvent ? 'pointer' : undefined}
+                      gap="2"
+                      alignItems="baseline"
+                      borderRadius="l1"
+                      py="1"
+                      px="1.5"
+                      transition="colors"
+                      _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
+                    >
                       <Text
                         flexShrink={0}
                         color="fg.muted"
@@ -115,7 +140,7 @@ export function SongDetailDialog({
                       >
                         {p.date}
                       </Text>
-                      <Text fontSize="sm" lineClamp={1}>
+                      <Text color={onSelectEvent ? 'accent.text' : undefined} fontSize="sm">
                         {p.tourName}
                       </Text>
                     </HStack>

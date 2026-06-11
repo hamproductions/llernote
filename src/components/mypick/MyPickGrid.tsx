@@ -13,8 +13,6 @@ import {
 } from '~/hooks/useData';
 import { getPicUrl } from '~/utils/assets';
 import { getSeriesShortName } from '~/utils/series-short';
-import { seriesTextColor } from '~/utils/series-contrast';
-import { useColorModeContext } from '~/context/ColorModeContext';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
@@ -24,10 +22,9 @@ function CellImage({ src, dim = false }: { src: string; dim?: boolean }) {
   const [failed, setFailed] = useState(false);
   return (
     <Box
-      flexShrink={0}
-      borderRadius="full"
-      w="12"
-      h="12"
+      style={{ aspectRatio: '1 / 1' }}
+      borderRadius="l2"
+      w="full"
       bgColor="bg.subtle"
       opacity={dim ? 0.5 : 1}
       overflow="hidden"
@@ -60,9 +57,9 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
     const character = characters.find((c) => c.id === pickedId);
     if (!character) return null;
     return (
-      <Stack gap="1" alignItems="center">
+      <Stack gap="1.5" alignItems="center" w="full">
         <CellImage src={getPicUrl(character.id, character.hasIcon ? 'icons' : 'character')} />
-        <Text fontSize="2xs" fontWeight="semibold" textAlign="center" lineClamp={2}>
+        <Text fontSize="2xs" fontWeight="bold" textAlign="center">
           {localizedName(i18n.language, character.fullName, character.englishName)}
         </Text>
       </Stack>
@@ -72,9 +69,9 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
     const song = songById.get(pickedId);
     if (!song) return null;
     return (
-      <Stack gap="1" alignItems="center">
+      <Stack gap="1.5" alignItems="center" w="full">
         <CellImage src={getPicUrl(song.id, 'thumbnail')} />
-        <Text fontSize="2xs" fontWeight="semibold" textAlign="center" lineClamp={2}>
+        <Text fontSize="2xs" fontWeight="bold" textAlign="center">
           {localizedName(i18n.language, song.name, song.englishName)}
         </Text>
       </Stack>
@@ -83,11 +80,22 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
   const performance = performanceById.get(pickedId);
   if (!performance) return null;
   return (
-    <Stack gap="0.5" justifyContent="center" h="full">
-      <Text color="fg.muted" fontSize="2xs" fontVariantNumeric="tabular-nums">
+    <Stack
+      gap="1"
+      justifyContent="center"
+      alignItems="center"
+      borderRadius="l2"
+      w="full"
+      h="full"
+      minH="20"
+      p="2"
+      textAlign="center"
+      bgColor="accent.a2"
+    >
+      <Text textStyle="display" color="accent.default" fontSize="sm" lineHeight="1">
         {performance.date}
       </Text>
-      <Text fontSize="2xs" fontWeight="semibold" lineClamp={3}>
+      <Text fontSize="2xs" fontWeight="bold">
         {performance.tourName}
       </Text>
     </Stack>
@@ -124,7 +132,6 @@ export const MyPickGrid = forwardRef<
   ref
 ) {
   const { t } = useTranslation();
-  const { colorMode } = useColorModeContext();
   const seriesById = useSeriesById();
   const artistById = useArtistById();
 
@@ -160,7 +167,16 @@ export const MyPickGrid = forwardRef<
     >
       <Stack gap="3" minW="fit-content">
         <HStack justifyContent="space-between" alignItems="baseline">
-          <Text color="accent.default" fontSize="xl" fontWeight="bold">
+          <Text
+            textStyle="display"
+            style={{
+              background: 'linear-gradient(92deg, #e4007f 10%, #ff7a00 55%, #00a0e0 95%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+            fontSize="2xl"
+          >
             MY PICK
           </Text>
           <Text color="fg.subtle" fontSize="xs">
@@ -169,7 +185,8 @@ export const MyPickGrid = forwardRef<
         </HStack>
         <Grid
           style={{
-            gridTemplateColumns: `minmax(6rem, 8rem) repeat(${columns.length}, minmax(7rem, 1fr))${editable ? ' 2.25rem' : ''}`
+            gridTemplateColumns: `minmax(5rem, 6.5rem) repeat(${columns.length}, minmax(7.5rem, 10.5rem))${editable ? ' 2.25rem' : ''}`,
+            justifyContent: 'center'
           }}
           gap="1.5"
           alignItems="stretch"
@@ -218,22 +235,20 @@ export const MyPickGrid = forwardRef<
             return (
               <Fragment key={rowKey(row)}>
                 <HStack
-                  style={{
-                    backgroundColor: `${meta.color}22`,
-                    borderLeft: `4px solid ${meta.color}`
-                  }}
+                  style={{ backgroundColor: meta.color }}
+                  position="relative"
                   gap="1"
-                  justifyContent="space-between"
+                  justifyContent="center"
                   borderRadius="l2"
                   py="1"
                   px="2"
                 >
                   <Text
+                    textStyle="display"
                     title={meta.full}
-                    style={{ color: seriesTextColor(meta.color, colorMode) }}
+                    style={{ color: 'white' }}
                     fontSize="xs"
-                    fontWeight="bold"
-                    lineClamp={2}
+                    textAlign="center"
                   >
                     {meta.label}
                   </Text>
@@ -243,9 +258,12 @@ export const MyPickGrid = forwardRef<
                       variant="ghost"
                       size="xs"
                       onClick={() => onRemoveRow(row)}
+                      style={{ color: 'rgba(255,255,255,0.85)' }}
+                      position="absolute"
+                      top="-1.5"
+                      right="-1.5"
                       minW="4"
                       h="4"
-                      color="fg.subtle"
                     >
                       <FaXmark size={10} />
                     </IconButton>

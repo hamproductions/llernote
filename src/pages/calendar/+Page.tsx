@@ -253,7 +253,7 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
                   {p.date.slice(5).replace('-', '/')}
                 </Text>
                 <Stack flex="1" gap="0" minW="0">
-                  <Text fontSize="xs" fontWeight="medium" lineClamp={1}>
+                  <Text fontSize="xs" fontWeight="medium">
                     {p.tourName}
                     {label ? ` ${label}` : ''}
                   </Text>
@@ -338,7 +338,7 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
               </Text>
             </Stack>
             <Stack flex="1" gap="0.5" minW="0">
-              <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
+              <Text fontSize="sm" fontWeight="medium">
                 {p.tourName}
                 {label ? ` ${label}` : ''}
               </Text>

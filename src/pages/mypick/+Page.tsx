@@ -127,7 +127,9 @@ export default function Page() {
         label: localizedName(i18n.language, a.name, a.englishName),
         sub: a.characters.length > 1 ? t('mypick.row_group') : t('mypick.row_solo')
       }))
-    ].filter((item) => !existing.has(item.id));
+    ].map((item) =>
+      existing.has(item.id) ? { ...item, sub: t('mypick.already_added'), disabled: true } : item
+    );
   }, [series, artists, i18n.language, config.rows, t]);
 
   const updateConfig = (patch: Partial<MyPickConfig>) => {
@@ -169,13 +171,12 @@ export default function Page() {
       config.columns.filter((c) => c.type === 'slot').map((c) => c.slot)
     );
     return [
-      ...slots
-        .filter((slot) => !existingSlots.has(slot))
-        .map((slot) => ({
-          id: `slot:${slot}`,
-          label: t(`mypick.slot_${slot}`),
-          sub: t('mypick.column_slot_sub')
-        })),
+      ...slots.map((slot) => ({
+        id: `slot:${slot}`,
+        label: t(`mypick.slot_${slot}`),
+        sub: existingSlots.has(slot) ? t('mypick.already_added') : t('mypick.column_slot_sub'),
+        disabled: existingSlots.has(slot)
+      })),
       ...slots.map((slot) => ({
         id: `year-right:${slot}`,
         label: `${maxYear != null ? maxYear + 1 : currentYear} ${t(`mypick.slot_${slot}`)}`,

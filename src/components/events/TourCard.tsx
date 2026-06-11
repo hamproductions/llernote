@@ -85,7 +85,7 @@ function LegRow({
             {performance.date.slice(5).replace('-', '/')}
           </Text>
           {label && (
-            <Text fontSize="xs" fontWeight="medium" lineClamp={1}>
+            <Text fontSize="xs" fontWeight="medium">
               {label}
             </Text>
           )}

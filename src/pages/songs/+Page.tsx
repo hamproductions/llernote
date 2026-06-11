@@ -8,6 +8,7 @@ import { Pagination } from '~/components/ui/pagination';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { SongCard } from '~/components/songs/SongCard';
 import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
+import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
@@ -15,7 +16,7 @@ import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useDa
 import { tallySongs } from '~/utils/song-tally';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { foldKana } from '~/utils/event-filter';
-import type { Song } from '~/types';
+import type { Performance, Song } from '~/types';
 
 const PAGE_SIZE = 48;
 
@@ -35,6 +36,7 @@ export default function Page() {
   const [sort, setSort] = useState<SortKey>('count');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Song>();
+  const [selectedEvent, setSelectedEvent] = useState<Performance>();
   const columns = useColumnCount();
 
   const performanceById = useMemo(
@@ -212,6 +214,15 @@ export default function Page() {
           heardAt={selectedHeardAt}
           open={selected !== undefined}
           onClose={() => setSelected(undefined)}
+          onSelectEvent={(p) => {
+            setSelected(undefined);
+            setSelectedEvent(p);
+          }}
+        />
+        <EventDetailDialog
+          performance={selectedEvent}
+          open={selectedEvent !== undefined}
+          onClose={() => setSelectedEvent(undefined)}
         />
       </Stack>
     </>

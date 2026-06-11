@@ -40,7 +40,7 @@ export function SongCard({
           color={heard ? 'fg.default' : 'fg.muted'}
           fontSize="sm"
           fontWeight="medium"
-          lineClamp={1}
+          lineClamp={2}
         >
           {localizedName(i18n.language, song.name, song.englishName)}
         </Text>

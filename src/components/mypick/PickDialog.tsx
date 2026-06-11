@@ -12,6 +12,7 @@ export interface PickItem {
   label: string;
   sub?: string;
   image?: string;
+  disabled?: boolean;
 }
 
 function TileImage({ src }: { src?: string }) {
@@ -38,8 +39,9 @@ function TileImage({ src }: { src?: string }) {
 function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onClick: () => void }) {
   return (
     <Stack
-      onClick={onClick}
-      cursor="pointer"
+      onClick={item.disabled ? undefined : onClick}
+      aria-disabled={item.disabled}
+      cursor={item.disabled ? 'not-allowed' : 'pointer'}
       position="relative"
       gap="1"
       alignItems="center"
@@ -48,6 +50,7 @@ function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onCl
       borderWidth="2px"
       p="2"
       bgColor={active ? 'accent.a3' : 'bg.subtle'}
+      opacity={item.disabled ? 0.35 : 1}
       transition="all"
       _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)' }}
     >
@@ -72,14 +75,16 @@ function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onCl
 function Row({ item, active, onClick }: { item: PickItem; active: boolean; onClick: () => void }) {
   return (
     <HStack
-      onClick={onClick}
-      cursor="pointer"
+      onClick={item.disabled ? undefined : onClick}
+      aria-disabled={item.disabled}
+      cursor={item.disabled ? 'not-allowed' : 'pointer'}
       gap="2"
       borderColor={active ? 'accent.default' : 'border.subtle'}
       borderRadius="l2"
       borderWidth="1px"
       p="2"
       bgColor={active ? 'accent.a3' : 'bg.default'}
+      opacity={item.disabled ? 0.35 : 1}
       transition="colors"
       _hover={{ borderColor: 'accent.8' }}
     >

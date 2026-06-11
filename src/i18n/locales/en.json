@@ -144,7 +144,8 @@
     "row_solo": "Solo",
     "add_column": "Add column",
     "column_slot_sub": "Pick column",
-    "column_year_sub": "Year column"
+    "column_year_sub": "Year column",
+    "already_added": "Already added"
   },
   "songs": {
     "title": "Songs",

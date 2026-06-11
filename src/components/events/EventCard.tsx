@@ -62,9 +62,7 @@ export function EventCard({
                   </Badge>
                 )}
               </HStack>
-              <Text fontWeight="semibold" lineClamp={2}>
-                {performance.tourName}
-              </Text>
+              <Text fontWeight="semibold">{performance.tourName}</Text>
               <Text color="fg.muted" fontSize="sm" lineClamp={1}>
                 {performance.venue}
               </Text>
