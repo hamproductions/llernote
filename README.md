@@ -35,6 +35,8 @@ bun check          # lint + type-check
 
 ## Documentation
 
+- [docs/PROJECT.md](docs/PROJECT.md) — **complete project documentation** (start here: every feature, decision, constraint, open issue)
+- [docs/DESIGN_HANDOFF.md](docs/DESIGN_HANDOFF.md) — design handoff with constraints and open visual issues
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — app structure, state, persistence
 - [docs/DATA.md](docs/DATA.md) — bundled datasets and their schemas
 - [docs/SYNC.md](docs/SYNC.md) — offline-first design and the future sync plan
