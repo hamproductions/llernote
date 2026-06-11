@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
+import { FaChevronLeft, FaChevronRight, FaStar } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
@@ -8,7 +8,6 @@ import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
 import { Tabs } from '~/components/ui/tabs';
 import { Badge } from '~/components/ui/badge';
-import { EventCard } from '~/components/events/EventCard';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { AttendanceButtons } from '~/components/events/AttendanceButtons';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
@@ -303,22 +302,71 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
   }
 
   return (
-    <Grid gap="3" alignItems="start" gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}>
+    <Grid gap="2" alignItems="start" gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}>
       {upcoming.map((p) => {
         const days = daysUntil(p.date);
+        const label = legLabel(p);
         return (
-          <Stack key={p.id} gap="1">
-            <HStack>
-              <Badge size="sm" variant={days <= 7 ? 'solid' : 'outline'}>
+          <HStack
+            key={p.id}
+            {...clickable(() => onSelect(p))}
+            cursor="pointer"
+            gap="3"
+            borderColor="border.subtle"
+            borderRadius="l2"
+            borderWidth="1px"
+            p="2.5"
+            bgColor="bg.default"
+            transition="colors"
+            _hover={{ borderColor: 'accent.8' }}
+          >
+            <Stack
+              gap="0"
+              flexShrink={0}
+              alignItems="center"
+              borderRadius="l2"
+              minW="14"
+              py="1.5"
+              px="2"
+              bgColor="accent.a3"
+            >
+              <Text textStyle="display" color="accent.default" fontSize="xl" lineHeight="1">
+                {Number(p.date.slice(8))}
+              </Text>
+              <Text color="fg.muted" fontSize="2xs">
+                {p.date.slice(0, 7)}
+              </Text>
+            </Stack>
+            <Stack flex="1" gap="0.5" minW="0">
+              <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
+                {p.tourName}
+                {label ? ` ${label}` : ''}
+              </Text>
+              <HStack gap="1.5">
+                {p.seriesIds.slice(0, 2).map((id) => (
+                  <SeriesBadge key={id} seriesId={id} />
+                ))}
+                <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+                  {p.venue}
+                </Text>
+              </HStack>
+            </Stack>
+            <Stack
+              onClick={(e) => e.stopPropagation()}
+              gap="1"
+              flexShrink={0}
+              alignItems="flex-end"
+            >
+              <Text color="accent.default" fontSize="xs" fontWeight="bold">
                 {days === 0
                   ? t('upcoming.today')
                   : days === 1
                     ? t('upcoming.tomorrow')
                     : t('upcoming.days_until', { count: days })}
-              </Badge>
-            </HStack>
-            <EventCard performance={p} onClick={() => onSelect(p)} />
-          </Stack>
+              </Text>
+              <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} />
+            </Stack>
+          </HStack>
         );
       })}
     </Grid>
@@ -328,7 +376,7 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
 function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
   const { t } = useTranslation();
   const performances = usePerformances();
-  const { records } = useAttendance();
+  const { records, map } = useAttendance();
 
   const attended = useMemo(() => {
     const ids = new Set(records.filter((r) => r.status === 'attended').map((r) => r.performanceId));
@@ -346,24 +394,77 @@ function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
   }
 
   return (
-    <Stack gap="6">
+    <Stack gap="6" maxW="3xl">
       {[...byYear.entries()].map(([year, events]) => (
-        <Stack key={year} gap="3">
-          <Heading as="h2" color="accent.default" fontSize="xl">
+        <Stack key={year} gap="0">
+          <Text textStyle="display" color="accent.default" fontSize="2xl">
             {year}
-          </Heading>
-          <Grid
-            gap="3"
-            alignItems="start"
-            gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}
-            borderColor="accent.a6"
-            borderLeftWidth="2px"
-            pl="4"
-          >
-            {events.map((p) => (
-              <EventCard key={p.id} performance={p} onClick={() => onSelect(p)} />
-            ))}
-          </Grid>
+          </Text>
+          <Stack gap="0" borderColor="accent.a6" borderLeftWidth="2px" ml="2" pl="0">
+            {events.map((p) => {
+              const record = map[p.id];
+              const label = legLabel(p);
+              return (
+                <HStack
+                  key={p.id}
+                  {...clickable(() => onSelect(p))}
+                  cursor="pointer"
+                  position="relative"
+                  gap="3"
+                  alignItems="flex-start"
+                  py="2.5"
+                  pl="5"
+                  transition="colors"
+                  _hover={{ bgColor: 'bg.subtle' }}
+                >
+                  <Box
+                    position="absolute"
+                    top="4"
+                    left="-5px"
+                    borderRadius="full"
+                    w="2"
+                    h="2"
+                    bgColor="accent.default"
+                  />
+                  <Text
+                    flexShrink={0}
+                    minW="16"
+                    color="fg.muted"
+                    fontSize="sm"
+                    fontVariantNumeric="tabular-nums"
+                  >
+                    {p.date.slice(5).replace('-', '/')}
+                  </Text>
+                  <Stack flex="1" gap="0.5" minW="0">
+                    <Text fontSize="sm" fontWeight="medium" lineClamp={2}>
+                      {p.tourName}
+                      {label ? ` ${label}` : ''}
+                    </Text>
+                    <HStack gap="2">
+                      {p.seriesIds.slice(0, 2).map((id) => (
+                        <SeriesBadge key={id} seriesId={id} />
+                      ))}
+                      <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+                        {p.venue}
+                      </Text>
+                    </HStack>
+                    {record?.memo && (
+                      <Text color="fg.muted" fontSize="xs" lineClamp={1} fontStyle="italic">
+                        {record.memo}
+                      </Text>
+                    )}
+                  </Stack>
+                  {record?.rating && (
+                    <HStack gap="0.5" flexShrink={0} color="amber.9">
+                      {Array.from({ length: record.rating }, (_, i) => (
+                        <FaStar key={i} size={10} />
+                      ))}
+                    </HStack>
+                  )}
+                </HStack>
+              );
+            })}
+          </Stack>
         </Stack>
       ))}
     </Stack>

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Box, HStack, Wrap } from 'styled-system/jsx';
+import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
@@ -111,60 +111,100 @@ export function EventFiltersBar({
           {t('common.clear')}
         </Button>
       </HStack>
-      <Wrap gap="1" alignItems="center" mt="2">
-        {series.map((s) => {
-          const active = filters.seriesIds.includes(s.id);
-          return (
-            <Button
-              key={s.id}
-              size="xs"
-              variant={active ? 'solid' : 'outline'}
-              style={
-                active
-                  ? { backgroundColor: s.color, color: 'white' }
-                  : { color: seriesTextColor(s.color, colorMode) }
-              }
-              title={s.name}
-              onClick={() => toggle('seriesIds', s.id)}
-            >
-              {getSeriesShortName(s.id, s.name)}
-            </Button>
-          );
-        })}
-        <Box w="1px" h="6" mx="1" bgColor="border.default" />
-        {CATEGORIES.map((category) => {
-          const active = filters.categories.includes(category);
-          return (
-            <Button
-              key={category}
-              size="xs"
-              variant={active ? 'solid' : 'outline'}
-              onClick={() => toggle('categories', category)}
-            >
-              {t(`events.category_${category}`)}
-            </Button>
-          );
-        })}
-        {showAttendanceFilter && (
-          <>
-            <Box w="1px" h="6" mx="1" bgColor="border.default" />
-            {ATTENDANCE.map((status) => {
-              const active = filters.attendance === status;
+      <HStack gap="5" alignItems="flex-start" mt="3" flexWrap="wrap">
+        <Stack gap="1">
+          <Text
+            color="fg.subtle"
+            fontSize="2xs"
+            fontWeight="bold"
+            letterSpacing="wider"
+            textTransform="uppercase"
+          >
+            {t('events.series')}
+          </Text>
+          <Wrap gap="1">
+            {series.map((s) => {
+              const active = filters.seriesIds.includes(s.id);
               return (
                 <Button
-                  key={status}
+                  key={s.id}
                   size="xs"
                   variant={active ? 'solid' : 'outline'}
-                  onClick={() => onChange({ ...filters, attendance: active ? undefined : status })}
-                  colorPalette={status === 'interested' ? 'amber' : undefined}
+                  style={
+                    active
+                      ? { backgroundColor: s.color, color: 'white', borderColor: s.color }
+                      : { color: seriesTextColor(s.color, colorMode) }
+                  }
+                  title={s.name}
+                  onClick={() => toggle('seriesIds', s.id)}
+                  borderRadius="full"
                 >
-                  {attendanceLabel[status]}
+                  {getSeriesShortName(s.id, s.name)}
                 </Button>
               );
             })}
-          </>
+          </Wrap>
+        </Stack>
+        <Stack gap="1">
+          <Text
+            color="fg.subtle"
+            fontSize="2xs"
+            fontWeight="bold"
+            letterSpacing="wider"
+            textTransform="uppercase"
+          >
+            {t('events.category')}
+          </Text>
+          <Wrap gap="1">
+            {CATEGORIES.map((category) => {
+              const active = filters.categories.includes(category);
+              return (
+                <Button
+                  key={category}
+                  size="xs"
+                  variant={active ? 'solid' : 'outline'}
+                  onClick={() => toggle('categories', category)}
+                  borderRadius="full"
+                >
+                  {t(`events.category_${category}`)}
+                </Button>
+              );
+            })}
+          </Wrap>
+        </Stack>
+        {showAttendanceFilter && (
+          <Stack gap="1">
+            <Text
+              color="fg.subtle"
+              fontSize="2xs"
+              fontWeight="bold"
+              letterSpacing="wider"
+              textTransform="uppercase"
+            >
+              {t('events.attendance_filter')}
+            </Text>
+            <Wrap gap="1">
+              {ATTENDANCE.map((status) => {
+                const active = filters.attendance === status;
+                return (
+                  <Button
+                    key={status}
+                    size="xs"
+                    variant={active ? 'solid' : 'outline'}
+                    onClick={() =>
+                      onChange({ ...filters, attendance: active ? undefined : status })
+                    }
+                    colorPalette={status === 'interested' ? 'amber' : undefined}
+                    borderRadius="full"
+                  >
+                    {attendanceLabel[status]}
+                  </Button>
+                );
+              })}
+            </Wrap>
+          </Stack>
         )}
-      </Wrap>
+      </HStack>
     </Box>
   );
 }

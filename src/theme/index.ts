@@ -1,6 +1,15 @@
 import { type PartialTheme } from '@pandacss/types';
 
 export const theme: PartialTheme = {
+  textStyles: {
+    display: {
+      value: {
+        fontFamily: "'Zen Maru Gothic', 'Outfit', sans-serif",
+        fontWeight: '900',
+        letterSpacing: '0.02em'
+      }
+    }
+  },
   layerStyles: {
     textStroke: {
       value: {

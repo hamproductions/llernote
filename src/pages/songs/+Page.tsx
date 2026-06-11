@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
-import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
@@ -10,6 +9,7 @@ import { NativeSelect } from '~/components/events/NativeSelect';
 import { SongCard } from '~/components/songs/SongCard';
 import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
+import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
 import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
 import { tallySongs } from '~/utils/song-tally';
@@ -91,9 +91,7 @@ export default function Page() {
       <Metadata title={`${t('songs.title')} - LLerNote`} helmet />
       <Stack gap="3">
         <HStack justifyContent="space-between" alignItems="baseline" flexWrap="wrap">
-          <Heading as="h1" fontSize="2xl">
-            {t('songs.title')}
-          </Heading>
+          <SectionHeading size="2xl">{t('songs.title')}</SectionHeading>
           <Text color="fg.muted" fontSize="sm">
             {t('songs.progress', { heard: heardInScope, total: scopeSongs.length, percent })}
           </Text>
@@ -179,7 +177,12 @@ export default function Page() {
         <Grid
           gap="2"
           alignItems="start"
-          gridTemplateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', '2xl': 'repeat(3, 1fr)' }}
+          gridTemplateColumns={{
+            base: '1fr',
+            md: 'repeat(2, 1fr)',
+            xl: 'repeat(3, 1fr)',
+            '2xl': 'repeat(4, 1fr)'
+          }}
         >
           {pageItems.map((song) => (
             <SongCard

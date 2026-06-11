@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaRegStar, FaStar } from 'react-icons/fa6';
+import { FaStar } from 'react-icons/fa6';
 import { HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
@@ -59,16 +59,6 @@ export function EventCard({
                 {performance.hasSetlist && (
                   <Badge variant="outline" size="sm">
                     {t('events.setlist')}
-                  </Badge>
-                )}
-                {record?.status === 'attended' && (
-                  <Badge size="sm" variant="solid">
-                    <FaCheck /> {t('events.status_attended')}
-                  </Badge>
-                )}
-                {record?.status === 'interested' && (
-                  <Badge size="sm" variant="solid" colorPalette="amber">
-                    <FaRegStar /> {t('events.status_going')}
                   </Badge>
                 )}
               </HStack>

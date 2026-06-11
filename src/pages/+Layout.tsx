@@ -119,6 +119,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <Box
         style={{
+          background:
+            'radial-gradient(ellipse at center, rgba(228,0,127,0.14) 0%, rgba(0,152,240,0.05) 45%, transparent 70%)'
+        }}
+        zIndex="0"
+        position="fixed"
+        top="-40%"
+        left="50%"
+        transform="translateX(-50%)"
+        w="140vw"
+        h="80vh"
+        pointerEvents="none"
+      />
+      <Box
+        style={{
           ['--bg-image' as 'backgroundImage']: `url('${getAssetUrl('/assets/bg.webp')}')`
         }}
         zIndex="0"

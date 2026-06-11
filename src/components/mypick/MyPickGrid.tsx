@@ -105,9 +105,22 @@ export const MyPickGrid = forwardRef<
     onClearCell?: (key: string) => void;
     onRemoveRow?: (row: MyPickRow) => void;
     onRemoveColumn?: (column: MyPickColumn) => void;
+    onAddRow?: () => void;
+    onAddColumn?: () => void;
   }
 >(function MyPickGrid(
-  { myPick, rows, columns, editable = false, onPickCell, onClearCell, onRemoveRow, onRemoveColumn },
+  {
+    myPick,
+    rows,
+    columns,
+    editable = false,
+    onPickCell,
+    onClearCell,
+    onRemoveRow,
+    onRemoveColumn,
+    onAddRow,
+    onAddColumn
+  },
   ref
 ) {
   const { t } = useTranslation();
@@ -156,7 +169,7 @@ export const MyPickGrid = forwardRef<
         </HStack>
         <Grid
           style={{
-            gridTemplateColumns: `minmax(6rem, 8rem) repeat(${columns.length}, minmax(7rem, 1fr))`
+            gridTemplateColumns: `minmax(6rem, 8rem) repeat(${columns.length}, minmax(7rem, 1fr))${editable ? ' 2.25rem' : ''}`
           }}
           gap="1.5"
           alignItems="stretch"
@@ -188,6 +201,18 @@ export const MyPickGrid = forwardRef<
               )}
             </HStack>
           ))}
+          {editable && onAddColumn && (
+            <IconButton
+              aria-label={t('mypick.add_column')}
+              title={t('mypick.add_column')}
+              variant="outline"
+              size="xs"
+              onClick={onAddColumn}
+              alignSelf="center"
+            >
+              <FaPlus />
+            </IconButton>
+          )}
           {rows.map((row) => {
             const meta = rowMeta(row);
             return (
@@ -252,13 +277,14 @@ export const MyPickGrid = forwardRef<
                         <CellContent column={col} pickedId={pickedId} />
                       ) : editable ? (
                         <Stack
-                          gap="0.5"
+                          gap="1"
                           justifyContent="center"
                           alignItems="center"
                           h="full"
                           color="fg.subtle"
                         >
-                          <FaPlus size={10} />
+                          <FaPlus size={11} />
+                          <Text fontSize="2xs">{t(`mypick.slot_${col.slot}`)}</Text>
                         </Stack>
                       ) : null}
                       {editable && pickedId && (
@@ -280,9 +306,33 @@ export const MyPickGrid = forwardRef<
                     </Box>
                   );
                 })}
+                {editable && <Box />}
               </Fragment>
             );
           })}
+          {editable && onAddRow && (
+            <Box style={{ gridColumn: '1 / -1' }}>
+              <HStack
+                {...clickable(onAddRow, t('mypick.add_row'))}
+                cursor="pointer"
+                gap="2"
+                justifyContent="center"
+                borderColor="border.default"
+                borderRadius="l2"
+                borderWidth="1px"
+                py="2"
+                color="fg.muted"
+                transition="colors"
+                borderStyle="dashed"
+                _hover={{ borderColor: 'accent.8', color: 'accent.default' }}
+              >
+                <FaPlus size={11} />
+                <Text fontSize="xs" fontWeight="medium">
+                  {t('mypick.add_row')}
+                </Text>
+              </HStack>
+            </Box>
+          )}
         </Grid>
       </Stack>
     </Box>

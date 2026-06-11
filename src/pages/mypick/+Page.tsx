@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaDownload, FaLink, FaPlus } from 'react-icons/fa6';
-import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
+import { FaDownload, FaLink } from 'react-icons/fa6';
+import { HStack, Stack } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
 import { MyPickGrid } from '~/components/mypick/MyPickGrid';
-import { NativeSelect } from '~/components/events/NativeSelect';
 import { Metadata } from '~/components/layout/Metadata';
 import { useMyPick } from '~/hooks/useAttendance';
 import {
@@ -54,7 +53,7 @@ export default function Page() {
   const gridRef = useRef<HTMLDivElement>(null);
   const [picking, setPicking] = useState<{ row: MyPickRow; column: MyPickColumn }>();
   const [addingRow, setAddingRow] = useState(false);
-  const [yearSlot, setYearSlot] = useState<MyPickSlot>('song');
+  const [addingColumn, setAddingColumn] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const [shared, setShared] = useState<ReturnType<typeof decodeMyPick>>(null);
@@ -145,13 +144,13 @@ export default function Page() {
   const maxYear = yearColumns.length ? Math.max(...yearColumns.map((c) => c.year)) : null;
   const currentYear = new Date().getFullYear();
 
-  const addYear = (side: 'left' | 'right') => {
+  const addYear = (side: 'left' | 'right', slot: MyPickSlot) => {
     if (yearColumns.length === 0) {
-      addColumn({ type: 'year', year: currentYear, slot: yearSlot });
+      addColumn({ type: 'year', year: currentYear, slot });
       return;
     }
     const year = side === 'left' ? minYear! - 1 : maxYear! + 1;
-    const column: MyPickColumn = { type: 'year', year, slot: yearSlot };
+    const column: MyPickColumn = { type: 'year', year, slot };
     updateConfig({
       columns:
         side === 'left'
@@ -163,6 +162,34 @@ export default function Page() {
   };
 
   const pickedId = picking ? (myPick?.cells?.[cellKey(picking.row, picking.column)] ?? null) : null;
+
+  const columnItems: PickItem[] = useMemo(() => {
+    const slots: MyPickSlot[] = ['cast', 'song', 'event'];
+    const existingSlots = new Set(
+      config.columns.filter((c) => c.type === 'slot').map((c) => c.slot)
+    );
+    return [
+      ...slots
+        .filter((slot) => !existingSlots.has(slot))
+        .map((slot) => ({
+          id: `slot:${slot}`,
+          label: t(`mypick.slot_${slot}`),
+          sub: t('mypick.column_slot_sub')
+        })),
+      ...slots.map((slot) => ({
+        id: `year-right:${slot}`,
+        label: `${maxYear != null ? maxYear + 1 : currentYear} ${t(`mypick.slot_${slot}`)}`,
+        sub: t('mypick.column_year_sub')
+      })),
+      ...(yearColumns.length > 0
+        ? slots.map((slot) => ({
+            id: `year-left:${slot}`,
+            label: `${minYear! - 1} ${t(`mypick.slot_${slot}`)}`,
+            sub: t('mypick.column_year_sub')
+          }))
+        : [])
+    ];
+  }, [config.columns, yearColumns.length, minYear, maxYear, currentYear, t]);
 
   return (
     <>
@@ -239,53 +266,6 @@ export default function Page() {
             </Button>
           </HStack>
         )}
-        {!shared && (
-          <Box
-            borderColor="border.subtle"
-            borderRadius="l2"
-            borderWidth="1px"
-            p="3"
-            bgColor="bg.subtle"
-          >
-            <Wrap gap="2">
-              <Button size="xs" variant="outline" onClick={() => setAddingRow(true)}>
-                <FaPlus />
-                {t('mypick.add_row')}
-              </Button>
-              {(['cast', 'song', 'event'] as MyPickSlot[]).map((slot) => (
-                <Button
-                  key={slot}
-                  size="xs"
-                  variant="outline"
-                  onClick={() => addColumn({ type: 'slot', slot })}
-                >
-                  <FaPlus />
-                  {t(`mypick.slot_${slot}`)}
-                </Button>
-              ))}
-              <HStack gap="1" flexWrap="wrap">
-                <NativeSelect
-                  aria-label={t('mypick.year_slot')}
-                  value={yearSlot}
-                  options={(['song', 'cast', 'event'] as MyPickSlot[]).map((slot) => ({
-                    value: slot,
-                    label: t(`mypick.slot_${slot}`)
-                  }))}
-                  onChange={(slot) => setYearSlot(slot as MyPickSlot)}
-                />
-                <Button size="xs" variant="outline" onClick={() => addYear('left')}>
-                  <FaPlus />
-                  {t('mypick.add_year_left')}
-                </Button>
-                <Button size="xs" variant="outline" onClick={() => addYear('right')}>
-                  <FaPlus />
-                  {t('mypick.add_year_right')}
-                </Button>
-              </HStack>
-            </Wrap>
-          </Box>
-        )}
-
         <MyPickGrid
           ref={gridRef}
           myPick={shared ? shared.myPick : myPick}
@@ -301,6 +281,8 @@ export default function Page() {
               columns: config.columns.filter((c) => columnKey(c) !== columnKey(column))
             })
           }
+          onAddRow={() => setAddingRow(true)}
+          onAddColumn={() => setAddingColumn(true)}
           columns={config.columns}
         />
 
@@ -335,6 +317,25 @@ export default function Page() {
               }
             }
             setAddingRow(false);
+          }}
+        />
+
+        <PickDialog
+          title={t('mypick.add_column')}
+          items={columnItems}
+          selectedIds={[]}
+          max={1}
+          open={addingColumn}
+          onClose={() => setAddingColumn(false)}
+          onChange={(ids) => {
+            const ref = ids[ids.length - 1];
+            if (ref) {
+              const [kind, slot] = ref.split(':') as [string, MyPickSlot];
+              if (kind === 'slot') addColumn({ type: 'slot', slot });
+              else if (kind === 'year-right') addYear('right', slot);
+              else addYear('left', slot);
+            }
+            setAddingColumn(false);
           }}
         />
       </Stack>

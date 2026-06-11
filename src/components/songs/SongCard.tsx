@@ -24,11 +24,11 @@ export function SongCard({
     <HStack
       {...clickable(onClick)}
       cursor="pointer"
-      gap="3"
+      gap="2.5"
       borderColor={heard ? 'accent.7' : 'border.subtle'}
       borderRadius="l2"
       borderWidth="1px"
-      p="2.5"
+      p="2"
       bgColor={heard ? 'accent.a2' : 'bg.default'}
       transition="colors"
       _hover={{ borderColor: 'accent.8' }}

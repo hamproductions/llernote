@@ -20,6 +20,7 @@ import { Link } from '~/components/ui/link';
 import { EventCard } from '~/components/events/EventCard';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
+import { SectionHeading } from '~/components/layout/SectionHeading';
 import { usePerformanceById, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { computeStats } from '~/utils/stats';
@@ -107,13 +108,30 @@ export default function Page() {
     <>
       <Metadata helmet />
       <Stack gap="6">
-        <Stack gap="3" alignItems="center" py={{ base: '6', md: '10' }} textAlign="center">
-          <Heading as="h1" fontSize={{ base: '3xl', md: '4xl' }}>
-            <Text as="span" color="accent.default">
-              LLerNote
-            </Text>
+        <Stack
+          gap="4"
+          alignItems="center"
+          w="full"
+          maxW="2xl"
+          mx="auto"
+          py={{ base: '8', md: '14' }}
+          textAlign="center"
+        >
+          <Heading
+            as="h1"
+            textStyle="display"
+            style={{
+              background: 'linear-gradient(92deg, #e4007f 10%, #ff7a00 45%, #00a0e0 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+            fontSize={{ base: '5xl', md: '6xl' }}
+            lineHeight="1.1"
+          >
+            LLerNote
           </Heading>
-          <Text maxW="md" color="fg.muted">
+          <Text maxW="md" color="fg.muted" fontSize={{ base: 'sm', md: 'md' }}>
             {t('home.tagline')}
           </Text>
           <HStack gap="2" w="full" maxW="lg">
@@ -123,8 +141,16 @@ export default function Page() {
               placeholder={t('events.search_placeholder')}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
+              borderRadius="full"
+              px="5"
+              boxShadow="0 0 24px rgba(228,0,127,0.18)"
             />
-            <Button size="lg" aria-label={t('common.search')} onClick={submitSearch}>
+            <Button
+              size="lg"
+              aria-label={t('common.search')}
+              onClick={submitSearch}
+              borderRadius="full"
+            >
               <FaMagnifyingGlass />
             </Button>
           </HStack>
@@ -158,13 +184,21 @@ export default function Page() {
                   cursor="pointer"
                   gap="0"
                   alignItems="center"
-                  borderRadius="l2"
-                  p="3"
-                  bgColor="bg.subtle"
-                  transition="colors"
-                  _hover={{ bgColor: 'bg.muted' }}
+                  borderColor="accent.a5"
+                  borderRadius="l3"
+                  borderWidth="1px"
+                  p="4"
+                  bgColor="accent.a2"
+                  transition="all"
+                  _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)' }}
                 >
-                  <Text color="accent.default" fontSize="2xl" fontWeight="bold">
+                  <Text
+                    textStyle="display"
+                    color="accent.default"
+                    fontSize="3xl"
+                    fontWeight="bold"
+                    lineHeight="1.2"
+                  >
                     {value}
                   </Text>
                   <Text color="fg.muted" fontSize="xs">
@@ -179,9 +213,7 @@ export default function Page() {
         {nextUp.length > 0 && (
           <Stack gap="2">
             <HStack justifyContent="space-between" alignItems="baseline">
-              <Heading as="h2" fontSize="lg">
-                {t('home.next_up')}
-              </Heading>
+              <SectionHeading>{t('home.next_up')}</SectionHeading>
               <Link href={href('/calendar')}>
                 <Text color="accent.default" fontSize="sm">
                   {t('home.view_all')} →
@@ -212,9 +244,7 @@ export default function Page() {
         {recentAttended.length > 0 && (
           <Stack gap="2">
             <HStack justifyContent="space-between" alignItems="baseline">
-              <Heading as="h2" fontSize="lg">
-                {t('home.recent')}
-              </Heading>
+              <SectionHeading>{t('home.recent')}</SectionHeading>
               <Link href={href('/calendar')}>
                 <Text color="accent.default" fontSize="sm">
                   {t('home.view_all')} →
