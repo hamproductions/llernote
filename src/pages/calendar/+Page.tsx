@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaStar } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
-import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
@@ -13,6 +12,7 @@ import { AttendanceButtons } from '~/components/events/AttendanceButtons';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { Metadata } from '~/components/layout/Metadata';
+import { SectionHeading } from '~/components/layout/SectionHeading';
 import { usePerformance, usePerformances, useSeriesById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
@@ -157,42 +157,25 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
                     >
                       {Number(day.slice(8))}
                     </Text>
-                    <Stack hideBelow="md" gap="0.5">
-                      {events.slice(0, 2).map((p) => (
+                    <HStack gap="1" alignItems="center" flexWrap="wrap">
+                      {events.slice(0, 5).map((p) => (
                         <Box
                           key={p.id}
                           title={p.tourName}
-                          style={{
-                            backgroundColor: `${seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'}33`,
-                            borderLeft: `2px solid ${seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'}`
-                          }}
-                          borderRadius="sm"
-                          px="1"
-                        >
-                          <Text fontSize="2xs" lineClamp={1}>
-                            {p.tourName}
-                          </Text>
-                        </Box>
-                      ))}
-                      {events.length > 2 && (
-                        <Text color="fg.muted" fontSize="2xs">
-                          +{events.length - 2}
-                        </Text>
-                      )}
-                    </Stack>
-                    <HStack hideFrom="md" gap="0.5" flexWrap="wrap">
-                      {events.slice(0, 4).map((p) => (
-                        <Box
-                          key={p.id}
                           style={{
                             backgroundColor:
                               seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'
                           }}
                           borderRadius="full"
-                          w="1.5"
-                          h="1.5"
+                          w="2"
+                          h="2"
                         />
                       ))}
+                      {events.length > 5 && (
+                        <Text color="fg.muted" fontSize="2xs" fontWeight="bold">
+                          +{events.length - 5}
+                        </Text>
+                      )}
                     </HStack>
                   </Stack>
                 )}
@@ -267,7 +250,7 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
                   ))}
                 </HStack>
                 <HStack onClick={(e) => e.stopPropagation()} gap="1" flexShrink={0}>
-                  <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} />
+                  <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} iconOnly />
                 </HStack>
               </HStack>
             );
@@ -364,7 +347,7 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
                     ? t('upcoming.tomorrow')
                     : t('upcoming.days_until', { count: days })}
               </Text>
-              <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} />
+              <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} iconOnly />
             </Stack>
           </HStack>
         );
@@ -394,7 +377,7 @@ function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
   }
 
   return (
-    <Stack gap="6" maxW="3xl">
+    <Stack gap="6" w="full" maxW="3xl" mx="auto">
       {[...byYear.entries()].map(([year, events]) => (
         <Stack key={year} gap="0">
           <Text textStyle="display" color="accent.default" fontSize="2xl">
@@ -440,13 +423,20 @@ function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
                       {p.tourName}
                       {label ? ` ${label}` : ''}
                     </Text>
-                    <HStack gap="2">
+                    <HStack gap="2" alignItems="center" flexWrap="wrap">
                       {p.seriesIds.slice(0, 2).map((id) => (
                         <SeriesBadge key={id} seriesId={id} />
                       ))}
                       <Text color="fg.muted" fontSize="xs" lineClamp={1}>
                         {p.venue}
                       </Text>
+                      {record?.rating && (
+                        <HStack gap="0.5" color="accent.default">
+                          {Array.from({ length: record.rating }, (_, i) => (
+                            <FaStar key={i} size={10} />
+                          ))}
+                        </HStack>
+                      )}
                     </HStack>
                     {record?.memo && (
                       <Text color="fg.muted" fontSize="xs" lineClamp={1} fontStyle="italic">
@@ -454,13 +444,6 @@ function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
                       </Text>
                     )}
                   </Stack>
-                  {record?.rating && (
-                    <HStack gap="0.5" flexShrink={0} color="amber.9">
-                      {Array.from({ length: record.rating }, (_, i) => (
-                        <FaStar key={i} size={10} />
-                      ))}
-                    </HStack>
-                  )}
                 </HStack>
               );
             })}
@@ -480,9 +463,7 @@ export default function Page() {
     <>
       <Metadata title={`${t('calendar.title')} - LLerNote`} helmet />
       <Stack gap="4">
-        <Heading as="h1" fontSize="2xl">
-          {t('calendar.title')}
-        </Heading>
+        <SectionHeading size="2xl">{t('calendar.title')}</SectionHeading>
         <Tabs.Root defaultValue="calendar">
           <Tabs.List>
             <Tabs.Trigger value="calendar">{t('calendar.title')}</Tabs.Trigger>

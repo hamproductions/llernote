@@ -1,55 +1,64 @@
 import { useTranslation } from 'react-i18next';
 import { FaCheck, FaPlus, FaStar } from 'react-icons/fa6';
 import { Button } from '~/components/ui/button';
+import { IconButton } from '~/components/ui/icon-button';
 import { useAttendance } from '~/hooks/useAttendance';
 
 export function AttendanceButtons({
   performanceId,
   future = false,
-  size = 'xs'
+  size = 'xs',
+  iconOnly = false
 }: {
   performanceId: string;
   future?: boolean;
   size?: 'xs' | 'sm' | 'md';
+  iconOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const { get, setAttendance, removeAttendance } = useAttendance();
   const record = get(performanceId);
 
-  if (future) {
-    const going = record?.status === 'interested';
+  const active = future ? record?.status === 'interested' : record?.status === 'attended';
+  const label = future
+    ? active
+      ? t('events.status_going')
+      : t('events.mark_interested')
+    : active
+      ? t('events.status_attended')
+      : t('events.mark_attended');
+  const icon = future ? active ? <FaStar /> : <FaPlus /> : active ? <FaCheck /> : <FaPlus />;
+  const onClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (active) removeAttendance(performanceId);
+    else setAttendance(performanceId, future ? 'interested' : 'attended');
+  };
+
+  if (iconOnly) {
     return (
-      <Button
+      <IconButton
         size={size}
-        variant={going ? 'solid' : 'outline'}
-        title={going ? t('events.unmark') : undefined}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (going) removeAttendance(performanceId);
-          else setAttendance(performanceId, 'interested');
-        }}
-        colorPalette="amber"
+        variant={active ? 'solid' : 'outline'}
+        aria-label={label}
+        title={active ? t('events.unmark') : label}
+        onClick={onClick}
+        colorPalette={future ? 'amber' : undefined}
       >
-        {going ? <FaStar /> : <FaPlus />}
-        {going ? t('events.status_going') : t('events.mark_interested')}
-      </Button>
+        {icon}
+      </IconButton>
     );
   }
 
-  const attended = record?.status === 'attended';
   return (
     <Button
       size={size}
-      variant={attended ? 'solid' : 'outline'}
-      title={attended ? t('events.unmark') : undefined}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (attended) removeAttendance(performanceId);
-        else setAttendance(performanceId, 'attended');
-      }}
+      variant={active ? 'solid' : 'outline'}
+      title={active ? t('events.unmark') : undefined}
+      onClick={onClick}
+      colorPalette={future ? 'amber' : undefined}
     >
-      {attended ? <FaCheck /> : <FaPlus />}
-      {attended ? t('events.status_attended') : t('events.mark_attended')}
+      {icon}
+      {label}
     </Button>
   );
 }

@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
+import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { Pagination } from '~/components/ui/pagination';
+import { IconButton } from '~/components/ui/icon-button';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { SongCard } from '~/components/songs/SongCard';
+import { SongTable } from '~/components/songs/SongTable';
 import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
@@ -15,6 +18,7 @@ import { useAttendance } from '~/hooks/useAttendance';
 import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
 import { tallySongs } from '~/utils/song-tally';
 import { useColumnCount } from '~/hooks/useColumnCount';
+import { useLocalStorage } from '~/hooks/useLocalStorage';
 import { foldKana } from '~/utils/event-filter';
 import type { Performance, Song } from '~/types';
 
@@ -38,6 +42,8 @@ export default function Page() {
   const [selected, setSelected] = useState<Song>();
   const [selectedEvent, setSelectedEvent] = useState<Performance>();
   const columns = useColumnCount();
+  const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-songs-view', 'cards');
+  const effectiveView = columns === 1 ? 'cards' : view;
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
@@ -93,7 +99,27 @@ export default function Page() {
       <Metadata title={`${t('songs.title')} - LLerNote`} helmet />
       <Stack gap="3">
         <HStack justifyContent="space-between" alignItems="baseline" flexWrap="wrap">
-          <SectionHeading size="2xl">{t('songs.title')}</SectionHeading>
+          <HStack gap="3" alignItems="center">
+            <SectionHeading size="2xl">{t('songs.title')}</SectionHeading>
+            <HStack hideBelow="md" gap="1">
+              <IconButton
+                aria-label={t('common.card_view')}
+                variant={effectiveView === 'cards' ? 'subtle' : 'ghost'}
+                size="sm"
+                onClick={() => setView('cards')}
+              >
+                <FaTableCellsLarge />
+              </IconButton>
+              <IconButton
+                aria-label={t('common.table_view')}
+                variant={effectiveView === 'table' ? 'subtle' : 'ghost'}
+                size="sm"
+                onClick={() => setView('table')}
+              >
+                <FaTableList />
+              </IconButton>
+            </HStack>
+          </HStack>
           <Text color="fg.muted" fontSize="sm">
             {t('songs.progress', { heard: heardInScope, total: scopeSongs.length, percent })}
           </Text>
@@ -176,24 +202,32 @@ export default function Page() {
           {t('songs.results_count', { count: filtered.length })}
         </Text>
         {filtered.length === 0 && <Text color="fg.muted">{t('songs.no_results')}</Text>}
-        <Grid
-          gap="2"
-          gridTemplateColumns={{
-            base: '1fr',
-            md: 'repeat(2, 1fr)',
-            xl: 'repeat(3, 1fr)',
-            '2xl': 'repeat(4, 1fr)'
-          }}
-        >
-          {pageItems.map((song) => (
-            <SongCard
-              key={song.id}
-              song={song}
-              heardCount={tallyById.get(song.id)?.count ?? 0}
-              onClick={() => setSelected(song)}
-            />
-          ))}
-        </Grid>
+        {effectiveView === 'table' ? (
+          <SongTable
+            songs={pageItems}
+            heardCount={(id) => tallyById.get(id)?.count ?? 0}
+            onSelect={setSelected}
+          />
+        ) : (
+          <Grid
+            gap="2"
+            gridTemplateColumns={{
+              base: '1fr',
+              md: 'repeat(2, 1fr)',
+              xl: 'repeat(3, 1fr)',
+              '2xl': 'repeat(4, 1fr)'
+            }}
+          >
+            {pageItems.map((song) => (
+              <SongCard
+                key={song.id}
+                song={song}
+                heardCount={tallyById.get(song.id)?.count ?? 0}
+                onClick={() => setSelected(song)}
+              />
+            ))}
+          </Grid>
+        )}
         {filtered.length > PAGE_SIZE && (
           <Center>
             <Pagination

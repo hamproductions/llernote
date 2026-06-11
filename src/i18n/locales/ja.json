@@ -77,7 +77,8 @@
     "leg": "公演",
     "first_witness": "初",
     "doors": "開場",
-    "start": "開演"
+    "start": "開演",
+    "filters": "絞り込み"
   },
   "calendar": {
     "title": "カレンダー",
@@ -170,7 +171,8 @@
     "last_seen": "最終",
     "first_seen": "初回",
     "total_witnessed": "{{ unique }}曲・のべ{{ total }}回",
-    "no_results": "楽曲が見つかりません"
+    "no_results": "楽曲が見つかりません",
+    "release": "リリース"
   },
   "share": {
     "share": "シェア",

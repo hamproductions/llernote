@@ -94,7 +94,7 @@ export function EventTable({
               </Table.Cell>
               <Table.Cell>
                 <HStack onClick={(e) => e.stopPropagation()} gap="1" justifyContent="flex-end">
-                  <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} />
+                  <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} iconOnly />
                   {p.hasSetlist && (
                     <IconButton
                       aria-label={t('events.setlist')}

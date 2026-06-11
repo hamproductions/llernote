@@ -23,5 +23,23 @@ export const darkenForLight = (hex: string): string => {
   return result;
 };
 
+const BRIGHTENED: Record<string, string> = {};
+
+export const brightenForDark = (hex: string): string => {
+  if (BRIGHTENED[hex]) return BRIGHTENED[hex];
+  let [r, g, b] = hexToRgb(hex);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  if (luminance < 0.55) {
+    const target = 0.55;
+    const blend = (target - luminance) / (1 - luminance);
+    r = r + (255 - r) * blend;
+    g = g + (255 - g) * blend;
+    b = b + (255 - b) * blend;
+  }
+  const result = rgbToHex(r, g, b);
+  BRIGHTENED[hex] = result;
+  return result;
+};
+
 export const seriesTextColor = (hex: string, colorMode: string | null | undefined) =>
-  colorMode === 'light' ? darkenForLight(hex) : hex;
+  colorMode === 'light' ? darkenForLight(hex) : brightenForDark(hex);

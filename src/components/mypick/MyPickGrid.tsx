@@ -15,10 +15,19 @@ import { getPicUrl } from '~/utils/assets';
 import { getSeriesShortName } from '~/utils/series-short';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
+import { useColumnCount } from '~/hooks/useColumnCount';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
 import type { MyPick, MyPickColumn, MyPickRow } from '~/types/attendance';
 
-function CellImage({ src, dim = false }: { src: string; dim?: boolean }) {
+function CellImage({
+  src,
+  dim = false,
+  top = false
+}: {
+  src: string;
+  dim?: boolean;
+  top?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
   return (
     <Box
@@ -39,7 +48,12 @@ function CellImage({ src, dim = false }: { src: string; dim?: boolean }) {
           alt=""
           width="48"
           height="48"
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          style={{
+            objectFit: 'cover',
+            objectPosition: top ? 'top' : 'center',
+            width: '100%',
+            height: '100%'
+          }}
           onError={() => setFailed(true)}
         />
       )}
@@ -58,7 +72,7 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
     if (!character) return null;
     return (
       <Stack gap="1.5" alignItems="center" w="full">
-        <CellImage src={getPicUrl(character.id, character.hasIcon ? 'icons' : 'character')} />
+        <CellImage src={getPicUrl(character.id, 'character')} top />
         <Text fontSize="2xs" fontWeight="bold" textAlign="center">
           {localizedName(i18n.language, character.fullName, character.englishName)}
         </Text>
@@ -134,6 +148,8 @@ export const MyPickGrid = forwardRef<
   ref
 ) {
   const { t } = useTranslation();
+  const viewportColumns = useColumnCount();
+  const compact = viewportColumns === 1 && !exporting;
   const seriesById = useSeriesById();
   const artistById = useArtistById();
 
@@ -163,7 +179,7 @@ export const MyPickGrid = forwardRef<
       borderRadius="l3"
       borderWidth="2px"
       w={exporting ? 'fit-content' : 'full'}
-      p="4"
+      p={{ base: '2.5', md: '4' }}
       bgColor="bg.default"
       overflowX="auto"
     >
@@ -193,7 +209,9 @@ export const MyPickGrid = forwardRef<
         </HStack>
         <Grid
           style={{
-            gridTemplateColumns: `minmax(5rem, 6.5rem) repeat(${columns.length}, minmax(7.5rem, 10.5rem))${editable ? ' 2.25rem' : ''}`,
+            gridTemplateColumns: compact
+              ? `minmax(3.25rem, 4.5rem) repeat(${columns.length}, minmax(0, 1fr))${editable ? ' 1.75rem' : ''}`
+              : `minmax(5rem, 6.5rem) repeat(${columns.length}, minmax(7.5rem, 10.5rem))${editable ? ' 2.25rem' : ''}`,
             justifyContent: 'center'
           }}
           gap="1.5"

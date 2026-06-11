@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { Center, HStack, Stack } from 'styled-system/jsx';
-import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Pagination } from '~/components/ui/pagination';
 import { IconButton } from '~/components/ui/icon-button';
@@ -11,6 +10,7 @@ import { EventTable } from '~/components/events/EventTable';
 import { EventFiltersBar } from '~/components/events/EventFiltersBar';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
+import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useArtistById, usePerformances, useSetlists, useSongById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
@@ -52,7 +52,8 @@ export default function Page() {
 
   const tours = useMemo(() => groupByTour(filtered), [filtered]);
 
-  const totalCount = view === 'table' ? filtered.length : tours.length;
+  const effectiveView = columns === 1 ? 'cards' : view;
+  const totalCount = effectiveView === 'table' ? filtered.length : tours.length;
   const pageTours = tours.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
@@ -61,14 +62,12 @@ export default function Page() {
       <Stack gap="3">
         <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
           <HStack gap="3" alignItems="baseline">
-            <Heading as="h1" fontSize="2xl">
-              {t('events.title')}
-            </Heading>
+            <SectionHeading size="2xl">{t('events.title')}</SectionHeading>
             <Text color="fg.muted" fontSize="sm">
               {t('events.results_count', { count: filtered.length })}
             </Text>
           </HStack>
-          <HStack gap="1">
+          <HStack hideBelow="md" gap="1">
             <IconButton
               aria-label={t('common.card_view')}
               variant={view === 'cards' ? 'subtle' : 'ghost'}
@@ -101,7 +100,7 @@ export default function Page() {
           }}
         />
         {totalCount === 0 && <Text color="fg.muted">{t('events.no_results')}</Text>}
-        {view === 'table' ? (
+        {effectiveView === 'table' ? (
           <EventTable
             performances={filtered}
             pageSize={PAGE_SIZE}

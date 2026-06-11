@@ -101,7 +101,11 @@ function LegRow({
         </Text>
       </Stack>
       <HStack onClick={(e) => e.stopPropagation()} gap="0.5" flexShrink={0}>
-        <AttendanceButtons performanceId={performance.id} future={isFutureEvent(performance)} />
+        <AttendanceButtons
+          performanceId={performance.id}
+          future={isFutureEvent(performance)}
+          iconOnly
+        />
         {performance.hasSetlist && (
           <IconButton
             aria-label={t('events.setlist')}

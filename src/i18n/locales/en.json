@@ -78,7 +78,8 @@
     "results_count_one": "{{ count }} event",
     "first_witness": "First",
     "doors": "Doors",
-    "start": "Start"
+    "start": "Start",
+    "filters": "Filters"
   },
   "calendar": {
     "title": "Calendar",
@@ -172,7 +173,8 @@
     "first_seen": "First seen",
     "total_witnessed": "{{ total }} performances of {{ unique }} unique songs",
     "results_count_one": "{{ count }} song",
-    "no_results": "No songs found"
+    "no_results": "No songs found",
+    "release": "Release"
   },
   "share": {
     "share": "Share",

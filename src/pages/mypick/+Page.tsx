@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaDownload, FaLink } from 'react-icons/fa6';
 import { HStack, Stack } from 'styled-system/jsx';
-import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
 import { MyPickGrid } from '~/components/mypick/MyPickGrid';
 import { Metadata } from '~/components/layout/Metadata';
+import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useMyPick } from '~/hooks/useAttendance';
 import {
   useArtistById,
@@ -199,9 +199,7 @@ export default function Page() {
       <Stack gap="3">
         <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
           <Stack gap="0">
-            <Heading as="h1" fontSize="2xl">
-              {t('mypick.title')}
-            </Heading>
+            <SectionHeading size="2xl">{t('mypick.title')}</SectionHeading>
             <Text color="fg.muted" fontSize="sm">
               {t('mypick.description')}
             </Text>

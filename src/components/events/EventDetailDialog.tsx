@@ -239,7 +239,9 @@ export function EventDetailDialog({
                             rating: record.rating === star ? undefined : star
                           })
                         }
-                        color={record.rating && record.rating >= star ? 'amber.9' : 'fg.subtle'}
+                        color={
+                          record.rating && record.rating >= star ? 'accent.default' : 'fg.subtle'
+                        }
                       >
                         <FaStar />
                       </IconButton>

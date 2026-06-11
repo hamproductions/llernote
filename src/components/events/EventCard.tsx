@@ -67,7 +67,7 @@ export function EventCard({
                 {performance.venue}
               </Text>
               {record?.rating && (
-                <HStack gap="0.5" color="amber.9">
+                <HStack gap="0.5" color="accent.default">
                   {Array.from({ length: record.rating }, (_, i) => (
                     <FaStar key={i} size={11} />
                   ))}

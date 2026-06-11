@@ -82,11 +82,7 @@ function BarList({
 
 function MonthHeatmap({ byMonth, years }: { byMonth: Map<string, number>; years: string[] }) {
   const max = Math.max(1, ...byMonth.values());
-  const allYears = years.length
-    ? Array.from({ length: Number(years[years.length - 1]) - Number(years[0]) + 1 }, (_, i) =>
-        String(Number(years[0]) + i)
-      )
-    : [];
+  const allYears = years;
 
   return (
     <Grid gap="1" alignItems="center" gridTemplateColumns="3rem repeat(12, 1fr)">

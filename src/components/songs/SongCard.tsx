@@ -3,6 +3,7 @@ import { HStack, Stack } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import { localizedName } from '~/utils/names';
+import { useArtistById } from '~/hooks/useData';
 import { clickable } from '~/utils/clickable';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
@@ -19,7 +20,16 @@ export function SongCard({
   onClick: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const artistById = useArtistById();
   const heard = heardCount > 0;
+  const artistNames = [
+    ...new Set(
+      (song.artists ?? [])
+        .map((a) => artistById.get(a.id))
+        .filter(Boolean)
+        .map((a) => localizedName(i18n.language, a!.name, a!.englishName))
+    )
+  ].join('・');
 
   return (
     <HStack
@@ -47,10 +57,15 @@ export function SongCard({
         >
           {localizedName(i18n.language, song.name, song.englishName)}
         </Text>
-        <HStack gap="1">
-          {song.seriesIds.map((id) => (
+        <HStack gap="1.5" alignItems="center" flexWrap="wrap">
+          {song.seriesIds.slice(0, 2).map((id) => (
             <SeriesBadge key={id} seriesId={String(id)} />
           ))}
+          {artistNames && (
+            <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
+              {artistNames}
+            </Text>
+          )}
         </HStack>
       </Stack>
       {heard ? (

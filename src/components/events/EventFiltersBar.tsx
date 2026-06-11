@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
+import { FaChevronDown, FaChevronUp, FaFilter } from 'react-icons/fa6';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
@@ -25,6 +27,7 @@ export function EventFiltersBar({
   showAttendanceFilter?: boolean;
 }) {
   const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
   const { colorMode } = useColorModeContext();
   const series = useSeries();
   const years = useEventYears();
@@ -55,11 +58,31 @@ export function EventFiltersBar({
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
           />
         </Box>
-        <CastFilter
-          selectedIds={filters.characterIds}
-          onChange={(characterIds) => onChange({ ...filters, characterIds })}
-        />
-        <HStack gap="1" alignItems="center">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          hideFrom="md"
+        >
+          <FaFilter />
+          {t('events.filters')}
+          {expanded ? <FaChevronUp /> : <FaChevronDown />}
+        </Button>
+        <Box
+          display={{ base: expanded ? 'block' : 'none', md: 'block' }}
+          w={{ base: 'full', md: 'auto' }}
+        >
+          <CastFilter
+            selectedIds={filters.characterIds}
+            onChange={(characterIds) => onChange({ ...filters, characterIds })}
+          />
+        </Box>
+        <HStack
+          display={{ base: expanded ? 'flex' : 'none', md: 'flex' }}
+          gap="1"
+          alignItems="center"
+        >
           <NativeSelect
             aria-label={t('events.year_from')}
             value={filters.yearFrom ?? ''}

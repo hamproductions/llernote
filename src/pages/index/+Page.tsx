@@ -91,7 +91,8 @@ export default function Page() {
       .filter((p) => p.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date));
     const going = upcoming.filter((p) => goingIds.has(p.id));
-    return (going.length > 0 ? going : upcoming).slice(0, 2);
+    const rest = upcoming.filter((p) => !goingIds.has(p.id));
+    return [...going, ...rest].slice(0, 2);
   }, [performances, goingIds]);
 
   const recentAttended = useMemo(() => {
@@ -171,13 +172,14 @@ export default function Page() {
         </Stack>
 
         {hasData && (
-          <Grid gap="2" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }}>
+          <Grid gap="2" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
             {(
               [
                 ['total_attended', stats.attendedCount],
                 ['songs_witnessed', stats.songsWitnessed],
                 ['unique_songs', `${stats.uniqueSongs}/${songs.length}`],
-                ['venues_visited', stats.venuesVisited]
+                ['venues_visited', stats.venuesVisited],
+                ['total_interested', stats.interestedCount]
               ] as const
             ).map(([key, value]) => (
               <Link
