@@ -161,3 +161,61 @@ dogfood-output/  QA report + ~60 screenshot baselines
 ## 12. Quality state at handoff
 
 Lint 0 errors / 0 warnings · tsc clean · 25/25 tests · client+server builds green · 0 console errors on all routes in ja and en, dark and light · keyboard operable · offline after first visit. Dev server convention: `bun dev --port 5199`. ~20 commits, each gated.
+
+---
+
+# APPENDICES — full session knowledge dump
+
+## A. Bug post-mortems (root causes, so they never come back)
+
+1. **SSR 500 on most pages (day 1):** `import { saveAs } from 'file-saver'` — CJS named-export fails under Vite SSR. Fix: add `'file-saver'` to `cjsInterop.dependencies` in vite.config.ts. Symptom returns if removed.
+2. **Invisible selection states:** `panda.config hash.cssVar: true` hashes CSS variable names, so inline `var(--colors-accent-default)` resolves to nothing → borders/bars silently transparent; ALSO broke Park UI preset box-shadows (focus rings, error rings, tabs separator) app-wide. Fix: `cssVar: false`. Any inline style must use literal hex or panda props.
+3. **Theme never persisted:** ColorModeProvider's mount effect ran before useLocalStorage's hydration effect, saw `undefined`, wrote the OS-preference theme over the user's saved choice. Fix: provider reads `new LocalStorage('color-mode').value` directly before defaulting.
+4. **useLocalStorage was triply broken:** (a) storage-event cleanup removed a different closure → listener leak per mount; (b) `JSON.parse(event.newValue ?? '')` threw on cross-tab key removal; (c) setter only guarded `!== null` so `undefined` was persisted as literal string `"undefined"`, corrupting first-visit color-mode (the inline bootstrap script then misread it). All fixed in the rewrite.
+5. **Cross-tab clobbering:** SyncedStore cached forever; another tab's writes were invisible and got overwritten. Fix: constructor subscribes to `storage` events for its key, refreshes cache, notifies.
+6. **EN hydration error (1/page):** i18next-browser-languagedetector made server (fallback en, but `i18n.language` semantics differ) and client first paint disagree (visible via LanguageToggle `data-active`). Fix: no detector; `lng:'ja'` fixed first paint; saved lang applied in +Wrapper effect; persisted via `languageChanged` listener writing `i18nextLng`.
+7. **Other hydration mismatches:** `useState(() => localStorage/location.search reads)` in events (?q) and mypick (?d) → moved to effects; `Version` title used `toLocaleString()` of build timestamp (server/client locale differ) → suppressed + static title; footer date suppressHydrationWarning; nav active state now from `usePageContext().urlPathname` instead of window.location-in-effect.
+8. **Table sort sorted only the current page:** events page sliced before EventTable sorted. Fix: table receives full filtered list + page/pageSize, sorts globally then slices.
+9. **React duplicate keys:** season-split tours share tourName → key is now `tourName|startDate`.
+10. **MyPick wiped "after a crash":** actually the ErrorBoundary's "clear data" button + the v2→v3 schema churn during HMR; not reproducible after schema settled. Storage itself was proven sound (pick → reload → survives).
+11. **PNG export bugs (only visible by opening the file):** `background-clip: text` gradient renders as clipped garbage in domToBlob → `exporting` prop swaps to solid color; viewport-clipped capture → pass `width/height: scrollWidth/scrollHeight`; baked-in scrollbar bar → `style: { overflow: 'visible' }`; wide dead margins → export width `fit-content`; edit affordances captured → `editable={false}` during export (50ms rAF wait after setState before capture).
+12. **MyPick degenerate configs:** removing all columns produced auto-flow pill soup. Fix: min 1 row/col enforced (last ✗ hidden) + defensive empty-state render for 0-row/0-col stored configs.
+13. **"NO CHANGE" mystery:** dev server had served ~7.3k HMR patches; long-lived tabs ran stale module graphs. Restart server + hard reload fixed. Lesson: after heavy edit sessions, restart dev server before user verification.
+14. **Tour "Day N" labels were fabricated** — real labels existed in raw llfans data all along (performance.name, concert.name). Lesson the owner enforced: inventory ALL raw data fields before synthesizing UI labels.
+
+## B. 20-agent review (111 findings) — what each lens was and what survived
+
+Lenses: 10 browser personas (first-timer, kosan-fan data accuracy, mobile-only, keyboard-a11y, light-mode, english-user, power-filterer, mypick-creator, stats-nerd, calendar-navigator) + 10 code audits (react-correctness, state-storage, panda-css, ssr-hydration, i18n-completeness, data-layer, performance, a11y-static, sw-pwa, edge-cases). Result: 1 critical (keyboard-unreachable dialogs — everything was click-only divs) + 23 high + 44 medium + 43 low. All criticals/highs fixed; notable mediums fixed: year-range from>to, picker search persistence, page-reset on view toggle, watchType not persisted on quick-mark, 参戦予定 counting past events, calendar nav escaping year range (parked), import version ignored, tombstone resurrection, fragment keys, debounce (parked — 761 filter is fast), aria-label i18n, button-in-anchor nesting (→ asChild), th sort semantics (parked), SW waitUntil/206 guard, cache version bump, whitespace memo, orphan cells. Things verified as NON-issues: songs pagination needs no virtualization; imgs are in fixed boxes (no CLS); bySeries multi-counting is intentional & test-documented; React Compiler memoizes useAttendance records.
+
+Fresh-agent QA wave (zero-context agent) found 11: theme persistence (A.3), page-slice sort (A.8), dup keys (A.9), hydration (A.7), silent invalid import (toast works; agent's file was blocked by accept attr — verified working programmatically), mobile table overflow (→ overflow wrapper + force-cards), mypick toolbar overflow (→ wrap, later toolbar deleted), year dropdown duplicate boundary label (→ placeholder すべて), 404 not localized (fixed), silent clipboard failure (→ try/catch error toasts on all 4 copy buttons), PNG scrollbar (A.11).
+
+Critic waves: #1 found 12 (calendar 8px pills→dots+legend+count, giant kana cell art→portraits with objectPosition top, table column inversion, home next-up hiding events when one marked going→pin-first, flat white rating stars→accent fill, CTA button spam→iconOnly mode on dense rows, heading/tile inconsistency→SectionHeading everywhere + home 5 tiles, 192-cell empty heatmap→active years only, timeline dead half→centered 3xl + rating in meta, mobile clipping→force cards + shrink grid, filter wall→絞り込み disclosure, chip contrast→brightenForDark floor). #2 found 6 (EN hydration A.6, mypick mobile cell wrap→nowrap date/clamped title/nowrap headers, table chips actually capped this time, calendar single-dot ambiguity→count+legend, watermark bleed→opacity .03, home CTA alignment→mt auto). Convergence accepted.
+
+## C. the-sorter goodies inventory (explored, mostly NOT ported — paths valid in sibling repo)
+
+Ported: toast system, confirm-dialog pattern (not used yet), useLocalStorage, vitest setup, eslint config, OG metadata skeleton, lz-string URL sharing (adapted for MyPick), CI (ci.yml only).
+NOT ported (with source paths in ../the-sorter/src/): multi save-slot system (`hooks/setlist-prediction/useSaveSlots.ts`, `utils/setlist-prediction/storage.ts` — 10 named slots, quota handling); JSON/CSV/Markdown export + import with wanakana fuzzy song matching (`utils/setlist-prediction/{export,import}.ts`); CharacterInfoDialog (birthdays, units, color swatch, seiyuu photo — `components/dialog/CharacterInfoDialog.tsx`); KeyboardShortcuts display; dnd-kit setlist reordering; virtualization examples; GitHub Actions deploy.yml (Pages + Lighthouse/PSI budgets) and update-data.yml (12h data refresh, auto-commit); release-it + commit-format scripts; intro-don audio onset detection (`utils/intro-don/detectSoundStart.ts` — skipped, no audio assets copied).
+
+## D. Reference-site measurements (mypick.rurino.dev)
+
+Desktop: rows = unit logo block on tinted row bg + 3 generation columns (103期/104期/105期 headers), cells = big square song-art tiles, dashed "＋ PICK SONG" empties, "EMPTY" state for disabled gens, header "MY PICK HASUNOSORA" + rainbow tagline, CTAs: Search All Songs / Clear Grid / Generate Image. Mobile 375px: Tailwind `grid grid-cols-4 gap-2 md:gap-4`, computed tracks 73.25px each (label spans, `col-span-3 grid-cols-3` for cells) — cells SHRINK to fit, no horizontal scroll. This measurement drove our compact template `minmax(3.25rem,4.5rem) repeat(N, minmax(0,1fr))`.
+
+## E. MyPick share-URL codec (`src/utils/mypick-share.ts`)
+
+`?d=` = lz-string `compressToEncodedURIComponent` of `{ v:1, r: [type,id][], c: (['s',slot] | ['y',year,slot])[], l: { cellKey: pickedId } }` (null cells filtered). Decode failures → null → normal editable page. Read-only mode renders shared grid + banner + "自分のマイピックを作る" (strips query).
+
+## F. Misc facts that cost time to learn
+
+- tourType EN map lives in CategoryBadge: ライブ・ファンミ=Live/Fanmeeting, 外部のフェス=External festival, TV出演=TV appearance, リリイベ・ミニライブ=Release event, 外部イベント内のライブ=Live at external event, バーチャルライブ=Virtual live, 有観客バーチャルライブ=Virtual live (audience), 収録配信=Recorded broadcast. Keyed off `startsWith('ja')` inverse (non-ja gets EN, matching fallbackLng).
+- Character "icons" are member symbol glyphs (Honoka = orange ほ) — fine at ≤32px, grotesque as cell art. Cell art = `character/{id}.webp` portraits with `objectPosition: top`.
+- `foldKana()` lowercases + maps katakana→hiragana (U+30A1–30F6 minus 0x60) for search; applied to events and songs search and CastFilter.
+- Series short names (`series-short.ts`): 1=μ's 2=Aqours 3=虹ヶ咲 4=Liella! 5=ミュージカル 6=蓮ノ空 7=ヨハネ 8=イキヅライブ.
+- Stats 参戦予定 counts interested records with event date >= today only.
+- Witness markers in setlist: count map built from ALL the user's attended setlists; 初 shows when this event's date equals the song's earliest witnessed date.
+- Events count header counts performances (761), not tours — owner noted it once (low), left as-is.
+- agent-browser quirks learned: `eval` (not `evaluate`), one shared session per name, refs go stale after DOM churn (re-snapshot), `[role=dialog]` matches closed dialogs (scope with `[data-state=open]`), clipboard.readText denied headless, downloads land in ~/Downloads, fish shell breaks `S() {}` aliases (use `bash /tmp/x.sh`).
+- python heredoc patch scripts: ALWAYS assert each replacement and write only after all match — silent `.replace` no-ops caused three "fixed but not really" incidents; prettier reformats targets between batches.
+
+## G. Owner feedback log (chronological, condensed — the requirements as actually stated)
+
+selected-state too weak → checking both ways future/past → legs/performances weak + setlist view options → kininaru gtfo / pro UI / max responsiveness → shitty UI / -トーク / eventernote links / paginate / table view → mypick like mypick.rurino.dev → Day1/Day2 meaningless + single-event clunky + READ MORE DATA → pinterest style → categorize in-person/online/TV → stats filters → masonry 1-2-3 row-major → music page: every song heard/unheard → mypick modals shit → X axis years addable left/right, Y axis series/units incl. groups+solos, INFINITELY CONFIGURABLE → long banners→dots/short → calendar clunky → label types properly → upcoming useless, merge into calendar → song without art = no icon → mypick must vibe like other pages → english names localization → multi-select searchable pickers → 20 iterations until perfection → touch every button (/dogfood, /ui-ux-pro-max) → unknowing-agent test, 0 errors no exception → home not centered / filters dog water / stats claustrophobic / songs bland / mypick unintuitive → EMBED youtube, event links, wrap no ellipsis, grey out unavailable, real-mypick aura → irregular song heights + no phantom icons → spawn 20 agents 20 opinions → song page artist names + table view → mypick collapse like original (they shrink, verified 73px) → degenerate column states → handoff docs. Final state: functionality accepted, visual design fired (open: add-column chooser UX, artless song picker tiles, pill ✗ clipping, dialog polish).

@@ -18,7 +18,16 @@ export interface PickItem {
 function TileImage({ src }: { src?: string }) {
   const [failed, setFailed] = useState(false);
   return (
-    <Box flexShrink={0} borderRadius="full" w="16" h="16" bgColor="bg.subtle" overflow="hidden">
+    <Box
+      flexShrink={0}
+      borderRadius="l2"
+      w="full"
+      style={{ aspectRatio: '1 / 1' }}
+      bgColor="bg.default"
+      overflow="hidden"
+      borderColor="border.subtle"
+      borderWidth="1px"
+    >
       {failed || !src ? (
         <Center w="full" h="full" color="fg.subtle">
           <FaMusic />
@@ -43,16 +52,17 @@ function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onCl
       aria-disabled={item.disabled}
       cursor={item.disabled ? 'not-allowed' : 'pointer'}
       position="relative"
-      gap="1"
+      gap="2"
       alignItems="center"
       borderColor={active ? 'accent.default' : 'border.subtle'}
-      borderRadius="l2"
+      borderRadius="l3"
       borderWidth="2px"
-      p="2"
-      bgColor={active ? 'accent.a3' : 'bg.subtle'}
+      p="2.5"
+      bgColor={active ? 'accent.a2' : 'white'}
       opacity={item.disabled ? 0.35 : 1}
       transition="all"
-      _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)' }}
+      boxShadow="sm"
+      _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)', boxShadow: 'md' }}
     >
       <TileImage src={item.image} />
       <Text fontSize="xs" fontWeight="medium" textAlign="center" lineClamp={2}>
@@ -113,6 +123,7 @@ export function PickDialog({
   selectedIds,
   max,
   open,
+  display = 'auto',
   onClose,
   onChange
 }: {
@@ -121,12 +132,14 @@ export function PickDialog({
   selectedIds: string[];
   max: number;
   open: boolean;
+  display?: 'auto' | 'tiles' | 'rows';
   onClose: () => void;
   onChange: (ids: string[]) => void;
 }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const hasImages = items.some((item) => item.image);
+  const showTiles = display === 'tiles' || (display === 'auto' && hasImages);
 
   useEffect(() => {
     if (open) setSearch('');
@@ -162,16 +175,20 @@ export function PickDialog({
           maxH="80vh"
           mx="4"
         >
-          <Stack flex="1" gap="3" p="5" overflow="hidden">
+          <Stack flex="1" gap="4" p={{ base: '4', md: '5' }} overflow="hidden">
             <HStack justifyContent="space-between" pr="8">
-              <Dialog.Title>{title}</Dialog.Title>
+              <Dialog.Title>
+                <Text textStyle="display" fontSize="xl">
+                  {title}
+                </Text>
+              </Dialog.Title>
               {max > 1 && (
                 <Text color="fg.muted" fontSize="sm">
                   {Number.isFinite(max) ? `${selectedIds.length}/${max}` : selectedIds.length}
                 </Text>
               )}
             </HStack>
-            {items.length > 8 && (
+            {items.length > 12 && (
               <Input
                 size="sm"
                 value={search}
@@ -186,8 +203,9 @@ export function PickDialog({
                   {t('common.no_results')}
                 </Text>
               )}
-              {hasImages ? (
+              {showTiles ? (
                 <Grid
+                  data-testid="pick-dialog-grid"
                   gap="2"
                   gridTemplateColumns={{ base: 'repeat(3, 1fr)', sm: 'repeat(4, 1fr)' }}
                 >
@@ -201,7 +219,7 @@ export function PickDialog({
                   ))}
                 </Grid>
               ) : (
-                <Stack gap="1">
+                <Stack data-testid="pick-dialog-list" gap="1">
                   {filtered.map((item) => (
                     <Row
                       key={item.id}
