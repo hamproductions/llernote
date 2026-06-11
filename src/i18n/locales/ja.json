@@ -1,0 +1,149 @@
+{
+  "title": "{{ titlePrefix }}LLerNote",
+  "defaultTitlePrefix": "",
+  "description": "参加したラブライブ！イベントを記録しよう",
+  "site_name": "LLerNote",
+  "navigation": {
+    "events": "イベント",
+    "calendar": "カレンダー",
+    "upcoming": "今後の予定",
+    "stats": "統計",
+    "songs": "楽曲",
+    "mypick": "マイピック"
+  },
+  "common": {
+    "menu": "メニュー",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "delete": "削除",
+    "search": "検索",
+    "clear": "クリア",
+    "all": "すべて",
+    "loading": "読み込み中...",
+    "select_all": "すべて選択",
+    "deselect_all": "選択解除",
+    "today": "今日"
+  },
+  "events": {
+    "title": "イベント",
+    "search_placeholder": "イベント・会場を検索...",
+    "series": "シリーズ",
+    "year": "年",
+    "cast": "キャスト",
+    "attendance_filter": "参加状況",
+    "status_attended": "参加済み",
+    "status_interested": "気になる",
+    "status_none": "未登録",
+    "watched_live": "現地",
+    "watched_stream": "配信",
+    "watched_delay": "ディレイ",
+    "venue": "会場",
+    "date": "日付",
+    "setlist": "セットリスト",
+    "no_setlist": "セットリスト未登録",
+    "no_results": "イベントが見つかりません",
+    "results_count": "{{ count }}件のイベント",
+    "memo": "メモ",
+    "memo_placeholder": "座席、感想など...",
+    "rating": "評価",
+    "mark_attended": "参加済みにする",
+    "mark_interested": "気になる",
+    "unmark": "登録解除",
+    "songs_count": "{{ count }}曲",
+    "encore": "アンコール",
+    "main": "本編",
+    "view_detail": "詳細を見る",
+    "attended_events": "参加",
+    "interested_events": "気になる"
+  },
+  "calendar": {
+    "title": "カレンダー"
+  },
+  "timeline": {
+    "title": "タイムライン",
+    "empty": "参加済みイベントがありません。イベントを参加済みにしましょう！"
+  },
+  "upcoming": {
+    "title": "今後のイベント",
+    "empty": "今後のイベントはありません",
+    "days_until": "あと{{ count }}日",
+    "tomorrow": "明日",
+    "today": "今日！"
+  },
+  "stats": {
+    "title": "統計",
+    "total_attended": "参加イベント数",
+    "total_interested": "気になる",
+    "songs_witnessed": "聴いた曲数",
+    "unique_songs": "ユニーク曲数",
+    "venues_visited": "訪れた会場数",
+    "first_event": "初参加イベント",
+    "latest_event": "最新イベント",
+    "by_year": "年別",
+    "by_series": "シリーズ別",
+    "by_venue": "会場トップ",
+    "by_type": "イベント種別",
+    "empty": "データがありません。イベントを参加済みにすると統計が表示されます！",
+    "share_title": "私のラブライブ！統計",
+    "generated_by": "LLerNoteで作成"
+  },
+  "mypick": {
+    "title": "マイピック",
+    "description": "お気に入りを選んでシェアしよう",
+    "favorite_events": "推しイベント",
+    "favorite_groups": "推しグループ",
+    "favorite_year": "推し年",
+    "favorite_songs": "推し曲",
+    "add_event": "イベントを追加",
+    "add_group": "グループを追加",
+    "add_song": "楽曲を追加",
+    "select_year": "年を選択",
+    "empty": "まだ何も選ばれていません",
+    "share_title": "マイピック",
+    "pick_limit": "最大{{ count }}件"
+  },
+  "songs": {
+    "title": "聴いた楽曲",
+    "subtitle": "ライブで聴いたすべての楽曲",
+    "times_one": "{{ count }}回",
+    "times_other": "{{ count }}回",
+    "witnessed_at": "聴いた場所",
+    "empty": "まだ楽曲がありません。セットリストのあるイベントを参加済みにしましょう！",
+    "rank": "順位",
+    "song": "楽曲",
+    "count": "回数",
+    "last_seen": "最終",
+    "first_seen": "初回",
+    "total_witnessed": "{{ unique }}曲・のべ{{ total }}回"
+  },
+  "share": {
+    "share": "シェア",
+    "download_image": "画像をダウンロード",
+    "copy_text": "テキストをコピー",
+    "copied": "コピーしました",
+    "share_x": "Xでシェア",
+    "eventernote": "EventerNoteで探す",
+    "image_generated": "画像を生成しました"
+  },
+  "settings": {
+    "title": "設定",
+    "export_data": "データをエクスポート",
+    "import_data": "データをインポート",
+    "import_success": "インポートしました",
+    "import_error": "無効なバックアップファイルです",
+    "data_management": "データ管理"
+  },
+  "footer": {
+    "footer_text": "LLerNote - ラブライブ！イベント参加記録",
+    "data_source": "イベントデータ提供:",
+    "data_updated": "データ更新日: {{ date }}"
+  },
+  "error_page": {
+    "title": "エラーが発生しました",
+    "text": "予期しないエラーが発生しました。ページを再読み込みしてください。",
+    "copy": "エラーをコピー",
+    "reload": "再読み込み",
+    "clear": "データを消去して再読み込み"
+  }
+}
