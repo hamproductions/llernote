@@ -14,7 +14,13 @@ import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useArtistById, useSetlist, useSongById } from '~/hooks/useData';
+import {
+  useArtistById,
+  usePerformanceById,
+  useSetlist,
+  useSetlists,
+  useSongById
+} from '~/hooks/useData';
 import { useToaster } from '~/context/ToasterContext';
 import { isFutureEvent } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
@@ -30,11 +36,13 @@ import type { WatchType } from '~/types/attendance';
 function SetlistItemRow({
   item,
   index,
-  showArtists
+  showArtists,
+  witnessInfo
 }: {
   item: SetlistItem;
   index: number;
   showArtists: boolean;
+  witnessInfo?: { count: number; isFirst: boolean };
 }) {
   const { i18n } = useTranslation();
   const songById = useSongById();
@@ -72,6 +80,16 @@ function SetlistItemRow({
       <Text fontSize="sm">
         {song ? localizedName(i18n.language, song.name, song.englishName) : item.customSongName}
       </Text>
+      {witnessInfo?.isFirst && (
+        <Badge size="sm" variant="solid" flexShrink={0}>
+          初
+        </Badge>
+      )}
+      {witnessInfo && witnessInfo.count > 1 && (
+        <Text flexShrink={0} color="accent.text" fontSize="xs" fontVariantNumeric="tabular-nums">
+          ×{witnessInfo.count}
+        </Text>
+      )}
       {showArtists && artistNames && (
         <Text color="fg.muted" fontSize="xs" lineClamp={1}>
           {artistNames}
@@ -97,7 +115,9 @@ export function EventDetailDialog({
 }) {
   const { t } = useTranslation();
   const { toast } = useToaster();
-  const { get, updateAttendance } = useAttendance();
+  const { get, records, updateAttendance } = useAttendance();
+  const setlists = useSetlists();
+  const performanceById = usePerformanceById();
   const setlist = useSetlist(performance?.id);
   const songById = useSongById();
   const record = performance ? get(performance.id) : undefined;
@@ -126,6 +146,27 @@ export function EventDetailDialog({
       }
     }
   }
+  const witnessBySong = (() => {
+    if (record?.status !== 'attended' || !setlist) return null;
+    const map = new Map<string, { count: number; firstDate: string }>();
+    for (const r of records) {
+      if (r.status !== 'attended') continue;
+      const perf = performanceById.get(r.performanceId);
+      const sl = setlists[r.performanceId];
+      if (!perf || !sl) continue;
+      for (const it of sl.items) {
+        if (it.type !== 'song' || !it.songId) continue;
+        const prev = map.get(it.songId);
+        if (!prev) map.set(it.songId, { count: 1, firstDate: perf.date });
+        else {
+          prev.count += 1;
+          if (perf.date < prev.firstDate) prev.firstDate = perf.date;
+        }
+      }
+    }
+    return map;
+  })();
+
   const sections =
     setlist && setlist.sections.length > 0
       ? setlist.sections
@@ -307,6 +348,15 @@ export function EventDetailDialog({
                           item={item}
                           index={songNumbers.get(item.id) ?? 0}
                           showArtists={showArtists}
+                          witnessInfo={
+                            item.type === 'song' && item.songId && witnessBySong
+                              ? {
+                                  count: witnessBySong.get(item.songId)?.count ?? 0,
+                                  isFirst:
+                                    witnessBySong.get(item.songId)?.firstDate === performance.date
+                                }
+                              : undefined
+                          }
                         />
                       ))}
                     </Box>

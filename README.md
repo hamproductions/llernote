@@ -15,6 +15,9 @@ Track the lives you attended, browse setlists, tally every song you've witnessed
 - **Song tally** — every song you've witnessed live, ranked by count, with the exact performances where you heard it
 - **Sharing** — X (Twitter) intent, copy-as-text, EventerNote search link per event
 - **Data ownership** — JSON export/import backup (Stats page → Data Management)
+- **Offline** — service worker caches app shell + assets after first visit; installable PWA manifest
+- **Personal setlist markers** — 初 badge on songs you witnessed for the first time at that event, ×N witness counts
+- **Activity heatmap** — GitHub-style year × month grid on the stats share card
 
 ## Stack
 

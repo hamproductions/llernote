@@ -13,6 +13,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { useAttendance } from '~/hooks/useAttendance';
 import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
 import { tallySongs } from '~/utils/song-tally';
+import { foldKana } from '~/utils/event-filter';
 import type { Song } from '~/types';
 
 const PAGE_SIZE = 48;
@@ -46,11 +47,12 @@ export default function Page() {
   const tallyById = useMemo(() => new Map(tally.map((e) => [e.songId, e])), [tally]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = foldKana(search.trim());
     const list = songs.filter((song) => {
       if (q) {
-        const haystack =
-          `${song.name} ${song.phoneticName ?? ''} ${song.englishName ?? ''}`.toLowerCase();
+        const haystack = foldKana(
+          `${song.name} ${song.phoneticName ?? ''} ${song.englishName ?? ''}`
+        );
         if (!haystack.includes(q)) return false;
       }
       if (seriesId && !song.seriesIds.map(String).includes(seriesId)) return false;

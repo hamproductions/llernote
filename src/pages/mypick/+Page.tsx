@@ -54,6 +54,7 @@ export default function Page() {
   const [picking, setPicking] = useState<{ row: MyPickRow; column: MyPickColumn }>();
   const [addingRow, setAddingRow] = useState(false);
   const [yearSlot, setYearSlot] = useState<MyPickSlot>('song');
+  const [exporting, setExporting] = useState(false);
 
   const config = myPick?.config ?? DEFAULT_CONFIG;
 
@@ -169,9 +170,14 @@ export default function Page() {
           <Button
             size="sm"
             onClick={async () => {
-              if (gridRef.current) {
+              if (!gridRef.current) return;
+              setExporting(true);
+              await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
+              try {
                 await downloadElementAsImage(gridRef.current, 'llernote-mypick.png');
                 toast({ title: t('share.image_generated'), type: 'success' });
+              } finally {
+                setExporting(false);
               }
             }}
           >
@@ -229,7 +235,7 @@ export default function Page() {
           ref={gridRef}
           myPick={myPick}
           rows={config.rows}
-          editable
+          editable={!exporting}
           onPickCell={(row, column) => setPicking({ row, column })}
           onClearCell={(key) => setMyPickCell(key, null)}
           onRemoveRow={(row) =>

@@ -25,16 +25,26 @@ export const todayString = () => {
 
 export const isFutureEvent = (performance: Performance) => performance.date > todayString();
 
+export const foldKana = (text: string) =>
+  text.toLowerCase().replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+
 export const filterEvents = (
   performances: Performance[],
   filters: EventFilters,
   attendanceMap: AttendanceMap,
   performanceCharacters?: Map<string, Set<string>>
 ): Performance[] => {
-  const search = filters.search.trim().toLowerCase();
+  const search = foldKana(filters.search.trim());
 
   return performances.filter((p) => {
-    if (search && !`${p.tourName} ${p.venue}`.toLowerCase().includes(search)) return false;
+    if (
+      search &&
+      !foldKana(
+        `${p.tourName} ${p.venue} ${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`
+      ).includes(search)
+    ) {
+      return false;
+    }
     if (filters.seriesIds.length > 0 && !p.seriesIds.some((id) => filters.seriesIds.includes(id))) {
       return false;
     }

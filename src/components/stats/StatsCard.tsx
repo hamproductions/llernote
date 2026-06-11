@@ -170,7 +170,10 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
             <BarList
               items={stats.bySeries.map((s) => ({
                 key: s.seriesId,
-                label: getSeriesShortName(s.seriesId, seriesById.get(s.seriesId)?.name ?? s.seriesId),
+                label: getSeriesShortName(
+                  s.seriesId,
+                  seriesById.get(s.seriesId)?.name ?? s.seriesId
+                ),
                 count: s.count,
                 color: seriesById.get(s.seriesId)?.color
               }))}
