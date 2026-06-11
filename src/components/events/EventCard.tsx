@@ -7,6 +7,7 @@ import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { useAttendance } from '~/hooks/useAttendance';
+import { isFutureEvent } from '~/utils/event-filter';
 import type { Performance } from '~/types';
 
 export function EventCard({
@@ -19,20 +20,29 @@ export function EventCard({
   const { t } = useTranslation();
   const { get } = useAttendance();
   const record = get(performance.id);
+  const future = isFutureEvent(performance);
 
   return (
     <Card.Root
       onClick={onClick}
-      style={{
-        borderLeftColor:
-          record?.status === 'attended'
-            ? 'var(--colors-accent-default)'
-            : record?.status === 'interested'
-              ? 'var(--colors-amber-9)'
-              : 'transparent'
-      }}
       cursor={onClick ? 'pointer' : undefined}
       borderLeftWidth="4px"
+      borderLeftColor={
+        record?.status === 'attended'
+          ? 'accent.default'
+          : record?.status === 'interested'
+            ? 'amber.9'
+            : 'transparent'
+      }
+      bgColor={
+        record?.status === 'attended'
+          ? 'accent.a2'
+          : record?.status === 'interested'
+            ? 'amber.a2'
+            : undefined
+      }
+      transition="colors"
+      _hover={onClick ? { borderColor: 'accent.8' } : undefined}
     >
       <Card.Body p="4">
         <Stack gap="2">
@@ -51,13 +61,13 @@ export function EventCard({
                   </Badge>
                 )}
                 {record?.status === 'attended' && (
-                  <Badge size="sm">
+                  <Badge size="sm" variant="solid">
                     <FaCheck /> {t('events.status_attended')}
                   </Badge>
                 )}
                 {record?.status === 'interested' && (
-                  <Badge size="sm" colorPalette="amber">
-                    <FaRegStar /> {t('events.status_interested')}
+                  <Badge size="sm" variant="solid" colorPalette="amber">
+                    <FaRegStar /> {t('events.status_going')}
                   </Badge>
                 )}
               </HStack>
@@ -70,7 +80,7 @@ export function EventCard({
             </Stack>
           </HStack>
           <Wrap gap="2">
-            <AttendanceButtons performanceId={performance.id} />
+            <AttendanceButtons performanceId={performance.id} future={future} />
           </Wrap>
         </Stack>
       </Card.Body>

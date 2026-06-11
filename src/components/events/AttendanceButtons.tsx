@@ -5,44 +5,49 @@ import { useAttendance } from '~/hooks/useAttendance';
 
 export function AttendanceButtons({
   performanceId,
+  future = false,
   size = 'xs'
 }: {
   performanceId: string;
+  future?: boolean;
   size?: 'xs' | 'sm' | 'md';
 }) {
   const { t } = useTranslation();
   const { get, setAttendance, removeAttendance } = useAttendance();
   const record = get(performanceId);
 
-  return (
-    <>
+  if (future) {
+    const going = record?.status === 'interested';
+    return (
       <Button
         size={size}
-        variant={record?.status === 'attended' ? 'solid' : 'outline'}
+        variant={going ? 'solid' : 'outline'}
         onClick={(e) => {
           e.stopPropagation();
-          record?.status === 'attended'
-            ? removeAttendance(performanceId)
-            : setAttendance(performanceId, 'attended');
-        }}
-      >
-        <FaCheck />
-        {t('events.status_attended')}
-      </Button>
-      <Button
-        size={size}
-        variant={record?.status === 'interested' ? 'solid' : 'outline'}
-        onClick={(e) => {
-          e.stopPropagation();
-          record?.status === 'interested'
-            ? removeAttendance(performanceId)
-            : setAttendance(performanceId, 'interested');
+          if (going) removeAttendance(performanceId);
+          else setAttendance(performanceId, 'interested');
         }}
         colorPalette="amber"
       >
-        {record?.status === 'interested' ? <FaStar /> : <FaRegStar />}
-        {t('events.status_interested')}
+        {going ? <FaStar /> : <FaRegStar />}
+        {t('events.status_going')}
       </Button>
-    </>
+    );
+  }
+
+  const attended = record?.status === 'attended';
+  return (
+    <Button
+      size={size}
+      variant={attended ? 'solid' : 'outline'}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (attended) removeAttendance(performanceId);
+        else setAttendance(performanceId, 'attended');
+      }}
+    >
+      <FaCheck />
+      {t('events.status_attended')}
+    </Button>
   );
 }

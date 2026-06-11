@@ -12,8 +12,9 @@ import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useSetlist, useSongById } from '~/hooks/useData';
+import { useArtistById, useSetlist, useSongById } from '~/hooks/useData';
 import { useToaster } from '~/context/ToasterContext';
+import { isFutureEvent } from '~/utils/event-filter';
 import {
   copyTextToClipboard,
   eventernoteSearchUrl,
@@ -23,8 +24,17 @@ import {
 import type { Performance, SetlistItem } from '~/types';
 import type { WatchType } from '~/types/attendance';
 
-function SetlistItemRow({ item, index }: { item: SetlistItem; index: number }) {
+function SetlistItemRow({
+  item,
+  index,
+  showArtists
+}: {
+  item: SetlistItem;
+  index: number;
+  showArtists: boolean;
+}) {
   const songById = useSongById();
+  const artistById = useArtistById();
   if (item.type !== 'song') {
     return (
       <HStack gap="2" py="0.5">
@@ -38,8 +48,12 @@ function SetlistItemRow({ item, index }: { item: SetlistItem; index: number }) {
     );
   }
   const song = item.songId ? songById.get(item.songId) : undefined;
+  const artistNames = (song?.artists ?? [])
+    .map((a) => artistById.get(a.id)?.name)
+    .filter(Boolean)
+    .join('・');
   return (
-    <HStack gap="2" py="0.5">
+    <HStack gap="2" alignItems="baseline" py="0.5">
       <Text
         minW="8"
         color="fg.subtle"
@@ -50,6 +64,16 @@ function SetlistItemRow({ item, index }: { item: SetlistItem; index: number }) {
         {index}.
       </Text>
       <Text fontSize="sm">{song?.name ?? item.customSongName}</Text>
+      {showArtists && artistNames && (
+        <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+          {artistNames}
+        </Text>
+      )}
+      {item.remarks && (
+        <Text color="fg.subtle" fontSize="xs" lineClamp={1}>
+          {item.remarks}
+        </Text>
+      )}
     </HStack>
   );
 }
@@ -67,8 +91,10 @@ export function EventDetailDialog({
   const { toast } = useToaster();
   const { get, updateAttendance } = useAttendance();
   const setlist = useSetlist(performance?.id);
+  const songById = useSongById();
   const record = performance ? get(performance.id) : undefined;
   const [memo, setMemo] = useState('');
+  const [showArtists, setShowArtists] = useState(false);
 
   useEffect(() => {
     setMemo(record?.memo ?? '');
@@ -121,7 +147,11 @@ export function EventDetailDialog({
             </Stack>
 
             <Wrap gap="2">
-              <AttendanceButtons performanceId={performance.id} size="sm" />
+              <AttendanceButtons
+                performanceId={performance.id}
+                future={isFutureEvent(performance)}
+                size="sm"
+              />
             </Wrap>
 
             {record?.status === 'attended' && (
@@ -200,7 +230,41 @@ export function EventDetailDialog({
             </Wrap>
 
             <Stack gap="2">
-              <Text fontWeight="semibold">{t('events.setlist')}</Text>
+              <HStack gap="2" justifyContent="space-between" flexWrap="wrap">
+                <Text fontWeight="semibold">{t('events.setlist')}</Text>
+                {setlist && (
+                  <HStack gap="1">
+                    <Button
+                      size="xs"
+                      variant={showArtists ? 'subtle' : 'ghost'}
+                      onClick={() => setShowArtists((v) => !v)}
+                    >
+                      {t('events.show_artists')}
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      onClick={async () => {
+                        const lines = [
+                          formatEventShareText(performance),
+                          ...setlist.items.map((item) => {
+                            if (item.type !== 'song') {
+                              return `-- ${item.title ?? item.type.toUpperCase()}`;
+                            }
+                            const song = item.songId ? songById.get(item.songId) : undefined;
+                            return `${String(songNumbers.get(item.id) ?? '-').padStart(2, '0')}. ${song?.name ?? item.customSongName ?? ''}`;
+                          })
+                        ];
+                        await copyTextToClipboard(lines.join('\n'));
+                        toast({ title: t('share.copied'), type: 'success' });
+                      }}
+                    >
+                      <FaCopy />
+                      {t('events.copy_setlist')}
+                    </Button>
+                  </HStack>
+                )}
+              </HStack>
               {setlist ? (
                 <Stack gap="3">
                   {sections.map((section) => (
@@ -221,6 +285,7 @@ export function EventDetailDialog({
                           key={item.id}
                           item={item}
                           index={songNumbers.get(item.id) ?? 0}
+                          showArtists={showArtists}
                         />
                       ))}
                     </Box>

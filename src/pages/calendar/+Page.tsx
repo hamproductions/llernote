@@ -118,9 +118,7 @@ function MonthCalendar({
                         key={p.id}
                         title={p.tourName}
                         style={{
-                          backgroundColor:
-                            seriesById.get(p.seriesIds[0] ?? '')?.color ??
-                            'var(--colors-accent-default)'
+                          backgroundColor: seriesById.get(p.seriesIds[0] ?? '')?.color ?? '#e4007f'
                         }}
                         borderRadius="full"
                         w="2"

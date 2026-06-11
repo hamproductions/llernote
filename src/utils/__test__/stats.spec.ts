@@ -4,7 +4,12 @@ import { tallySongs } from '../song-tally';
 import type { Performance, Setlist } from '~/types';
 import type { AttendanceRecord } from '~/types/attendance';
 
-const performance = (id: string, date: string, venue = 'Venue A', seriesIds = ['1']): Performance => ({
+const performance = (
+  id: string,
+  date: string,
+  venue = 'Venue A',
+  seriesIds = ['1']
+): Performance => ({
   id,
   tourName: `Event ${id}`,
   date,

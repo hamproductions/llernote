@@ -21,7 +21,7 @@ export default defineConfig({
   plugins: [
     tsconfigPaths(),
     cjsInterop({
-      dependencies: ['path-browserify', 'lz-string', 'react-helmet-async']
+      dependencies: ['path-browserify', 'lz-string', 'react-helmet-async', 'file-saver']
     }),
     react({
       babel: {

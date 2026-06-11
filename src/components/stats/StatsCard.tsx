@@ -36,7 +36,7 @@ function BarList({
             <Box
               style={{
                 width: `${(item.count / max) * 100}%`,
-                backgroundColor: item.color ?? 'var(--colors-accent-default)'
+                backgroundColor: item.color ?? '#e4007f'
               }}
               borderRadius="sm"
               h="full"

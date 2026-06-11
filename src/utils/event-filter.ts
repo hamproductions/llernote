@@ -14,6 +14,13 @@ export const EMPTY_FILTERS: EventFilters = {
   seriesIds: []
 };
 
+export const todayString = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+export const isFutureEvent = (performance: Performance) => performance.date > todayString();
+
 export const filterEvents = (
   performances: Performance[],
   filters: EventFilters,

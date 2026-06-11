@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Stack } from 'styled-system/jsx';
+import { Grid, HStack, Stack } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
-import { HStack } from 'styled-system/jsx';
 import { EventCard } from '~/components/events/EventCard';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
@@ -37,7 +36,11 @@ export default function Page() {
           {t('upcoming.title')}
         </Heading>
         {upcoming.length === 0 && <Text color="fg.muted">{t('upcoming.empty')}</Text>}
-        <Stack gap="3">
+        <Grid
+          gap="3"
+          alignItems="start"
+          gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}
+        >
           {upcoming.map((p) => {
             const days = daysUntil(p.date);
             return (
@@ -55,7 +58,7 @@ export default function Page() {
               </Stack>
             );
           })}
-        </Stack>
+        </Grid>
         <EventDetailDialog
           performance={selected}
           open={selected !== undefined}

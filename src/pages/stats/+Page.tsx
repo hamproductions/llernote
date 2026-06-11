@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaDownload, FaFileExport, FaFileImport } from 'react-icons/fa6';
 import { saveAs } from 'file-saver';
-import { Stack, Wrap } from 'styled-system/jsx';
+import { HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
@@ -53,9 +53,9 @@ export default function Page() {
         {stats.attendedCount === 0 && stats.interestedCount === 0 ? (
           <Text color="fg.muted">{t('stats.empty')}</Text>
         ) : (
-          <>
+          <HStack gap="6" alignItems="flex-start" flexWrap="wrap">
             <StatsCard ref={cardRef} stats={stats} />
-            <Wrap gap="2">
+            <Stack gap="2" minW="48">
               <Button
                 size="sm"
                 onClick={async () => {
@@ -68,8 +68,8 @@ export default function Page() {
                 <FaDownload />
                 {t('share.download_image')}
               </Button>
-            </Wrap>
-          </>
+            </Stack>
+          </HStack>
         )}
 
         <Stack gap="2" mt="8">

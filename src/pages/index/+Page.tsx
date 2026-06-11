@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Stack } from 'styled-system/jsx';
+import { Grid, HStack, Stack } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
-import { EventCard } from '~/components/events/EventCard';
+import { TourCard } from '~/components/events/TourCard';
 import { EventFiltersBar } from '~/components/events/EventFiltersBar';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
@@ -12,9 +12,10 @@ import { useArtistById, usePerformances, useSetlists, useSongById } from '~/hook
 import { useAttendance } from '~/hooks/useAttendance';
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { EMPTY_FILTERS, filterEvents, type EventFilters } from '~/utils/event-filter';
+import { groupByTour } from '~/utils/tour';
 import type { Performance } from '~/types';
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 export default function Page() {
   const { t } = useTranslation();
@@ -32,20 +33,25 @@ export default function Page() {
     [setlists, songById, artistById]
   );
 
-  const filtered = useMemo(
-    () => filterEvents(performances, filters, map, performanceCharacters),
+  const tours = useMemo(
+    () => groupByTour(filterEvents(performances, filters, map, performanceCharacters)),
     [performances, filters, map, performanceCharacters]
   );
 
-  const visible = filtered.slice(0, limit);
+  const visible = tours.slice(0, limit);
 
   return (
     <>
       <Metadata title={`${t('events.title')} - LLerNote`} helmet />
       <Stack gap="4">
-        <Heading as="h1" fontSize="2xl">
-          {t('events.title')}
-        </Heading>
+        <HStack justifyContent="space-between" alignItems="baseline" flexWrap="wrap">
+          <Heading as="h1" fontSize="2xl">
+            {t('events.title')}
+          </Heading>
+          <Text color="fg.muted" fontSize="sm">
+            {t('events.results_count', { count: tours.length })}
+          </Text>
+        </HStack>
         <EventFiltersBar
           filters={filters}
           onChange={(next) => {
@@ -53,20 +59,17 @@ export default function Page() {
             setLimit(PAGE_SIZE);
           }}
         />
-        <Text color="fg.muted" fontSize="sm">
-          {t('events.results_count', { count: filtered.length })}
-        </Text>
-        {filtered.length === 0 && <Text color="fg.muted">{t('events.no_results')}</Text>}
-        <Stack gap="3">
-          {visible.map((performance) => (
-            <EventCard
-              key={performance.id}
-              performance={performance}
-              onClick={() => setSelected(performance)}
-            />
+        {tours.length === 0 && <Text color="fg.muted">{t('events.no_results')}</Text>}
+        <Grid
+          gap="3"
+          alignItems="start"
+          gridTemplateColumns={{ base: '1fr', xl: 'repeat(2, 1fr)' }}
+        >
+          {visible.map((tour) => (
+            <TourCard key={tour.tourName} tour={tour} onSelect={setSelected} />
           ))}
-        </Stack>
-        {filtered.length > limit && (
+        </Grid>
+        {tours.length > limit && (
           <Button variant="outline" onClick={() => setLimit((l) => l + PAGE_SIZE)}>
             {t('common.show_more')}
           </Button>

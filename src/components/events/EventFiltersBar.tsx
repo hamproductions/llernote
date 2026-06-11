@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { HStack, Wrap } from 'styled-system/jsx';
+import { Box, HStack, Wrap } from 'styled-system/jsx';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { NativeSelect } from './NativeSelect';
@@ -31,35 +31,21 @@ export function EventFiltersBar({
 
   const attendanceOptions = [
     { value: 'attended', label: t('events.status_attended') },
-    { value: 'interested', label: t('events.status_interested') },
+    { value: 'interested', label: t('events.status_going') },
     { value: 'none', label: t('events.status_none') }
   ];
 
   return (
-    <>
-      <Input
-        size="sm"
-        value={filters.search}
-        placeholder={t('events.search_placeholder')}
-        onChange={(e) => onChange({ ...filters, search: e.target.value })}
-      />
-      <Wrap gap="1">
-        {series.map((s) => {
-          const active = filters.seriesIds.includes(s.id);
-          return (
-            <Button
-              key={s.id}
-              size="xs"
-              variant={active ? 'solid' : 'outline'}
-              style={active ? { backgroundColor: s.color, color: 'white' } : { color: s.color }}
-              onClick={() => toggleSeries(s.id)}
-            >
-              {s.name}
-            </Button>
-          );
-        })}
-      </Wrap>
-      <HStack gap="2" flexWrap="wrap">
+    <Box borderColor="border.subtle" borderRadius="l2" borderWidth="1px" p="3" bgColor="bg.subtle">
+      <HStack gap="2" alignItems="center" flexWrap="wrap">
+        <Box flex="1" minW="56">
+          <Input
+            size="sm"
+            value={filters.search}
+            placeholder={t('events.search_placeholder')}
+            onChange={(e) => onChange({ ...filters, search: e.target.value })}
+          />
+        </Box>
         <NativeSelect
           aria-label={t('events.year')}
           value={filters.year ?? ''}
@@ -97,6 +83,22 @@ export function EventFiltersBar({
           {t('common.clear')}
         </Button>
       </HStack>
-    </>
+      <Wrap gap="1" mt="2">
+        {series.map((s) => {
+          const active = filters.seriesIds.includes(s.id);
+          return (
+            <Button
+              key={s.id}
+              size="xs"
+              variant={active ? 'solid' : 'outline'}
+              style={active ? { backgroundColor: s.color, color: 'white' } : { color: s.color }}
+              onClick={() => toggleSeries(s.id)}
+            >
+              {s.name}
+            </Button>
+          );
+        })}
+      </Wrap>
+    </Box>
   );
 }

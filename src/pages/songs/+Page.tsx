@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa6';
-import { Box, HStack, Stack } from 'styled-system/jsx';
+import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
@@ -51,7 +51,11 @@ export default function Page() {
             <Text color="fg.muted" fontSize="sm">
               {t('songs.total_witnessed', { total, unique: tally.length })}
             </Text>
-            <Stack gap="2">
+            <Grid
+              gap="2"
+              alignItems="start"
+              gridTemplateColumns={{ base: '1fr', xl: 'repeat(2, 1fr)' }}
+            >
               {tally.map((entry, i) => {
                 const song = songById.get(entry.songId);
                 const isExpanded = expanded === entry.songId;
@@ -134,7 +138,7 @@ export default function Page() {
                   </Box>
                 );
               })}
-            </Stack>
+            </Grid>
           </>
         )}
       </Stack>
