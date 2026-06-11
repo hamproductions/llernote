@@ -145,7 +145,11 @@
     "add_column": "列を追加",
     "column_slot_sub": "ピック列",
     "column_year_sub": "年別の列",
-    "already_added": "追加済み"
+    "already_added": "追加済み",
+    "database_ready": "{{ count }}件の候補を読み込み済み",
+    "pick_columns": "ピック列",
+    "year_columns": "年別の列",
+    "no_pick": "未選択"
   },
   "songs": {
     "title": "楽曲",

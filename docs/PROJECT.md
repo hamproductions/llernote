@@ -4,6 +4,38 @@ Everything known about this project as of 2026-06-12. This is the knowledge-tran
 
 ---
 
+## 0. Project philosophy — the WHY behind everything
+
+### Product vision
+**"EventerNote, but for LoveLive, and yours."** A fan's personal live-history ledger. The user is an LLer who goes to lives (or watches streams) and wants to: remember every show, prove it, relive it (setlists, songs witnessed, 初披露 moments), show it off (share images, share URLs), and plan the next one. The original mandate verbatim: *"KEEP TRACK OF LOVELIVE EVENTS THEY WENT TO, similar spirit to EventerNote… ../the-sorter has A GOLD MINE OF SUCH DATA — YANK IT AND USE EVERYTHING: THE FRONTEND, THE LIBS, THE DATA, THE VIBES. LLFANS IS THE SOURCE OF TRUTH."*
+
+### Core values (ranked)
+1. **The data is the product.** LLFans/the-sorter data is sacred and complete — UI must surface ALL of it (real leg names, open/start times, tour types, premiere info), never synthesize what already exists. Every "use more data" demand was the owner catching invented labels where real ones existed.
+2. **User owns their data.** Offline-first, no account, no server. localStorage with export/import. Sync is anticipated (LWW, tombstones, versioned backups) but never required. Losing or corrupting a user's attendance history is the cardinal sin — hence validation, tombstones, cross-tab sync, degenerate-state guards.
+3. **Sharing is the social loop.** Stats PNG, MyPick grid PNG + URL, attendance-history text, X intents, EventerNote links. Everything memorable should be exportable and tweetable. Share artifacts must look intentional — an exported image IS the app's public face.
+4. **Fan-grade respect for the franchise.** Official series brand colors everywhere, member symbol glyphs used correctly (small), seiyuu names alongside characters, 推し (oshi) vocabulary, JA-first with real EN localization. A 古参 fan should find zero factual embarrassments.
+5. **Free and personal.** No monetization assumptions, no telemetry beyond nothing. It's a fan tool.
+
+### Design philosophy (what the ~40 feedback rounds converged on)
+- **Identity: "live venue at night."** Dark-first, penlight gradient (#e4007f→#ff7a00→#00a0e0), stage-glow, rounded JP display type. Not generic-SaaS, not AI-slop pastel.
+- **Dense but legible.** A tracker for 761 events and 884 songs is a power tool — information density wins over whitespace aesthetics, but with strict alignment, uniform heights, and visual rhythm. "Claustrophobic" and "random space" are both failures; the line between them is intentionality.
+- **Direct manipulation, zero ceremony.** One click to record attendance. Inline filters, never modal pickers for filtering. Type-ahead everywhere lists are long. Grey-out (with reason) instead of hiding. If it needs a tutorial, redesign it.
+- **The reference rules.** When a beloved community tool exists (mypick.rurino.dev, EventerNote), match its learned conventions and READ ITS ACTUAL CSS rather than reinventing — the owner repeatedly demanded parity with real fan tools over novel inventions.
+- **Wrap, don't truncate.** Event names are sacred strings fans recognize whole.
+
+### Engineering philosophy
+- **Steal the whole stack, change nothing gratuitously.** the-sorter's stack was adopted wholesale (Vike/Panda/Park UI) — proven against this exact data. New deps require strong justification (only lz-string usage patterns were added).
+- **Static data compiled in; user data behind one tiny store abstraction** (SyncedStore) so a sync backend can slot in without touching features.
+- **Determinism over cleverness:** SSR first paint is fixed (ja, no detectors, no Date/window in render); side effects in effects; degenerate states unrepresentable.
+- **Zero-error bar, literally:** 0 console errors in both locales/themes, 0 lint errors AND warnings, all gates green — "MUST END WITH 0 ERROR NO EXCEPTION" was a standing order, not a slogan.
+
+### Process philosophy (how this was built — keep working this way)
+- **Dogfood relentlessly, with fresh eyes.** Spawn zero-context agents to discover the app cold; spawn many-lens critic panels (the 20-agent review: 10 personas × 10 audits); treat their findings as the backlog. "SPIN UP AGENT → MAKE IT DO → FIX ALL FEEDBACK → REPEAT → 0 ERRORS."
+- **Screenshots are the only truth.** Every claim of "fixed" must be re-verified in the user's exact conditions (their theme, locale, viewport, their weird stored state, the exported PNG opened and looked at). The owner will always screenshot the state you didn't check. "ARE YOU SURE?" means you weren't.
+- **Fix → test → iterate, in small committed waves.** Every commit message names the feedback it answers; git log is the requirements audit trail.
+- **Read everything first.** Source data files, reference-site CSS, the sibling repo — before writing a line. The biggest reworks came from not having read raw data that already held the answer.
+- **Improvise, adapt, overcome — but document.** Leave docs (this file, ARCHITECTURE, DATA, SYNC), leave dogfood reports, leave the failure post-mortems, so nothing is re-learned.
+
 ## 1. What this is
 
 **LLerNote** — offline-first LoveLive! event-attendance tracker in the spirit of EventerNote. Track which of 761 franchise performances you attended, browse setlists, tally every song you've witnessed live (884 catalog), view statistics, build a shareable "MyPick" favorites grid. No backend; all user data in localStorage with a sync-ready schema.

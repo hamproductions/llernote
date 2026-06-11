@@ -12,13 +12,13 @@ describe('PickDialog', () => {
         selectedIds={[]}
         max={1}
         open
-        display="tiles"
         onClose={vi.fn()}
         onChange={vi.fn()}
+        display="tiles"
       />
     );
 
-    expect(screen.getByTestId('pick-dialog-grid')).toBeInTheDocument();
-    expect(screen.queryByTestId('pick-dialog-list')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pick-dialog-grid')).not.toBeNull();
+    expect(screen.queryByTestId('pick-dialog-list')).toBeNull();
   });
 });

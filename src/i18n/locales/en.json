@@ -146,7 +146,11 @@
     "add_column": "Add column",
     "column_slot_sub": "Pick column",
     "column_year_sub": "Year column",
-    "already_added": "Already added"
+    "already_added": "Already added",
+    "database_ready": "{{ count }} choices ready",
+    "pick_columns": "Pick columns",
+    "year_columns": "Year columns",
+    "no_pick": "No Pick"
   },
   "songs": {
     "title": "Songs",

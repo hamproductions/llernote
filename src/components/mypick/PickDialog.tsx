@@ -19,14 +19,14 @@ function TileImage({ src }: { src?: string }) {
   const [failed, setFailed] = useState(false);
   return (
     <Box
-      flexShrink={0}
-      borderRadius="l2"
-      w="full"
       style={{ aspectRatio: '1 / 1' }}
+      flexShrink={0}
+      borderColor="border.subtle"
+      borderRadius="l2"
+      borderWidth="1px"
+      w="full"
       bgColor="bg.default"
       overflow="hidden"
-      borderColor="border.subtle"
-      borderWidth="1px"
     >
       {failed || !src ? (
         <Center w="full" h="full" color="fg.subtle">
@@ -60,8 +60,8 @@ function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onCl
       p="2.5"
       bgColor={active ? 'accent.a2' : 'white'}
       opacity={item.disabled ? 0.35 : 1}
-      transition="all"
       boxShadow="sm"
+      transition="all"
       _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)', boxShadow: 'md' }}
     >
       <TileImage src={item.image} />

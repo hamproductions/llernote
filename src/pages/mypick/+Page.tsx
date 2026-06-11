@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaDownload, FaLink } from 'react-icons/fa6';
-import { HStack, Stack } from 'styled-system/jsx';
+import { FaChevronLeft, FaChevronRight, FaDownload, FaLink, FaXmark } from 'react-icons/fa6';
+import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
 import { MyPickGrid } from '~/components/mypick/MyPickGrid';
 import { Metadata } from '~/components/layout/Metadata';
-import { SectionHeading } from '~/components/layout/SectionHeading';
+import { Dialog } from '~/components/ui/dialog';
+import { IconButton } from '~/components/ui/icon-button';
 import { useMyPick } from '~/hooks/useAttendance';
 import {
   useArtistById,
@@ -165,46 +166,61 @@ export default function Page() {
   };
 
   const pickedId = picking ? (myPick?.cells?.[cellKey(picking.row, picking.column)] ?? null) : null;
-
-  const columnItems: PickItem[] = useMemo(() => {
-    const slots: MyPickSlot[] = ['cast', 'song', 'event'];
-    const existingSlots = new Set(
-      config.columns.filter((c) => c.type === 'slot').map((c) => c.slot)
-    );
-    return [
-      ...slots.map((slot) => ({
-        id: `slot:${slot}`,
-        label: t(`mypick.slot_${slot}`),
-        sub: existingSlots.has(slot) ? t('mypick.already_added') : t('mypick.column_slot_sub'),
-        disabled: existingSlots.has(slot)
-      })),
-      ...slots.map((slot) => ({
-        id: `year-right:${slot}`,
-        label: `${maxYear != null ? maxYear + 1 : currentYear} ${t(`mypick.slot_${slot}`)}`,
-        sub: t('mypick.column_year_sub')
-      })),
-      ...(yearColumns.length > 0
-        ? slots.map((slot) => ({
-            id: `year-left:${slot}`,
-            label: `${minYear! - 1} ${t(`mypick.slot_${slot}`)}`,
-            sub: t('mypick.column_year_sub')
-          }))
-        : [])
-    ];
-  }, [config.columns, yearColumns.length, minYear, maxYear, currentYear, t]);
+  const slots: MyPickSlot[] = ['cast', 'song', 'event'];
+  const existingSlots = new Set(config.columns.filter((c) => c.type === 'slot').map((c) => c.slot));
+  const leftYear = yearColumns.length > 0 ? minYear! - 1 : null;
+  const rightYear = maxYear != null ? maxYear + 1 : currentYear;
 
   return (
     <>
       <Metadata title={`${t('mypick.title')} - LLerNote`} helmet />
-      <Stack gap="3">
-        <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
-          <Stack gap="0">
-            <SectionHeading size="2xl">{t('mypick.title')}</SectionHeading>
-            <Text color="fg.muted" fontSize="sm">
-              {t('mypick.description')}
+      <Stack gap={{ base: '5', md: '7' }}>
+        <Stack gap="2" alignItems="center" pt={{ base: '2', md: '5' }} textAlign="center">
+          <Text
+            color="accent.default"
+            fontSize="2xs"
+            fontWeight="semibold"
+            letterSpacing="0.3em"
+            textTransform="uppercase"
+          >
+            Link! Like! Love Live!
+          </Text>
+          <Text
+            as="h1"
+            textStyle="display"
+            color="fg.default"
+            fontSize={{ base: '3xl', sm: '4xl', md: '5xl' }}
+            letterSpacing="0.04em"
+            lineHeight="1"
+          >
+            MY PICK{' '}
+            <Box
+              as="span"
+              style={{
+                background: 'linear-gradient(92deg, #ec4899 8%, #06b6d4 52%, #f59e0b 94%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
+              LLERNOTE
+            </Box>
+          </Text>
+          <Text color="fg.muted" fontSize="sm" letterSpacing="0.08em">
+            {t('mypick.description')}
+          </Text>
+        </Stack>
+
+        <HStack gap="3" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+          <HStack gap="2.5" color="fg.muted" fontSize="xs">
+            <Box borderRadius="full" w="2" h="2" bgColor="green.9" />
+            <Text>
+              {t('mypick.database_ready', {
+                count: songs.length + performances.length + characters.length
+              })}
             </Text>
-          </Stack>
-          <HStack gap="2">
+          </HStack>
+          <HStack gap="3" flexWrap="wrap">
             {!shared && (
               <Button
                 size="sm"
@@ -300,6 +316,7 @@ export default function Page() {
               setPicking(undefined);
             }
           }}
+          display={picking?.column.slot === 'song' ? 'tiles' : 'auto'}
         />
 
         <PickDialog
@@ -321,24 +338,139 @@ export default function Page() {
           }}
         />
 
-        <PickDialog
-          title={t('mypick.add_column')}
-          items={columnItems}
-          selectedIds={[]}
-          max={1}
-          open={addingColumn}
-          onClose={() => setAddingColumn(false)}
-          onChange={(ids) => {
-            const ref = ids[ids.length - 1];
-            if (ref) {
-              const [kind, slot] = ref.split(':') as [string, MyPickSlot];
-              if (kind === 'slot') addColumn({ type: 'slot', slot });
-              else if (kind === 'year-right') addYear('right', slot);
-              else addYear('left', slot);
-            }
-            setAddingColumn(false);
-          }}
-        />
+        <Dialog.Root open={addingColumn} onOpenChange={(e) => !e.open && setAddingColumn(false)}>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content w="full" maxW="2xl" mx="4">
+              <Stack gap="5" p={{ base: '4', md: '5' }}>
+                <HStack justifyContent="space-between" pr="8">
+                  <Dialog.Title>
+                    <Text textStyle="display" fontSize="xl">
+                      {t('mypick.add_column')}
+                    </Text>
+                  </Dialog.Title>
+                </HStack>
+
+                <Stack gap="2">
+                  <Text color="fg.muted" fontSize="xs" fontWeight="bold" textTransform="uppercase">
+                    {t('mypick.pick_columns')}
+                  </Text>
+                  <Grid gap="2" gridTemplateColumns={{ base: '1fr', sm: 'repeat(3, 1fr)' }}>
+                    {slots.map((slot) => {
+                      const disabled = existingSlots.has(slot);
+                      return (
+                        <Stack
+                          key={slot}
+                          onClick={
+                            disabled
+                              ? undefined
+                              : () => {
+                                  addColumn({ type: 'slot', slot });
+                                  setAddingColumn(false);
+                                }
+                          }
+                          cursor={disabled ? 'not-allowed' : 'pointer'}
+                          gap="1"
+                          borderColor={disabled ? 'border.subtle' : 'accent.7'}
+                          borderRadius="l3"
+                          borderWidth="1px"
+                          p="4"
+                          bgColor={disabled ? 'bg.subtle' : 'accent.a1'}
+                          opacity={disabled ? 0.45 : 1}
+                          _hover={
+                            disabled ? undefined : { borderColor: 'accent.9', bgColor: 'accent.a2' }
+                          }
+                        >
+                          <Text fontWeight="bold">{t(`mypick.slot_${slot}`)}</Text>
+                          <Text color="fg.muted" fontSize="xs">
+                            {disabled ? t('mypick.already_added') : t('mypick.column_slot_sub')}
+                          </Text>
+                        </Stack>
+                      );
+                    })}
+                  </Grid>
+                </Stack>
+
+                <Stack gap="3">
+                  <Text color="fg.muted" fontSize="xs" fontWeight="bold" textTransform="uppercase">
+                    {t('mypick.year_columns')}
+                  </Text>
+                  <Grid
+                    gap="3"
+                    gridTemplateColumns={{ base: '1fr', md: leftYear ? '1fr 1fr' : '1fr' }}
+                  >
+                    {leftYear && (
+                      <Stack
+                        gap="3"
+                        borderColor="border.subtle"
+                        borderRadius="l3"
+                        borderWidth="1px"
+                        p="4"
+                      >
+                        <HStack gap="2">
+                          <FaChevronLeft />
+                          <Text textStyle="display" fontSize="lg">
+                            {leftYear}
+                          </Text>
+                        </HStack>
+                        <Grid gap="2" gridTemplateColumns="repeat(3, 1fr)">
+                          {slots.map((slot) => (
+                            <Button
+                              key={slot}
+                              size="xs"
+                              variant="outline"
+                              onClick={() => {
+                                addYear('left', slot);
+                                setAddingColumn(false);
+                              }}
+                            >
+                              {t(`mypick.slot_${slot}`)}
+                            </Button>
+                          ))}
+                        </Grid>
+                      </Stack>
+                    )}
+                    <Stack
+                      gap="3"
+                      borderColor="accent.7"
+                      borderRadius="l3"
+                      borderWidth="1px"
+                      p="4"
+                      bgColor="accent.a1"
+                    >
+                      <HStack gap="2">
+                        <FaChevronRight />
+                        <Text textStyle="display" fontSize="lg">
+                          {rightYear}
+                        </Text>
+                      </HStack>
+                      <Grid gap="2" gridTemplateColumns="repeat(3, 1fr)">
+                        {slots.map((slot) => (
+                          <Button
+                            key={slot}
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              addYear('right', slot);
+                              setAddingColumn(false);
+                            }}
+                          >
+                            {t(`mypick.slot_${slot}`)}
+                          </Button>
+                        ))}
+                      </Grid>
+                    </Stack>
+                  </Grid>
+                </Stack>
+              </Stack>
+              <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">
+                <IconButton aria-label={t('common.close')} variant="ghost" size="sm">
+                  <FaXmark />
+                </IconButton>
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Dialog.Root>
       </Stack>
     </>
   );
