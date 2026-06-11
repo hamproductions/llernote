@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaDownload, FaFileExport, FaFileImport } from 'react-icons/fa6';
+import { FaCopy, FaDownload, FaFileExport, FaFileImport } from 'react-icons/fa6';
 import { saveAs } from 'file-saver';
 import { HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
@@ -12,7 +12,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useEventYears, useSeries, useSetlists, usePerformances } from '~/hooks/useData';
 import { computeStats } from '~/utils/stats';
-import { downloadElementAsImage } from '~/utils/share';
+import { copyTextToClipboard, downloadElementAsImage, formatEventShareText } from '~/utils/share';
 import { exportBackup, importBackup } from '~/utils/attendance/storage';
 import { useToaster } from '~/context/ToasterContext';
 import type { EventCategory } from '~/types';
@@ -140,6 +140,25 @@ export default function Page() {
             <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
               <FaFileImport />
               {t('settings.import_data')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                const attended = filteredRecords
+                  .filter((r) => r.status === 'attended')
+                  .map((r) => performanceById.get(r.performanceId))
+                  .filter((p) => p !== undefined)
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((p) => formatEventShareText(p));
+                await copyTextToClipboard(
+                  [t('stats.share_title'), ...attended, '', t('stats.generated_by')].join('\n')
+                );
+                toast({ title: t('share.copied'), type: 'success' });
+              }}
+            >
+              <FaCopy />
+              {t('settings.copy_history')}
             </Button>
             <input
               ref={fileInputRef}

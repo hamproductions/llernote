@@ -160,7 +160,8 @@
     "import_data": "Import Data",
     "import_success": "Data imported",
     "import_error": "Invalid backup file",
-    "data_management": "Data Management"
+    "data_management": "Data Management",
+    "copy_history": "Copy attendance history"
   },
   "footer": {
     "footer_text": "LLerNote - Your LoveLive! event attendance log",

@@ -241,7 +241,7 @@ export const MyPickGrid = forwardRef<
                   >
                     {pickedId ? (
                       <CellContent column={col} pickedId={pickedId} />
-                    ) : (
+                    ) : editable ? (
                       <Stack
                         gap="0.5"
                         justifyContent="center"
@@ -251,7 +251,7 @@ export const MyPickGrid = forwardRef<
                       >
                         <FaPlus size={10} />
                       </Stack>
-                    )}
+                    ) : null}
                     {editable && pickedId && (
                       <Box
                         onClick={(e) => {

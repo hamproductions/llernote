@@ -160,7 +160,8 @@
     "import_data": "データをインポート",
     "import_success": "インポートしました",
     "import_error": "無効なバックアップファイルです",
-    "data_management": "データ管理"
+    "data_management": "データ管理",
+    "copy_history": "参加履歴をコピー"
   },
   "footer": {
     "footer_text": "LLerNote - ラブライブ！イベント参加記録",

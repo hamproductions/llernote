@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaRegStar } from 'react-icons/fa6';
+import { FaCheck, FaRegStar, FaStar } from 'react-icons/fa6';
 import { HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
@@ -77,6 +77,18 @@ export function EventCard({
               <Text color="fg.muted" fontSize="sm" lineClamp={1}>
                 {performance.venue}
               </Text>
+              {record?.rating && (
+                <HStack gap="0.5" color="amber.9">
+                  {Array.from({ length: record.rating }, (_, i) => (
+                    <FaStar key={i} size={11} />
+                  ))}
+                </HStack>
+              )}
+              {record?.memo && (
+                <Text color="fg.muted" fontSize="xs" lineClamp={1} fontStyle="italic">
+                  {record.memo}
+                </Text>
+              )}
             </Stack>
           </HStack>
           <Wrap gap="2">
