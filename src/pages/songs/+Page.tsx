@@ -178,7 +178,6 @@ export default function Page() {
         {filtered.length === 0 && <Text color="fg.muted">{t('songs.no_results')}</Text>}
         <Grid
           gap="2"
-          alignItems="start"
           gridTemplateColumns={{
             base: '1fr',
             md: 'repeat(2, 1fr)',

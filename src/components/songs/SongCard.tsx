@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { HStack, Stack } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
+import { hasSongThumb } from '~/utils/song-thumbs';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
 import { Text } from '~/components/ui/text';
@@ -28,12 +29,14 @@ export function SongCard({
       borderColor={heard ? 'accent.7' : 'border.subtle'}
       borderRadius="l2"
       borderWidth="1px"
+      h="full"
+      minH="16"
       p="2"
       bgColor={heard ? 'accent.a2' : 'bg.default'}
       transition="colors"
       _hover={{ borderColor: 'accent.8' }}
     >
-      <SongThumb songId={song.id} dim={!heard} />
+      {hasSongThumb(song.id) && <SongThumb songId={song.id} dim={!heard} />}
       <Stack flex="1" gap="0.5" minW="0">
         <Text
           title={song.name}

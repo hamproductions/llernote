@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { FaXmark } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
+import { hasSongThumb } from '~/utils/song-thumbs';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
 import { Text } from '~/components/ui/text';
@@ -58,7 +59,7 @@ export function SongDetailDialog({
               pr="8"
               pb="3"
             >
-              <SongThumb songId={song.id} large />
+              {hasSongThumb(song.id) && <SongThumb songId={song.id} large />}
               <Stack gap="1" minW="0">
                 <Dialog.Title>
                   {localizedName(i18n.language, song.name, song.englishName)}

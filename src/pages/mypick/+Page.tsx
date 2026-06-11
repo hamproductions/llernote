@@ -22,6 +22,7 @@ import {
 import { setMyPickCell, setMyPickConfig } from '~/utils/attendance/storage';
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { getPicUrl } from '~/utils/assets';
+import { hasSongThumb } from '~/utils/song-thumbs';
 import { localizedName } from '~/utils/names';
 import { copyTextToClipboard, downloadElementAsImage } from '~/utils/share';
 import { decodeMyPick, encodeMyPick, myPickShareUrl } from '~/utils/mypick-share';
@@ -102,7 +103,7 @@ export default function Page() {
           id: s.id,
           label: localizedName(i18n.language, s.name, s.englishName),
           sub: s.releasedOn,
-          image: getPicUrl(s.id, 'thumbnail')
+          image: hasSongThumb(s.id) ? getPicUrl(s.id, 'thumbnail') : undefined
         }));
     }
     return performances
@@ -272,6 +273,7 @@ export default function Page() {
           myPick={shared ? shared.myPick : myPick}
           rows={config.rows}
           editable={!shared && !exporting}
+          exporting={exporting}
           onPickCell={(row, column) => setPicking({ row, column })}
           onClearCell={(key) => setMyPickCell(key, null)}
           onRemoveRow={(row) =>

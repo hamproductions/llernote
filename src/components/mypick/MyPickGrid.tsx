@@ -115,6 +115,7 @@ export const MyPickGrid = forwardRef<
     onRemoveColumn?: (column: MyPickColumn) => void;
     onAddRow?: () => void;
     onAddColumn?: () => void;
+    exporting?: boolean;
   }
 >(function MyPickGrid(
   {
@@ -127,7 +128,8 @@ export const MyPickGrid = forwardRef<
     onRemoveRow,
     onRemoveColumn,
     onAddRow,
-    onAddColumn
+    onAddColumn,
+    exporting = false
   },
   ref
 ) {
@@ -160,7 +162,7 @@ export const MyPickGrid = forwardRef<
       borderColor="accent.default"
       borderRadius="l3"
       borderWidth="2px"
-      w="full"
+      w={exporting ? 'fit-content' : 'full'}
       p="4"
       bgColor="bg.default"
       overflowX="auto"
@@ -169,13 +171,19 @@ export const MyPickGrid = forwardRef<
         <HStack justifyContent="space-between" alignItems="baseline">
           <Text
             textStyle="display"
-            style={{
-              background: 'linear-gradient(92deg, #e4007f 10%, #ff7a00 55%, #00a0e0 95%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}
+            style={
+              exporting
+                ? undefined
+                : {
+                    background: 'linear-gradient(92deg, #e4007f 10%, #ff7a00 55%, #00a0e0 95%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }
+            }
+            color="accent.default"
             fontSize="2xl"
+            whiteSpace="nowrap"
           >
             MY PICK
           </Text>
@@ -249,6 +257,7 @@ export const MyPickGrid = forwardRef<
                     style={{ color: 'white' }}
                     fontSize="xs"
                     textAlign="center"
+                    whiteSpace="nowrap"
                   >
                     {meta.label}
                   </Text>
