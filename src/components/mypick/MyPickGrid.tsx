@@ -178,6 +178,44 @@ export const MyPickGrid = forwardRef<
     return { label: artist?.name ?? row.id, full: artist?.name ?? row.id, color };
   };
 
+  if (rows.length === 0 || columns.length === 0) {
+    return (
+      <Box
+        ref={ref}
+        borderColor="accent.default"
+        borderRadius="l3"
+        borderWidth="2px"
+        w="full"
+        p="8"
+        bgColor="bg.default"
+      >
+        <Stack gap="3" alignItems="center">
+          <Text color="fg.muted" fontSize="sm">
+            {t('mypick.empty')}
+          </Text>
+          {editable && (
+            <HStack gap="2">
+              {columns.length === 0 && onAddColumn && (
+                <IconButton
+                  aria-label={t('mypick.add_column')}
+                  variant="outline"
+                  onClick={onAddColumn}
+                >
+                  <FaPlus />
+                </IconButton>
+              )}
+              {rows.length === 0 && onAddRow && (
+                <IconButton aria-label={t('mypick.add_row')} variant="outline" onClick={onAddRow}>
+                  <FaPlus />
+                </IconButton>
+              )}
+            </HStack>
+          )}
+        </Stack>
+      </Box>
+    );
+  }
+
   return (
     <Box
       ref={ref}
@@ -236,7 +274,7 @@ export const MyPickGrid = forwardRef<
               >
                 {columnLabel(col)}
               </Text>
-              {editable && onRemoveColumn && (
+              {editable && onRemoveColumn && columns.length > 1 && (
                 <IconButton
                   aria-label={t('common.delete')}
                   variant="ghost"
@@ -286,7 +324,7 @@ export const MyPickGrid = forwardRef<
                   >
                     {meta.label}
                   </Text>
-                  {editable && onRemoveRow && (
+                  {editable && onRemoveRow && rows.length > 1 && (
                     <IconButton
                       aria-label={t('common.delete')}
                       variant="ghost"

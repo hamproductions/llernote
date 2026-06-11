@@ -171,13 +171,15 @@ export function PickDialog({
                 </Text>
               )}
             </HStack>
-            <Input
-              size="sm"
-              value={search}
-              placeholder={t('common.search')}
-              autoFocus
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            {items.length > 8 && (
+              <Input
+                size="sm"
+                value={search}
+                placeholder={t('common.search')}
+                autoFocus
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            )}
             <Box flex="1" overflowY="auto">
               {filtered.length === 0 && (
                 <Text py="8" color="fg.muted" fontSize="sm" textAlign="center">
