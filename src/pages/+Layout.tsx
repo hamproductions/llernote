@@ -60,7 +60,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <HStack justifyContent="space-between" alignItems="center" w="full">
             <HStack gap="4" alignItems="center">
               <Link href={join(import.meta.env.BASE_URL, '/')} _hover={{ textDecoration: 'none' }}>
-                <Text color="accent.default" fontWeight="bold" fontSize="lg">
+                <Text color="accent.default" fontSize="lg" fontWeight="bold">
                   LLerNote
                 </Text>
               </Link>

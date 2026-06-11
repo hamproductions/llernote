@@ -1,0 +1,245 @@
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FaStar, FaXmark, FaXTwitter, FaCopy, FaArrowUpRightFromSquare } from 'react-icons/fa6';
+import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
+import { Dialog } from '~/components/ui/dialog';
+import { IconButton } from '~/components/ui/icon-button';
+import { Button } from '~/components/ui/button';
+import { Text } from '~/components/ui/text';
+import { Textarea } from '~/components/ui/textarea';
+import { Link } from '~/components/ui/link';
+import { SeriesBadge } from './SeriesBadge';
+import { AttendanceButtons } from './AttendanceButtons';
+import { NativeSelect } from './NativeSelect';
+import { useAttendance } from '~/hooks/useAttendance';
+import { useSetlist, useSongById } from '~/hooks/useData';
+import { useToaster } from '~/context/ToasterContext';
+import {
+  copyTextToClipboard,
+  eventernoteSearchUrl,
+  formatEventShareText,
+  xShareUrl
+} from '~/utils/share';
+import type { Performance, SetlistItem } from '~/types';
+import type { WatchType } from '~/types/attendance';
+
+function SetlistItemRow({ item, index }: { item: SetlistItem; index: number }) {
+  const songById = useSongById();
+  if (item.type !== 'song') {
+    return (
+      <HStack gap="2" py="0.5">
+        <Text minW="8" color="fg.subtle" fontSize="sm" textAlign="right">
+          -
+        </Text>
+        <Text color="fg.muted" fontSize="sm">
+          {item.title ?? item.customSongName ?? item.type.toUpperCase()}
+        </Text>
+      </HStack>
+    );
+  }
+  const song = item.songId ? songById.get(item.songId) : undefined;
+  return (
+    <HStack gap="2" py="0.5">
+      <Text
+        minW="8"
+        color="fg.subtle"
+        fontSize="sm"
+        fontVariantNumeric="tabular-nums"
+        textAlign="right"
+      >
+        {index}.
+      </Text>
+      <Text fontSize="sm">{song?.name ?? item.customSongName}</Text>
+    </HStack>
+  );
+}
+
+export function EventDetailDialog({
+  performance,
+  open,
+  onClose
+}: {
+  performance?: Performance;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const { toast } = useToaster();
+  const { get, updateAttendance } = useAttendance();
+  const setlist = useSetlist(performance?.id);
+  const record = performance ? get(performance.id) : undefined;
+  const [memo, setMemo] = useState('');
+
+  useEffect(() => {
+    setMemo(record?.memo ?? '');
+  }, [record?.memo, performance?.id]);
+
+  if (!performance) return null;
+
+  const watchTypeOptions: { value: WatchType; label: string }[] = [
+    { value: 'live', label: t('events.watched_live') },
+    { value: 'stream', label: t('events.watched_stream') },
+    { value: 'delay', label: t('events.watched_delay') }
+  ];
+
+  const songNumbers = new Map<string, number>();
+  if (setlist) {
+    let songIndex = 0;
+    for (const item of setlist.items) {
+      if (item.type === 'song') {
+        songIndex += 1;
+        songNumbers.set(item.id, songIndex);
+      }
+    }
+  }
+  const sections =
+    setlist && setlist.sections.length > 0
+      ? setlist.sections
+      : setlist
+        ? [{ name: '', startIndex: 0, endIndex: setlist.items.length - 1, type: 'main' }]
+        : [];
+
+  return (
+    <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
+      <Dialog.Backdrop />
+      <Dialog.Positioner>
+        <Dialog.Content maxW="2xl" maxH="85vh" overflowY="auto">
+          <Stack gap="4" p="6">
+            <Stack gap="1">
+              <Wrap gap="2">
+                <Text color="fg.muted" fontSize="sm">
+                  {performance.date}
+                </Text>
+                {performance.seriesIds.map((id) => (
+                  <SeriesBadge key={id} seriesId={id} />
+                ))}
+              </Wrap>
+              <Dialog.Title>{performance.tourName}</Dialog.Title>
+              <Text color="fg.muted" fontSize="sm">
+                {performance.venue}
+              </Text>
+            </Stack>
+
+            <Wrap gap="2">
+              <AttendanceButtons performanceId={performance.id} size="sm" />
+            </Wrap>
+
+            {record?.status === 'attended' && (
+              <Stack gap="3">
+                <HStack gap="3" flexWrap="wrap">
+                  <NativeSelect
+                    aria-label={t('events.attendance_filter')}
+                    value={record.watchType ?? 'live'}
+                    options={watchTypeOptions}
+                    onChange={(watchType) =>
+                      updateAttendance(performance.id, { watchType: watchType as WatchType })
+                    }
+                  />
+                  <HStack gap="1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <IconButton
+                        key={star}
+                        aria-label={`${t('events.rating')} ${star}`}
+                        variant="ghost"
+                        size="xs"
+                        onClick={() =>
+                          updateAttendance(performance.id, {
+                            rating: record.rating === star ? undefined : star
+                          })
+                        }
+                        color={record.rating && record.rating >= star ? 'amber.9' : 'fg.subtle'}
+                      >
+                        <FaStar />
+                      </IconButton>
+                    ))}
+                  </HStack>
+                </HStack>
+                <Stack gap="1">
+                  <Text fontSize="sm" fontWeight="medium">
+                    {t('events.memo')}
+                  </Text>
+                  <Textarea
+                    size="sm"
+                    rows={3}
+                    value={memo}
+                    placeholder={t('events.memo_placeholder')}
+                    onChange={(e) => setMemo(e.target.value)}
+                    onBlur={() => updateAttendance(performance.id, { memo })}
+                  />
+                </Stack>
+              </Stack>
+            )}
+
+            <Wrap gap="2">
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={async () => {
+                  await copyTextToClipboard(formatEventShareText(performance));
+                  toast({ title: t('share.copied'), type: 'success' });
+                }}
+              >
+                <FaCopy />
+                {t('share.copy_text')}
+              </Button>
+              <Link
+                href={xShareUrl(`${formatEventShareText(performance)} #LLerNote`)}
+                target="_blank"
+              >
+                <Button size="xs" variant="outline">
+                  <FaXTwitter />
+                  {t('share.share_x')}
+                </Button>
+              </Link>
+              <Link href={eventernoteSearchUrl(performance)} target="_blank">
+                <Button size="xs" variant="outline">
+                  <FaArrowUpRightFromSquare />
+                  {t('share.eventernote')}
+                </Button>
+              </Link>
+            </Wrap>
+
+            <Stack gap="2">
+              <Text fontWeight="semibold">{t('events.setlist')}</Text>
+              {setlist ? (
+                <Stack gap="3">
+                  {sections.map((section) => (
+                    <Box key={`${section.name}-${section.startIndex}`}>
+                      {section.name && (
+                        <Text
+                          mb="1"
+                          color="fg.muted"
+                          fontSize="xs"
+                          fontWeight="bold"
+                          textTransform="uppercase"
+                        >
+                          {section.name}
+                        </Text>
+                      )}
+                      {setlist.items.slice(section.startIndex, section.endIndex + 1).map((item) => (
+                        <SetlistItemRow
+                          key={item.id}
+                          item={item}
+                          index={songNumbers.get(item.id) ?? 0}
+                        />
+                      ))}
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <Text color="fg.muted" fontSize="sm">
+                  {t('events.no_setlist')}
+                </Text>
+              )}
+            </Stack>
+          </Stack>
+          <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">
+            <IconButton aria-label={t('common.close')} variant="ghost" size="sm">
+              <FaXmark />
+            </IconButton>
+          </Dialog.CloseTrigger>
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Dialog.Root>
+  );
+}
