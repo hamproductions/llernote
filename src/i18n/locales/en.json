@@ -177,7 +177,8 @@
     "copied": "Copied to clipboard",
     "share_x": "Share on X",
     "eventernote": "Find on EventerNote",
-    "image_generated": "Image generated"
+    "image_generated": "Image generated",
+    "copy_failed": "Copy failed"
   },
   "settings": {
     "title": "Settings",
@@ -198,7 +199,8 @@
     "text": "An unexpected error occurred. Try reloading the page.",
     "copy": "Copy error",
     "reload": "Reload",
-    "clear": "Clear data & reload"
+    "clear": "Clear data & reload",
+    "not_found": "Page not found"
   },
   "home": {
     "tagline": "Keep track of every LoveLive! event you've been to — setlists, songs, stats, all of it.",

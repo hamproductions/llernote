@@ -151,10 +151,14 @@ export default function Page() {
                   .filter((p) => p !== undefined)
                   .sort((a, b) => a.date.localeCompare(b.date))
                   .map((p) => formatEventShareText(p));
-                await copyTextToClipboard(
-                  [t('stats.share_title'), ...attended, '', t('stats.generated_by')].join('\n')
-                );
-                toast({ title: t('share.copied'), type: 'success' });
+                try {
+                  await copyTextToClipboard(
+                    [t('stats.share_title'), ...attended, '', t('stats.generated_by')].join('\n')
+                  );
+                  toast({ title: t('share.copied'), type: 'success' });
+                } catch {
+                  toast({ title: t('share.copy_failed'), type: 'error' });
+                }
               }}
             >
               <FaCopy />

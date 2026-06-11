@@ -175,7 +175,8 @@
     "copied": "コピーしました",
     "share_x": "Xでシェア",
     "eventernote": "EventerNoteで探す",
-    "image_generated": "画像を生成しました"
+    "image_generated": "画像を生成しました",
+    "copy_failed": "コピーに失敗しました"
   },
   "settings": {
     "title": "設定",
@@ -196,7 +197,8 @@
     "text": "予期しないエラーが発生しました。ページを再読み込みしてください。",
     "copy": "エラーをコピー",
     "reload": "再読み込み",
-    "clear": "データを消去して再読み込み"
+    "clear": "データを消去して再読み込み",
+    "not_found": "ページが見つかりません"
   },
   "home": {
     "tagline": "参加したラブライブ！イベントを全部記録。セトリも楽曲も統計も。",

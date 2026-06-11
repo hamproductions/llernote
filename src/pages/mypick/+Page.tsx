@@ -188,8 +188,12 @@ export default function Page() {
                     config.rows,
                     config.columns
                   );
-                  await copyTextToClipboard(myPickShareUrl(encoded));
-                  toast({ title: t('share.copied'), type: 'success' });
+                  try {
+                    await copyTextToClipboard(myPickShareUrl(encoded));
+                    toast({ title: t('share.copied'), type: 'success' });
+                  } catch {
+                    toast({ title: t('share.copy_failed'), type: 'error' });
+                  }
                 }}
               >
                 <FaLink />
@@ -259,7 +263,7 @@ export default function Page() {
                   {t(`mypick.slot_${slot}`)}
                 </Button>
               ))}
-              <HStack gap="1">
+              <HStack gap="1" flexWrap="wrap">
                 <NativeSelect
                   aria-label={t('mypick.year_slot')}
                   value={yearSlot}

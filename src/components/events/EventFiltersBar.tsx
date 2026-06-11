@@ -63,7 +63,7 @@ export function EventFiltersBar({
           <NativeSelect
             aria-label={t('events.year_from')}
             value={filters.yearFrom ?? ''}
-            placeholder={yearOptions[0]}
+            placeholder={t('common.all')}
             options={yearOptions.map((y) => ({ value: y, label: y }))}
             onChange={(yearFrom) =>
               onChange({
@@ -82,7 +82,7 @@ export function EventFiltersBar({
           <NativeSelect
             aria-label={t('events.year_to')}
             value={filters.yearTo ?? ''}
-            placeholder={yearOptions[yearOptions.length - 1]}
+            placeholder={t('common.all')}
             options={yearOptions.map((y) => ({ value: y, label: y }))}
             onChange={(yearTo) =>
               onChange({

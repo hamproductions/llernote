@@ -53,10 +53,7 @@ export default function Page() {
   const tours = useMemo(() => groupByTour(filtered), [filtered]);
 
   const totalCount = view === 'table' ? filtered.length : tours.length;
-  const pageItems =
-    view === 'table'
-      ? filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-      : tours.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageTours = tours.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <>
@@ -105,15 +102,24 @@ export default function Page() {
         />
         {totalCount === 0 && <Text color="fg.muted">{t('events.no_results')}</Text>}
         {view === 'table' ? (
-          <EventTable performances={pageItems as Performance[]} onSelect={setSelected} />
+          <EventTable
+            performances={filtered}
+            pageSize={PAGE_SIZE}
+            onSelect={setSelected}
+            page={page}
+          />
         ) : (
           <HStack gap="3" alignItems="flex-start">
             {Array.from({ length: columns }, (_, col) => (
               <Stack key={col} flex="1" gap="3" minW="0">
-                {(pageItems as ReturnType<typeof groupByTour>)
+                {pageTours
                   .filter((_, i) => i % columns === col)
                   .map((tour) => (
-                    <TourCard key={tour.tourName} tour={tour} onSelect={setSelected} />
+                    <TourCard
+                      key={`${tour.tourName}|${tour.startDate}`}
+                      tour={tour}
+                      onSelect={setSelected}
+                    />
                   ))}
               </Stack>
             ))}

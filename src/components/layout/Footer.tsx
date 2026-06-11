@@ -28,7 +28,7 @@ export function Footer() {
         </Text>
         <HStack>
           <Version format="version" />
-          <Text color="fg.muted" fontSize="xs">
+          <Text suppressHydrationWarning color="fg.muted" fontSize="xs">
             {t('footer.data_updated', { date: formattedDate })}
           </Text>
         </HStack>

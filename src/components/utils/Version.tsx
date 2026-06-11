@@ -30,7 +30,11 @@ export function Version({ format = 'full' }: VersionProps) {
       break;
   }
 
-  return <Text title={getVersionString()}>{content}</Text>;
+  return (
+    <Text suppressHydrationWarning title={`v${VERSION}`}>
+      {content}
+    </Text>
+  );
 }
 
 export default Version;

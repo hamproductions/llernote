@@ -18,7 +18,8 @@ export const downloadElementAsImage = async (element: HTMLElement, filename: str
     scale: 2,
     width: element.scrollWidth,
     height: element.scrollHeight,
-    backgroundColor: getComputedStyle(document.body).backgroundColor
+    backgroundColor: getComputedStyle(document.body).backgroundColor,
+    style: { overflow: 'visible' }
   });
   if (blob) saveAs(blob, filename);
 };

@@ -268,8 +268,12 @@ export function EventDetailDialog({
                 size="xs"
                 variant="outline"
                 onClick={async () => {
-                  await copyTextToClipboard(formatEventShareText(performance));
-                  toast({ title: t('share.copied'), type: 'success' });
+                  try {
+                    await copyTextToClipboard(formatEventShareText(performance));
+                    toast({ title: t('share.copied'), type: 'success' });
+                  } catch {
+                    toast({ title: t('share.copy_failed'), type: 'error' });
+                  }
                 }}
               >
                 <FaCopy />
@@ -319,8 +323,12 @@ export function EventDetailDialog({
                             return `${String(songNumbers.get(item.id) ?? '-').padStart(2, '0')}. ${song?.name ?? item.customSongName ?? ''}`;
                           })
                         ];
-                        await copyTextToClipboard(lines.join('\n'));
-                        toast({ title: t('share.copied'), type: 'success' });
+                        try {
+                          await copyTextToClipboard(lines.join('\n'));
+                          toast({ title: t('share.copied'), type: 'success' });
+                        } catch {
+                          toast({ title: t('share.copy_failed'), type: 'error' });
+                        }
                       }}
                     >
                       <FaCopy />

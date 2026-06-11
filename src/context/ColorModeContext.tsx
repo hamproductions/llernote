@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect } from 'react';
-import { useLocalStorage } from '~/hooks/useLocalStorage';
+import { LocalStorage, useLocalStorage } from '~/hooks/useLocalStorage';
 
 type ColorModes = 'dark' | 'light';
 const ColorModeContext = createContext<{
@@ -12,14 +12,16 @@ export function ColorModeProvider({ children }: { children: ReactNode }) {
   const [colorMode, setColorMode] = useLocalStorage<ColorModes>('color-mode', undefined);
 
   useEffect(() => {
-    if (colorMode === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
+    if (colorMode != null) {
+      document.documentElement.classList.add(colorMode);
+      document.documentElement.classList.remove(colorMode === 'dark' ? 'light' : 'dark');
+      return;
     }
-    if (colorMode !== undefined) return;
+    const stored = new LocalStorage<ColorModes>('color-mode').value;
+    if (stored != null) {
+      setColorMode(stored);
+      return;
+    }
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setColorMode('dark');
     } else {
