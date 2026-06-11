@@ -41,9 +41,10 @@ function QuickLink({
   description: string;
 }) {
   return (
-    <Link href={href(to)} _hover={{ textDecoration: 'none' }}>
+    <Link href={href(to)} display="block" w="full" h="full" _hover={{ textDecoration: 'none' }}>
       <Card.Root
         cursor="pointer"
+        w="full"
         h="full"
         transition="all"
         _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)' }}
@@ -179,7 +180,13 @@ export default function Page() {
                 ['venues_visited', stats.venuesVisited]
               ] as const
             ).map(([key, value]) => (
-              <Link key={key} href={href('/stats')} _hover={{ textDecoration: 'none' }}>
+              <Link
+                key={key}
+                href={href('/stats')}
+                display="block"
+                w="full"
+                _hover={{ textDecoration: 'none' }}
+              >
                 <Stack
                   cursor="pointer"
                   gap="0"
@@ -187,6 +194,7 @@ export default function Page() {
                   borderColor="accent.a5"
                   borderRadius="l3"
                   borderWidth="1px"
+                  w="full"
                   p="4"
                   bgColor="accent.a2"
                   transition="all"
