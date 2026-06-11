@@ -16,7 +16,6 @@ import { getAssetUrl } from '~/utils/assets';
 const NAV_ITEMS = [
   { path: '/', key: 'navigation.events', exact: true },
   { path: '/calendar', key: 'navigation.calendar' },
-  { path: '/upcoming', key: 'navigation.upcoming' },
   { path: '/stats', key: 'navigation.stats' },
   { path: '/songs', key: 'navigation.songs' },
   { path: '/mypick', key: 'navigation.mypick' }

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaDownload, FaPlus } from 'react-icons/fa6';
-import { HStack, Stack, Wrap } from 'styled-system/jsx';
+import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
@@ -22,6 +22,7 @@ import {
 import { setMyPickCell, setMyPickConfig } from '~/utils/attendance/storage';
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { getPicUrl } from '~/utils/assets';
+import { localizedName } from '~/utils/names';
 import { downloadElementAsImage } from '~/utils/share';
 import { useToaster } from '~/context/ToasterContext';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
@@ -37,7 +38,7 @@ const DEFAULT_CONFIG: MyPickConfig = {
 };
 
 export default function Page() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToaster();
   const { myPick } = useMyPick();
   const series = useSeries();
@@ -71,8 +72,10 @@ export default function Page() {
         .filter((c) => (rowCharacterIds ? rowCharacterIds.has(c.id) : c.seriesId === row.id))
         .map((c) => ({
           id: c.id,
-          label: c.fullName,
-          sub: c.casts.map((cast) => cast.seiyuu).join('・'),
+          label: localizedName(i18n.language, c.fullName, c.englishName),
+          sub: c.casts
+            .map((cast) => localizedName(i18n.language, cast.seiyuu, cast.englishName))
+            .join('・'),
           image: getPicUrl(c.id, c.hasIcon ? 'icons' : 'character')
         }));
     }
@@ -85,7 +88,7 @@ export default function Page() {
         })
         .map((s) => ({
           id: s.id,
-          label: s.name,
+          label: localizedName(i18n.language, s.name, s.englishName),
           sub: s.releasedOn,
           image: getPicUrl(s.id, 'thumbnail')
         }));
@@ -108,11 +111,11 @@ export default function Page() {
       ...series.map((s) => ({ id: `series:${s.id}`, label: s.name, sub: 'シリーズ' })),
       ...artists.map((a) => ({
         id: `artist:${a.id}`,
-        label: a.name,
+        label: localizedName(i18n.language, a.name, a.englishName),
         sub: a.characters.length > 1 ? 'グループ・ユニット' : 'ソロ'
       }))
     ],
-    [series, artists]
+    [series, artists, i18n.language]
   );
 
   const updateConfig = (patch: Partial<MyPickConfig>) => {
@@ -175,31 +178,39 @@ export default function Page() {
           </Button>
         </HStack>
 
-        <Wrap gap="2">
-          <Button size="xs" variant="outline" onClick={() => setAddingRow(true)}>
-            <FaPlus />
-            {t('mypick.add_row')}
-          </Button>
-          {(['cast', 'song', 'event'] as MyPickSlot[]).map((slot) => (
-            <Button
-              key={slot}
-              size="xs"
-              variant="outline"
-              onClick={() => addColumn({ type: 'slot', slot })}
-            >
+        <Box
+          borderColor="border.subtle"
+          borderRadius="l2"
+          borderWidth="1px"
+          p="3"
+          bgColor="bg.subtle"
+        >
+          <Wrap gap="2">
+            <Button size="xs" variant="outline" onClick={() => setAddingRow(true)}>
               <FaPlus />
-              {t(`mypick.slot_${slot}`)}
+              {t('mypick.add_row')}
             </Button>
-          ))}
-          <Button size="xs" variant="outline" onClick={() => addYear('left')}>
-            <FaPlus />
-            {t('mypick.add_year_left')}
-          </Button>
-          <Button size="xs" variant="outline" onClick={() => addYear('right')}>
-            <FaPlus />
-            {t('mypick.add_year_right')}
-          </Button>
-        </Wrap>
+            {(['cast', 'song', 'event'] as MyPickSlot[]).map((slot) => (
+              <Button
+                key={slot}
+                size="xs"
+                variant="outline"
+                onClick={() => addColumn({ type: 'slot', slot })}
+              >
+                <FaPlus />
+                {t(`mypick.slot_${slot}`)}
+              </Button>
+            ))}
+            <Button size="xs" variant="outline" onClick={() => addYear('left')}>
+              <FaPlus />
+              {t('mypick.add_year_left')}
+            </Button>
+            <Button size="xs" variant="outline" onClick={() => addYear('right')}>
+              <FaPlus />
+              {t('mypick.add_year_right')}
+            </Button>
+          </Wrap>
+        </Box>
 
         <MyPickGrid
           ref={gridRef}

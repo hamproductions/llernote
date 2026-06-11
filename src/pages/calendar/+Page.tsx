@@ -278,6 +278,52 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
   );
 }
 
+const daysUntil = (date: string) => {
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const [y, m, d] = date.split('-').map(Number);
+  return Math.round((Date.UTC(y!, m! - 1, d!) - todayUtc) / 86400000);
+};
+
+function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
+  const { t } = useTranslation();
+  const performances = usePerformances();
+
+  const upcoming = useMemo(
+    () =>
+      performances
+        .filter((p) => daysUntil(p.date) >= 0)
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    [performances]
+  );
+
+  if (upcoming.length === 0) {
+    return <Text color="fg.muted">{t('upcoming.empty')}</Text>;
+  }
+
+  return (
+    <Grid gap="3" alignItems="start" gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}>
+      {upcoming.map((p) => {
+        const days = daysUntil(p.date);
+        return (
+          <Stack key={p.id} gap="1">
+            <HStack>
+              <Badge size="sm" variant={days <= 7 ? 'solid' : 'outline'}>
+                {days === 0
+                  ? t('upcoming.today')
+                  : days === 1
+                    ? t('upcoming.tomorrow')
+                    : t('upcoming.days_until', { count: days })}
+              </Badge>
+            </HStack>
+            <EventCard performance={p} onClick={() => onSelect(p)} />
+          </Stack>
+        );
+      })}
+    </Grid>
+  );
+}
+
 function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
   const { t } = useTranslation();
   const performances = usePerformances();
@@ -338,11 +384,15 @@ export default function Page() {
         <Tabs.Root defaultValue="calendar">
           <Tabs.List>
             <Tabs.Trigger value="calendar">{t('calendar.title')}</Tabs.Trigger>
+            <Tabs.Trigger value="upcoming">{t('upcoming.title')}</Tabs.Trigger>
             <Tabs.Trigger value="timeline">{t('timeline.title')}</Tabs.Trigger>
             <Tabs.Indicator />
           </Tabs.List>
           <Tabs.Content value="calendar">
             <MonthView onSelect={(p) => setSelectedId(p.id)} />
+          </Tabs.Content>
+          <Tabs.Content value="upcoming">
+            <Upcoming onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="timeline">
             <Timeline onSelect={(p) => setSelectedId(p.id)} />

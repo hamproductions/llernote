@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { FaXmark, FaYoutube } from 'react-icons/fa6';
-import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
+import { HStack, Stack, Wrap } from 'styled-system/jsx';
+import { SongThumb } from './SongThumb';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
 import { Button } from '~/components/ui/button';
@@ -9,7 +10,7 @@ import { Badge } from '~/components/ui/badge';
 import { Link } from '~/components/ui/link';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { useArtistById } from '~/hooks/useData';
-import { getPicUrl } from '~/utils/assets';
+import { localizedName } from '~/utils/names';
 import type { Performance, Song } from '~/types';
 
 interface SongWithVideo extends Song {
@@ -27,13 +28,18 @@ export function SongDetailDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const artistById = useArtistById();
 
   if (!song) return null;
 
   const artistNames = [
-    ...new Set((song.artists ?? []).map((a) => artistById.get(a.id)?.name).filter(Boolean))
+    ...new Set(
+      (song.artists ?? [])
+        .map((a) => artistById.get(a.id))
+        .filter(Boolean)
+        .map((a) => localizedName(i18n.language, a!.name, a!.englishName))
+    )
   ].join('・');
   const videoId = (song as SongWithVideo).musicVideo?.videoId;
 
@@ -41,30 +47,21 @@ export function SongDetailDialog({
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxW="lg" maxH="85vh" overflowY="auto">
-          <Stack gap="4" p="6">
-            <HStack gap="3" alignItems="flex-start">
-              <Box
-                flexShrink={0}
-                borderRadius="l2"
-                w="16"
-                h="16"
-                bgColor="bg.subtle"
-                overflow="hidden"
-              >
-                <img
-                  src={getPicUrl(song.id, 'thumbnail')}
-                  alt=""
-                  width="64"
-                  height="64"
-                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.visibility = 'hidden';
-                  }}
-                />
-              </Box>
+        <Dialog.Content w="full" maxW="lg" maxH="85vh" mx="4" overflowY="auto">
+          <Stack gap="4" p={{ base: '4', md: '6' }}>
+            <HStack
+              gap="3"
+              alignItems="flex-start"
+              borderColor="border.subtle"
+              borderBottomWidth="1px"
+              pr="8"
+              pb="3"
+            >
+              <SongThumb songId={song.id} size="16" rounded="l2" />
               <Stack gap="1" minW="0">
-                <Dialog.Title>{song.name}</Dialog.Title>
+                <Dialog.Title>
+                  {localizedName(i18n.language, song.name, song.englishName)}
+                </Dialog.Title>
                 {artistNames && (
                   <Text color="fg.muted" fontSize="sm">
                     {artistNames}

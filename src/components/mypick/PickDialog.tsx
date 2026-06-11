@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaXmark } from 'react-icons/fa6';
-import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
+import { FaCheck, FaMusic, FaXmark } from 'react-icons/fa6';
+import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
 import { Input } from '~/components/ui/input';
@@ -12,6 +12,27 @@ export interface PickItem {
   label: string;
   sub?: string;
   image?: string;
+}
+
+function TileImage({ src }: { src?: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <Box flexShrink={0} borderRadius="full" w="16" h="16" bgColor="bg.subtle" overflow="hidden">
+      {failed || !src ? (
+        <Center w="full" h="full" color="fg.subtle">
+          <FaMusic />
+        </Center>
+      ) : (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          onError={() => setFailed(true)}
+        />
+      )}
+    </Box>
+  );
 }
 
 function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onClick: () => void }) {
@@ -26,23 +47,11 @@ function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onCl
       borderRadius="l2"
       borderWidth="2px"
       p="2"
-      bgColor={active ? 'accent.a3' : 'bg.default'}
-      transition="colors"
-      _hover={{ borderColor: 'accent.8' }}
+      bgColor={active ? 'accent.a3' : 'bg.subtle'}
+      transition="all"
+      _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)' }}
     >
-      <Box borderRadius="full" w="16" h="16" bgColor="bg.subtle" overflow="hidden">
-        <img
-          src={item.image}
-          alt=""
-          loading="lazy"
-          width="64"
-          height="64"
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.visibility = 'hidden';
-          }}
-        />
-      </Box>
+      <TileImage src={item.image} />
       <Text fontSize="xs" fontWeight="medium" textAlign="center" lineClamp={2}>
         {item.label}
       </Text>
@@ -136,13 +145,20 @@ export function PickDialog({
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content display="flex" flexDirection="column" w="full" maxW="2xl" maxH="80vh">
+        <Dialog.Content
+          display="flex"
+          flexDirection="column"
+          w="full"
+          maxW="2xl"
+          maxH="80vh"
+          mx="4"
+        >
           <Stack flex="1" gap="3" p="5" overflow="hidden">
             <HStack justifyContent="space-between" pr="8">
               <Dialog.Title>{title}</Dialog.Title>
               {max > 1 && (
                 <Text color="fg.muted" fontSize="sm">
-                  {selectedIds.length}/{max}
+                  {Number.isFinite(max) ? `${selectedIds.length}/${max}` : selectedIds.length}
                 </Text>
               )}
             </HStack>

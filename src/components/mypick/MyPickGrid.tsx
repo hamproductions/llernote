@@ -1,7 +1,7 @@
-import { forwardRef } from 'react';
+import { forwardRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaPlus, FaXmark } from 'react-icons/fa6';
-import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
+import { FaMusic, FaPlus, FaXmark } from 'react-icons/fa6';
+import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { IconButton } from '~/components/ui/icon-button';
 import {
@@ -13,10 +13,12 @@ import {
 } from '~/hooks/useData';
 import { getPicUrl } from '~/utils/assets';
 import { getSeriesShortName } from '~/utils/series-short';
+import { localizedName } from '~/utils/names';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
 import type { MyPick, MyPickColumn, MyPickRow } from '~/types/attendance';
 
 function CellImage({ src, dim = false }: { src: string; dim?: boolean }) {
+  const [failed, setFailed] = useState(false);
   return (
     <Box
       flexShrink={0}
@@ -27,21 +29,26 @@ function CellImage({ src, dim = false }: { src: string; dim?: boolean }) {
       opacity={dim ? 0.5 : 1}
       overflow="hidden"
     >
-      <img
-        src={src}
-        alt=""
-        width="48"
-        height="48"
-        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.visibility = 'hidden';
-        }}
-      />
+      {failed ? (
+        <Center w="full" h="full" color="fg.subtle">
+          <FaMusic />
+        </Center>
+      ) : (
+        <img
+          src={src}
+          alt=""
+          width="48"
+          height="48"
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          onError={() => setFailed(true)}
+        />
+      )}
     </Box>
   );
 }
 
 function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: string }) {
+  const { i18n } = useTranslation();
   const characters = useCharacters();
   const songById = useSongById();
   const performanceById = usePerformanceById();
@@ -53,7 +60,7 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       <Stack gap="1" alignItems="center">
         <CellImage src={getPicUrl(character.id, character.hasIcon ? 'icons' : 'character')} />
         <Text fontSize="2xs" fontWeight="semibold" textAlign="center" lineClamp={2}>
-          {character.fullName}
+          {localizedName(i18n.language, character.fullName, character.englishName)}
         </Text>
       </Stack>
     );
@@ -65,7 +72,7 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       <Stack gap="1" alignItems="center">
         <CellImage src={getPicUrl(song.id, 'thumbnail')} />
         <Text fontSize="2xs" fontWeight="semibold" textAlign="center" lineClamp={2}>
-          {song.name}
+          {localizedName(i18n.language, song.name, song.englishName)}
         </Text>
       </Stack>
     );

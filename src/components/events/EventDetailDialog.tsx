@@ -128,9 +128,9 @@ export function EventDetailDialog({
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <Dialog.Content maxW="2xl" maxH="85vh" overflowY="auto">
-          <Stack gap="4" p="6">
-            <Stack gap="1">
+        <Dialog.Content w="full" maxW="2xl" maxH="85vh" mx="4" overflowY="auto">
+          <Stack gap="4" p={{ base: '4', md: '6' }}>
+            <Stack gap="1" borderColor="border.subtle" borderBottomWidth="1px" pr="8" pb="3">
               <Wrap gap="2">
                 <Text color="fg.muted" fontSize="sm">
                   {performance.date}

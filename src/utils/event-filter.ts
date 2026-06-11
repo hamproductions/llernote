@@ -1,18 +1,21 @@
-import type { Performance } from '~/types';
+import type { EventCategory, Performance } from '~/types';
 import type { AttendanceMap } from '~/utils/attendance/storage';
 
 export interface EventFilters {
   search: string;
   seriesIds: string[];
-  year?: string;
+  years: string[];
+  characterIds: string[];
+  categories: EventCategory[];
   attendance?: 'attended' | 'interested' | 'none';
-  characterId?: string;
-  category?: Performance['category'];
 }
 
 export const EMPTY_FILTERS: EventFilters = {
   search: '',
-  seriesIds: []
+  seriesIds: [],
+  years: [],
+  characterIds: [],
+  categories: []
 };
 
 export const todayString = () => {
@@ -35,8 +38,8 @@ export const filterEvents = (
     if (filters.seriesIds.length > 0 && !p.seriesIds.some((id) => filters.seriesIds.includes(id))) {
       return false;
     }
-    if (filters.year && !p.date.startsWith(filters.year)) return false;
-    if (filters.category && p.category !== filters.category) return false;
+    if (filters.years.length > 0 && !filters.years.includes(p.date.slice(0, 4))) return false;
+    if (filters.categories.length > 0 && !filters.categories.includes(p.category)) return false;
     if (filters.attendance) {
       const record = attendanceMap[p.id];
       const status = record && !record.deleted ? record.status : undefined;
@@ -44,8 +47,9 @@ export const filterEvents = (
         return false;
       }
     }
-    if (filters.characterId) {
-      if (!performanceCharacters?.get(p.id)?.has(filters.characterId)) return false;
+    if (filters.characterIds.length > 0) {
+      const cast = performanceCharacters?.get(p.id);
+      if (!cast || !filters.characterIds.some((id) => cast.has(id))) return false;
     }
     return true;
   });

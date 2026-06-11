@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { Box, HStack, Stack } from 'styled-system/jsx';
+import { HStack, Stack } from 'styled-system/jsx';
+import { SongThumb } from './SongThumb';
+import { localizedName } from '~/utils/names';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
-import { getPicUrl } from '~/utils/assets';
 import type { Song } from '~/types';
 
 export function SongCard({
@@ -15,7 +16,7 @@ export function SongCard({
   heardCount: number;
   onClick: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const heard = heardCount > 0;
 
   return (
@@ -31,36 +32,16 @@ export function SongCard({
       transition="colors"
       _hover={{ borderColor: 'accent.8' }}
     >
-      <Box
-        flexShrink={0}
-        borderRadius="l1"
-        w="11"
-        h="11"
-        bgColor="bg.subtle"
-        opacity={heard ? 1 : 0.55}
-        overflow="hidden"
-        filter={heard ? undefined : 'grayscale(1)'}
-      >
-        <img
-          src={getPicUrl(song.id, 'thumbnail')}
-          alt=""
-          loading="lazy"
-          width="44"
-          height="44"
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.visibility = 'hidden';
-          }}
-        />
-      </Box>
+      <SongThumb songId={song.id} dim={!heard} />
       <Stack flex="1" gap="0.5" minW="0">
         <Text
+          title={song.name}
           color={heard ? 'fg.default' : 'fg.muted'}
           fontSize="sm"
           fontWeight="medium"
           lineClamp={1}
         >
-          {song.name}
+          {localizedName(i18n.language, song.name, song.englishName)}
         </Text>
         <HStack gap="1">
           {song.seriesIds.map((id) => (
