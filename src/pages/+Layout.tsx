@@ -145,7 +145,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         backgroundAttachment="fixed"
         backgroundImage="var(--bg-image)"
         backgroundSize="cover"
-        opacity="0.05"
+        opacity="0.03"
         mixBlendMode={{ base: 'darken', _dark: 'lighten' }}
         pointerEvents="none"
       />

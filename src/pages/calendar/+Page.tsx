@@ -17,6 +17,7 @@ import { usePerformance, usePerformances, useSeriesById } from '~/hooks/useData'
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
 import { legLabel } from '~/components/events/TourCard';
+import { getSeriesShortName } from '~/utils/series-short';
 import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
 
@@ -158,6 +159,11 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
                       {Number(day.slice(8))}
                     </Text>
                     <HStack gap="1" alignItems="center" flexWrap="wrap">
+                      {events.length > 1 && (
+                        <Text color="accent.default" fontSize="2xs" fontWeight="bold">
+                          {events.length}
+                        </Text>
+                      )}
                       {events.slice(0, 5).map((p) => (
                         <Box
                           key={p.id}
@@ -183,6 +189,16 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
             );
           })}
         </Grid>
+        <HStack gap="2.5" mt="1" flexWrap="wrap">
+          {[...seriesById.values()].map((series) => (
+            <HStack key={series.id} gap="1" alignItems="center">
+              <Box style={{ backgroundColor: series.color }} borderRadius="full" w="2" h="2" />
+              <Text color="fg.muted" fontSize="2xs">
+                {getSeriesShortName(series.id, series.name)}
+              </Text>
+            </HStack>
+          ))}
+        </HStack>
       </Stack>
 
       <Stack gap="2">

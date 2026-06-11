@@ -80,16 +80,21 @@ export function EventTable({
                   {legLabel(p)}
                 </Text>
               </Table.Cell>
-              <Table.Cell hideBelow="md" maxW="48">
-                <Text color="fg.muted" fontSize="sm" lineClamp={1}>
+              <Table.Cell hideBelow="md" maxW="72">
+                <Text color="fg.muted" fontSize="sm" lineClamp={2}>
                   {p.venue}
                 </Text>
               </Table.Cell>
               <Table.Cell hideBelow="xl">
                 <HStack gap="1">
-                  {p.seriesIds.map((id) => (
+                  {p.seriesIds.slice(0, 2).map((id) => (
                     <SeriesBadge key={id} seriesId={id} />
                   ))}
+                  {p.seriesIds.length > 2 && (
+                    <Text color="fg.muted" fontSize="xs">
+                      +{p.seriesIds.length - 2}
+                    </Text>
+                  )}
                 </HStack>
               </Table.Cell>
               <Table.Cell>

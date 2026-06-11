@@ -106,10 +106,16 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       textAlign="center"
       bgColor="accent.a2"
     >
-      <Text textStyle="display" color="accent.default" fontSize="sm" lineHeight="1">
+      <Text
+        textStyle="display"
+        color="accent.default"
+        fontSize="sm"
+        lineHeight="1"
+        whiteSpace="nowrap"
+      >
         {performance.date}
       </Text>
-      <Text fontSize="2xs" fontWeight="bold">
+      <Text fontSize="2xs" fontWeight="bold" lineClamp={4}>
         {performance.tourName}
       </Text>
     </Stack>
@@ -226,6 +232,7 @@ export const MyPickGrid = forwardRef<
                 fontWeight="bold"
                 textAlign="center"
                 textTransform="uppercase"
+                whiteSpace="nowrap"
               >
                 {columnLabel(col)}
               </Text>

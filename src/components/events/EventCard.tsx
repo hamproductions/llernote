@@ -45,8 +45,8 @@ export function EventCard({
       transition="colors"
       _hover={onClick ? { borderColor: 'accent.8' } : undefined}
     >
-      <Card.Body p="4">
-        <Stack gap="2">
+      <Card.Body h="full" p="4">
+        <Stack gap="2" h="full">
           <HStack gap="2" justifyContent="space-between" alignItems="flex-start">
             <Stack flex="1" gap="1" minW="0">
               <HStack gap="2" flexWrap="wrap">
@@ -80,7 +80,7 @@ export function EventCard({
               )}
             </Stack>
           </HStack>
-          <Wrap gap="2">
+          <Wrap gap="2" mt="auto">
             <AttendanceButtons performanceId={performance.id} future={future} />
           </Wrap>
         </Stack>
