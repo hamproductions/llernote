@@ -17,6 +17,7 @@ import { useAttendance } from '~/hooks/useAttendance';
 import { useArtistById, useSetlist, useSongById } from '~/hooks/useData';
 import { useToaster } from '~/context/ToasterContext';
 import { isFutureEvent } from '~/utils/event-filter';
+import { localizedName } from '~/utils/names';
 import {
   copyTextToClipboard,
   eventernoteSearchUrl,
@@ -35,6 +36,7 @@ function SetlistItemRow({
   index: number;
   showArtists: boolean;
 }) {
+  const { i18n } = useTranslation();
   const songById = useSongById();
   const artistById = useArtistById();
   if (item.type !== 'song') {
@@ -49,7 +51,12 @@ function SetlistItemRow({
   }
   const song = item.songId ? songById.get(item.songId) : undefined;
   const artistNames = [
-    ...new Set((song?.artists ?? []).map((a) => artistById.get(a.id)?.name).filter(Boolean))
+    ...new Set(
+      (song?.artists ?? [])
+        .map((a) => artistById.get(a.id))
+        .filter(Boolean)
+        .map((a) => localizedName(i18n.language, a!.name, a!.englishName))
+    )
   ].join('・');
   return (
     <HStack gap="2" alignItems="baseline" py="0.5">
@@ -62,7 +69,9 @@ function SetlistItemRow({
       >
         {index}.
       </Text>
-      <Text fontSize="sm">{song?.name ?? item.customSongName}</Text>
+      <Text fontSize="sm">
+        {song ? localizedName(i18n.language, song.name, song.englishName) : item.customSongName}
+      </Text>
       {showArtists && artistNames && (
         <Text color="fg.muted" fontSize="xs" lineClamp={1}>
           {artistNames}

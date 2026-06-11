@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { useSeriesById } from '~/hooks/useData';
+import { getSeriesShortName } from '~/utils/series-short';
 import type { StatsSummary } from '~/utils/stats';
 
 function StatNumber({ label, value }: { label: string; value: string | number }) {
@@ -47,6 +48,51 @@ function BarList({
           </Text>
         </HStack>
       ))}
+    </Stack>
+  );
+}
+
+function MonthHeatmap({ byMonth, years }: { byMonth: Map<string, number>; years: string[] }) {
+  const max = Math.max(1, ...byMonth.values());
+  const allYears = years.length
+    ? Array.from({ length: Number(years[years.length - 1]) - Number(years[0]) + 1 }, (_, i) =>
+        String(Number(years[0]) + i)
+      )
+    : [];
+
+  return (
+    <Stack gap="1">
+      <Grid gap="0.5" alignItems="center" gridTemplateColumns="2.5rem repeat(12, 1fr)">
+        <Box />
+        {Array.from({ length: 12 }, (_, m) => (
+          <Text key={m} color="fg.subtle" fontSize="2xs" textAlign="center">
+            {m + 1}
+          </Text>
+        ))}
+        {allYears.map((year) => [
+          <Text key={year} color="fg.muted" fontSize="2xs" fontVariantNumeric="tabular-nums">
+            {year}
+          </Text>,
+          ...Array.from({ length: 12 }, (_, m) => {
+            const key = `${year}-${String(m + 1).padStart(2, '0')}`;
+            const count = byMonth.get(key) ?? 0;
+            return (
+              <Box
+                key={key}
+                title={`${key}: ${count}`}
+                style={{
+                  backgroundColor:
+                    count > 0
+                      ? `rgba(228, 0, 127, ${0.25 + 0.75 * (count / max)})`
+                      : 'rgba(128, 128, 128, 0.12)'
+                }}
+                borderRadius="xs"
+                h="4"
+              />
+            );
+          })
+        ])}
+      </Grid>
     </Stack>
   );
 }
@@ -100,6 +146,14 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
         {stats.byYear.length > 0 && (
           <Stack gap="2">
             <Text fontSize="sm" fontWeight="semibold">
+              {t('stats.heatmap')}
+            </Text>
+            <MonthHeatmap byMonth={stats.byMonth} years={stats.byYear.map((y) => y.year)} />
+          </Stack>
+        )}
+        {stats.byYear.length > 0 && (
+          <Stack gap="2">
+            <Text fontSize="sm" fontWeight="semibold">
               {t('stats.by_year')}
             </Text>
             <BarList
@@ -116,7 +170,7 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
             <BarList
               items={stats.bySeries.map((s) => ({
                 key: s.seriesId,
-                label: seriesById.get(s.seriesId)?.name ?? s.seriesId,
+                label: getSeriesShortName(s.seriesId, seriesById.get(s.seriesId)?.name ?? s.seriesId),
                 count: s.count,
                 color: seriesById.get(s.seriesId)?.color
               }))}

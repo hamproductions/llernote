@@ -7,6 +7,7 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
 import { MyPickGrid } from '~/components/mypick/MyPickGrid';
+import { NativeSelect } from '~/components/events/NativeSelect';
 import { Metadata } from '~/components/layout/Metadata';
 import { useMyPick } from '~/hooks/useAttendance';
 import {
@@ -52,6 +53,7 @@ export default function Page() {
   const gridRef = useRef<HTMLDivElement>(null);
   const [picking, setPicking] = useState<{ row: MyPickRow; column: MyPickColumn }>();
   const [addingRow, setAddingRow] = useState(false);
+  const [yearSlot, setYearSlot] = useState<MyPickSlot>('song');
 
   const config = myPick?.config ?? DEFAULT_CONFIG;
 
@@ -134,11 +136,11 @@ export default function Page() {
 
   const addYear = (side: 'left' | 'right') => {
     if (yearColumns.length === 0) {
-      addColumn({ type: 'year', year: currentYear, slot: 'song' });
+      addColumn({ type: 'year', year: currentYear, slot: yearSlot });
       return;
     }
     const year = side === 'left' ? minYear! - 1 : maxYear! + 1;
-    const column: MyPickColumn = { type: 'year', year, slot: 'song' };
+    const column: MyPickColumn = { type: 'year', year, slot: yearSlot };
     updateConfig({
       columns:
         side === 'left'
@@ -201,14 +203,25 @@ export default function Page() {
                 {t(`mypick.slot_${slot}`)}
               </Button>
             ))}
-            <Button size="xs" variant="outline" onClick={() => addYear('left')}>
-              <FaPlus />
-              {t('mypick.add_year_left')}
-            </Button>
-            <Button size="xs" variant="outline" onClick={() => addYear('right')}>
-              <FaPlus />
-              {t('mypick.add_year_right')}
-            </Button>
+            <HStack gap="1">
+              <NativeSelect
+                aria-label={t('mypick.year_slot')}
+                value={yearSlot}
+                options={(['song', 'cast', 'event'] as MyPickSlot[]).map((slot) => ({
+                  value: slot,
+                  label: t(`mypick.slot_${slot}`)
+                }))}
+                onChange={(slot) => setYearSlot(slot as MyPickSlot)}
+              />
+              <Button size="xs" variant="outline" onClick={() => addYear('left')}>
+                <FaPlus />
+                {t('mypick.add_year_left')}
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => addYear('right')}>
+                <FaPlus />
+                {t('mypick.add_year_right')}
+              </Button>
+            </HStack>
           </Wrap>
         </Box>
 

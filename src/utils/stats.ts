@@ -14,6 +14,7 @@ export interface StatsSummary {
   byVenue: { venue: string; count: number }[];
   byWatchType: { watchType: string; count: number }[];
   byCategory: { category: string; count: number }[];
+  byMonth: Map<string, number>;
 }
 
 export const computeStats = (
@@ -34,6 +35,7 @@ export const computeStats = (
   const byVenue = new Map<string, number>();
   const byWatchType = new Map<string, number>();
   const byCategory = new Map<string, number>();
+  const byMonth = new Map<string, number>();
   const songIds: string[] = [];
 
   for (const { record, performance } of attended) {
@@ -48,6 +50,8 @@ export const computeStats = (
     const watchType = record.watchType ?? 'live';
     byWatchType.set(watchType, (byWatchType.get(watchType) ?? 0) + 1);
     byCategory.set(performance.category, (byCategory.get(performance.category) ?? 0) + 1);
+    const month = performance.date.slice(0, 7);
+    byMonth.set(month, (byMonth.get(month) ?? 0) + 1);
 
     const setlist = setlists[performance.id];
     if (setlist) {
@@ -79,6 +83,7 @@ export const computeStats = (
       .sort((a, b) => b.count - a.count),
     byCategory: [...byCategory.entries()]
       .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => b.count - a.count),
+    byMonth
   };
 };

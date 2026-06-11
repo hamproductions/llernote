@@ -94,7 +94,8 @@
     "by_type": "イベント種別",
     "empty": "データがありません。イベントを参加済みにすると統計が表示されます！",
     "share_title": "私のラブライブ！統計",
-    "generated_by": "LLerNoteで作成"
+    "generated_by": "LLerNoteで作成",
+    "heatmap": "活動ヒートマップ"
   },
   "mypick": {
     "title": "マイピック",
@@ -116,7 +117,8 @@
     "generate_image": "画像を生成",
     "add_row": "行を追加",
     "add_year_left": "年を追加 ←",
-    "add_year_right": "年を追加 →"
+    "add_year_right": "年を追加 →",
+    "year_slot": "年セルの種類"
   },
   "songs": {
     "title": "楽曲",
