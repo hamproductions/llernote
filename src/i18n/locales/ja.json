@@ -9,7 +9,8 @@
     "upcoming": "今後の予定",
     "stats": "統計",
     "songs": "楽曲",
-    "mypick": "マイピック"
+    "mypick": "マイピック",
+    "home": "ホーム"
   },
   "common": {
     "menu": "メニュー",
@@ -63,7 +64,11 @@
     "main": "本編",
     "view_detail": "詳細を見る",
     "attended_events": "参加",
-    "interested_events": "気になる"
+    "interested_events": "気になる",
+    "cast_placeholder": "キャストで絞り込み...",
+    "year_from": "開始年",
+    "year_to": "終了年",
+    "leg": "公演"
   },
   "calendar": {
     "title": "カレンダー"
@@ -174,5 +179,17 @@
     "copy": "エラーをコピー",
     "reload": "再読み込み",
     "clear": "データを消去して再読み込み"
+  },
+  "home": {
+    "tagline": "参加したラブライブ！イベントを全部記録。セトリも楽曲も統計も。",
+    "get_started": "まずは参加したイベントを登録しよう:",
+    "browse_events": "イベントを探す",
+    "next_up": "次の予定",
+    "recent": "最近の参加イベント",
+    "view_all": "すべて見る",
+    "guide_events": "760件以上のイベントから参加したものを登録",
+    "guide_calendar": "カレンダー・今後の予定・タイムライン",
+    "guide_songs": "ライブで聴いた楽曲をランキングで",
+    "guide_stats": "統計・ヒートマップ・シェア画像"
   }
 }

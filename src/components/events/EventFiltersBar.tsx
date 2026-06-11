@@ -1,19 +1,17 @@
-import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaChevronDown } from 'react-icons/fa6';
 import { Box, HStack, Wrap } from 'styled-system/jsx';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
+import { Text } from '~/components/ui/text';
 import { NativeSelect } from './NativeSelect';
-import { PickDialog } from '~/components/mypick/PickDialog';
-import { useCharacters, useEventYears, useSeries } from '~/hooks/useData';
+import { CastFilter } from './CastFilter';
+import { useEventYears, useSeries } from '~/hooks/useData';
 import { getSeriesShortName } from '~/utils/series-short';
-import { getPicUrl } from '~/utils/assets';
-import { localizedName } from '~/utils/names';
 import type { EventCategory } from '~/types';
 import type { EventFilters } from '~/utils/event-filter';
 
 const CATEGORIES: EventCategory[] = ['live', 'online', 'tv'];
+const ATTENDANCE = ['attended', 'interested', 'none'] as const;
 
 export function EventFiltersBar({
   filters,
@@ -24,12 +22,10 @@ export function EventFiltersBar({
   onChange: (filters: EventFilters) => void;
   showAttendanceFilter?: boolean;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const series = useSeries();
   const years = useEventYears();
-  const characters = useCharacters();
-  const [pickingCast, setPickingCast] = useState(false);
-  const [pickingYears, setPickingYears] = useState(false);
+  const yearOptions = [...years].sort();
 
   const toggle = (key: 'seriesIds' | 'categories', value: string) => {
     const list = filters[key] as string[];
@@ -39,31 +35,16 @@ export function EventFiltersBar({
     });
   };
 
-  const castItems = useMemo(
-    () =>
-      characters.map((c) => ({
-        id: c.id,
-        label: localizedName(i18n.language, c.fullName, c.englishName),
-        sub: c.casts
-          .map((cast) => localizedName(i18n.language, cast.seiyuu, cast.englishName))
-          .join('・'),
-        image: getPicUrl(c.id, c.hasIcon ? 'icons' : 'character')
-      })),
-    [characters, i18n.language]
-  );
-
-  const yearItems = useMemo(() => years.map((y) => ({ id: y, label: y })), [years]);
-
-  const attendanceOptions = [
-    { value: 'attended', label: t('events.status_attended') },
-    { value: 'interested', label: t('events.status_going') },
-    { value: 'none', label: t('events.status_none') }
-  ];
+  const attendanceLabel = {
+    attended: t('events.status_attended'),
+    interested: t('events.status_going'),
+    none: t('events.status_none')
+  };
 
   return (
     <Box borderColor="border.subtle" borderRadius="l2" borderWidth="1px" p="3" bgColor="bg.subtle">
-      <HStack gap="2" alignItems="center" flexWrap="wrap">
-        <Box flex="1" minW="56">
+      <HStack gap="2" alignItems="flex-start" flexWrap="wrap">
+        <Box flex="2" minW="56">
           <Input
             size="sm"
             value={filters.search}
@@ -71,49 +52,45 @@ export function EventFiltersBar({
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
           />
         </Box>
-        <Button size="sm" variant="outline" onClick={() => setPickingYears(true)}>
-          {t('events.year')}
-          {filters.years.length > 0 ? ` (${filters.years.length})` : ''}
-          <FaChevronDown />
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setPickingCast(true)}>
-          {t('events.cast')}
-          {filters.characterIds.length > 0 ? ` (${filters.characterIds.length})` : ''}
-          <FaChevronDown />
-        </Button>
-        {showAttendanceFilter && (
+        <CastFilter
+          selectedIds={filters.characterIds}
+          onChange={(characterIds) => onChange({ ...filters, characterIds })}
+        />
+        <HStack gap="1" alignItems="center">
           <NativeSelect
-            aria-label={t('events.attendance_filter')}
-            value={filters.attendance ?? ''}
-            placeholder={`${t('events.attendance_filter')}: ${t('common.all')}`}
-            options={attendanceOptions}
-            onChange={(attendance) =>
-              onChange({
-                ...filters,
-                attendance: (attendance || undefined) as EventFilters['attendance']
-              })
-            }
+            aria-label={t('events.year_from')}
+            value={filters.yearFrom ?? ''}
+            placeholder={yearOptions[0]}
+            options={yearOptions.map((y) => ({ value: y, label: y }))}
+            onChange={(yearFrom) => onChange({ ...filters, yearFrom: yearFrom || undefined })}
           />
-        )}
+          <Text color="fg.muted" fontSize="sm">
+            〜
+          </Text>
+          <NativeSelect
+            aria-label={t('events.year_to')}
+            value={filters.yearTo ?? ''}
+            placeholder={yearOptions[yearOptions.length - 1]}
+            options={yearOptions.map((y) => ({ value: y, label: y }))}
+            onChange={(yearTo) => onChange({ ...filters, yearTo: yearTo || undefined })}
+          />
+        </HStack>
         <Button
           size="xs"
           variant="ghost"
           onClick={() =>
             onChange({
-              ...filters,
               search: '',
               seriesIds: [],
-              years: [],
               characterIds: [],
-              categories: [],
-              attendance: undefined
+              categories: []
             })
           }
         >
           {t('common.clear')}
         </Button>
       </HStack>
-      <Wrap gap="1" mt="2">
+      <Wrap gap="1" alignItems="center" mt="2">
         {series.map((s) => {
           const active = filters.seriesIds.includes(s.id);
           return (
@@ -143,26 +120,26 @@ export function EventFiltersBar({
             </Button>
           );
         })}
+        {showAttendanceFilter && (
+          <>
+            <Box w="1px" h="6" mx="1" bgColor="border.default" />
+            {ATTENDANCE.map((status) => {
+              const active = filters.attendance === status;
+              return (
+                <Button
+                  key={status}
+                  size="xs"
+                  variant={active ? 'solid' : 'outline'}
+                  onClick={() => onChange({ ...filters, attendance: active ? undefined : status })}
+                  colorPalette={status === 'interested' ? 'amber' : undefined}
+                >
+                  {attendanceLabel[status]}
+                </Button>
+              );
+            })}
+          </>
+        )}
       </Wrap>
-
-      <PickDialog
-        title={t('events.cast')}
-        items={castItems}
-        selectedIds={filters.characterIds}
-        max={Infinity}
-        open={pickingCast}
-        onClose={() => setPickingCast(false)}
-        onChange={(characterIds) => onChange({ ...filters, characterIds })}
-      />
-      <PickDialog
-        title={t('events.year')}
-        items={yearItems}
-        selectedIds={filters.years}
-        max={Infinity}
-        open={pickingYears}
-        onClose={() => setPickingYears(false)}
-        onChange={(years) => onChange({ ...filters, years })}
-      />
     </Box>
   );
 }

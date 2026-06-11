@@ -14,7 +14,8 @@ import { IconButton } from '~/components/ui/styled/icon-button';
 import { getAssetUrl } from '~/utils/assets';
 
 const NAV_ITEMS = [
-  { path: '/', key: 'navigation.events', exact: true },
+  { path: '/', key: 'navigation.home', exact: true },
+  { path: '/events', key: 'navigation.events' },
   { path: '/calendar', key: 'navigation.calendar' },
   { path: '/stats', key: 'navigation.stats' },
   { path: '/songs', key: 'navigation.songs' },

@@ -4,7 +4,8 @@ import type { AttendanceMap } from '~/utils/attendance/storage';
 export interface EventFilters {
   search: string;
   seriesIds: string[];
-  years: string[];
+  yearFrom?: string;
+  yearTo?: string;
   characterIds: string[];
   categories: EventCategory[];
   attendance?: 'attended' | 'interested' | 'none';
@@ -13,7 +14,6 @@ export interface EventFilters {
 export const EMPTY_FILTERS: EventFilters = {
   search: '',
   seriesIds: [],
-  years: [],
   characterIds: [],
   categories: []
 };
@@ -48,7 +48,9 @@ export const filterEvents = (
     if (filters.seriesIds.length > 0 && !p.seriesIds.some((id) => filters.seriesIds.includes(id))) {
       return false;
     }
-    if (filters.years.length > 0 && !filters.years.includes(p.date.slice(0, 4))) return false;
+    const year = p.date.slice(0, 4);
+    if (filters.yearFrom && year < filters.yearFrom) return false;
+    if (filters.yearTo && year > filters.yearTo) return false;
     if (filters.categories.length > 0 && !filters.categories.includes(p.category)) return false;
     if (filters.attendance) {
       const record = attendanceMap[p.id];

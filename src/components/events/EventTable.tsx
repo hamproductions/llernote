@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaArrowUpRightFromSquare, FaListUl } from 'react-icons/fa6';
+import { FaArrowDown, FaArrowUp, FaArrowUpRightFromSquare, FaListUl } from 'react-icons/fa6';
 import { HStack } from 'styled-system/jsx';
 import { Table } from '~/components/ui/table';
 import { IconButton } from '~/components/ui/icon-button';
@@ -7,6 +8,7 @@ import { Link } from '~/components/ui/link';
 import { Text } from '~/components/ui/text';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
+import { legLabel } from './TourCard';
 import { isFutureEvent } from '~/utils/event-filter';
 import { eventernoteSearchUrl } from '~/utils/share';
 import type { Performance } from '~/types';
@@ -19,21 +21,47 @@ export function EventTable({
   onSelect: (p: Performance) => void;
 }) {
   const { t } = useTranslation();
+  const [asc, setAsc] = useState(false);
+
+  const rows = [...performances].sort((a, b) =>
+    asc ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)
+  );
 
   return (
     <Table.Root size="sm">
-      <Table.Head>
+      <Table.Head zIndex="1" position="sticky" top="0" bgColor="bg.default">
         <Table.Row>
-          <Table.Header w="28">{t('events.date')}</Table.Header>
+          <Table.Header w="28">
+            <HStack
+              onClick={() => setAsc((v) => !v)}
+              aria-sort={asc ? 'ascending' : 'descending'}
+              cursor="pointer"
+              gap="1"
+            >
+              {t('events.date')}
+              {asc ? <FaArrowUp size={10} /> : <FaArrowDown size={10} />}
+            </HStack>
+          </Table.Header>
           <Table.Header>{t('events.title')}</Table.Header>
-          <Table.Header hideBelow="md">{t('events.venue')}</Table.Header>
-          <Table.Header hideBelow="lg">{t('events.series')}</Table.Header>
+          <Table.Header hideBelow="lg" w="40">
+            {t('events.leg')}
+          </Table.Header>
+          <Table.Header hideBelow="md" maxW="48">
+            {t('events.venue')}
+          </Table.Header>
+          <Table.Header hideBelow="xl">{t('events.series')}</Table.Header>
           <Table.Header textAlign="right">{t('events.attendance_filter')}</Table.Header>
         </Table.Row>
       </Table.Head>
       <Table.Body>
-        {performances.map((p) => (
-          <Table.Row key={p.id} onClick={() => onSelect(p)} cursor="pointer">
+        {rows.map((p, i) => (
+          <Table.Row
+            key={p.id}
+            onClick={() => onSelect(p)}
+            cursor="pointer"
+            bgColor={i % 2 === 1 ? 'bg.subtle' : undefined}
+            _hover={{ bgColor: 'accent.a2' }}
+          >
             <Table.Cell color="fg.muted" fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
               {p.date}
             </Table.Cell>
@@ -42,12 +70,17 @@ export function EventTable({
                 {p.tourName}
               </Text>
             </Table.Cell>
+            <Table.Cell hideBelow="lg">
+              <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+                {legLabel(p)}
+              </Text>
+            </Table.Cell>
             <Table.Cell hideBelow="md" maxW="48">
               <Text color="fg.muted" fontSize="sm" lineClamp={1}>
                 {p.venue}
               </Text>
             </Table.Cell>
-            <Table.Cell hideBelow="lg">
+            <Table.Cell hideBelow="xl">
               <HStack gap="1">
                 {p.seriesIds.map((id) => (
                   <SeriesBadge key={id} seriesId={id} />

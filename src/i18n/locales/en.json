@@ -9,7 +9,8 @@
     "upcoming": "Upcoming",
     "stats": "Stats",
     "songs": "Songs",
-    "mypick": "MyPick"
+    "mypick": "MyPick",
+    "home": "Home"
   },
   "common": {
     "menu": "Menu",
@@ -63,7 +64,11 @@
     "main": "Main",
     "view_detail": "View details",
     "attended_events": "attended",
-    "interested_events": "interested"
+    "interested_events": "interested",
+    "cast_placeholder": "Filter by cast...",
+    "year_from": "From year",
+    "year_to": "To year",
+    "leg": "Show"
   },
   "calendar": {
     "title": "Calendar"
@@ -174,5 +179,17 @@
     "copy": "Copy error",
     "reload": "Reload",
     "clear": "Clear data & reload"
+  },
+  "home": {
+    "tagline": "Keep track of every LoveLive! event you've been to — setlists, songs, stats, all of it.",
+    "get_started": "Start by marking events you've attended:",
+    "browse_events": "Browse events",
+    "next_up": "Next up",
+    "recent": "Recently attended",
+    "view_all": "View all",
+    "guide_events": "Browse 760+ events, mark the ones you attended",
+    "guide_calendar": "Calendar, upcoming events and your timeline",
+    "guide_songs": "Every song you've witnessed live, ranked",
+    "guide_stats": "Your numbers, heatmap and share images"
   }
 }

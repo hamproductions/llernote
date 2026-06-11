@@ -58,10 +58,12 @@ describe('filterEvents', () => {
     ).toHaveLength(2);
   });
 
-  it('filters by multiple years', () => {
+  it('filters by year range', () => {
     expect(
-      filterEvents(performances, { ...EMPTY_FILTERS, years: ['2021', '2024'] }, {})
-    ).toHaveLength(3);
+      filterEvents(performances, { ...EMPTY_FILTERS, yearFrom: '2022', yearTo: '2024' }, {})
+    ).toHaveLength(2);
+    expect(filterEvents(performances, { ...EMPTY_FILTERS, yearFrom: '2024' }, {})).toHaveLength(1);
+    expect(filterEvents(performances, { ...EMPTY_FILTERS, yearTo: '2021' }, {})).toHaveLength(2);
   });
 
   it('filters by categories', () => {
