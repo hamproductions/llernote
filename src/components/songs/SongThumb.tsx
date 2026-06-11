@@ -5,13 +5,11 @@ import { getPicUrl } from '~/utils/assets';
 
 export function SongThumb({
   songId,
-  size = '11',
-  rounded = 'l1',
+  large = false,
   dim = false
 }: {
   songId: string;
-  size?: '11' | '12' | '16';
-  rounded?: 'l1' | 'l2' | 'full';
+  large?: boolean;
   dim?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
@@ -19,9 +17,9 @@ export function SongThumb({
   return (
     <Box
       flexShrink={0}
-      borderRadius={rounded}
-      w={size}
-      h={size}
+      borderRadius={large ? 'l2' : 'l1'}
+      w={large ? '16' : '11'}
+      h={large ? '16' : '11'}
       bgColor="bg.subtle"
       opacity={dim ? 0.55 : 1}
       overflow="hidden"

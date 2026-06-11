@@ -56,7 +56,7 @@ export function SongDetailDialog({
               pr="8"
               pb="3"
             >
-              <SongThumb songId={song.id} size="16" rounded="l2" />
+              <SongThumb songId={song.id} large />
               <Stack gap="1" minW="0">
                 <Dialog.Title>
                   {localizedName(i18n.language, song.name, song.englishName)}
