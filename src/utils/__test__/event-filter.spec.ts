@@ -72,8 +72,13 @@ describe('filterEvents', () => {
     ).toHaveLength(2);
   });
 
-  it('filters by series across multi-series events', () => {
-    expect(filterEvents(performances, { ...EMPTY_FILTERS, seriesIds: ['4'] }, {})).toHaveLength(2);
+  it('filters by series excluding multi-series events', () => {
+    expect(filterEvents(performances, { ...EMPTY_FILTERS, seriesIds: ['4'] }, {})).toHaveLength(1);
+    expect(
+      filterEvents(performances, { ...EMPTY_FILTERS, multiSeries: true }, {}).every(
+        (p) => p.seriesIds.length > 1
+      )
+    ).toBe(true);
   });
 
   it('filters by attendance status', () => {

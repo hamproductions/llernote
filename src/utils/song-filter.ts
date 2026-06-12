@@ -63,13 +63,21 @@ export const filterSongs = (
       );
       if (!haystack.includes(q)) return false;
     }
-    if (
+    if (filters.multiSeries) {
+      if (song.seriesIds.length < 2) return false;
+      if (
+        filters.seriesIds.length > 0 &&
+        !song.seriesIds.some((id) => filters.seriesIds.includes(String(id)))
+      ) {
+        return false;
+      }
+    } else if (
       filters.seriesIds.length > 0 &&
-      !song.seriesIds.some((id) => filters.seriesIds.includes(String(id)))
+      (song.seriesIds.length > 1 ||
+        !song.seriesIds.some((id) => filters.seriesIds.includes(String(id))))
     ) {
       return false;
     }
-    if (filters.multiSeries && song.seriesIds.length < 2) return false;
     if (
       filters.categories.length > 0 &&
       !filters.categories.some((category) => songMatchesCategory(song, category, artistById))

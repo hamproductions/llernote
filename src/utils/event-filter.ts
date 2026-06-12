@@ -53,10 +53,20 @@ export const filterEvents = (
     ) {
       return false;
     }
-    if (filters.seriesIds.length > 0 && !p.seriesIds.some((id) => filters.seriesIds.includes(id))) {
+    if (filters.multiSeries) {
+      if (p.seriesIds.length < 2) return false;
+      if (
+        filters.seriesIds.length > 0 &&
+        !p.seriesIds.some((id) => filters.seriesIds.includes(id))
+      ) {
+        return false;
+      }
+    } else if (
+      filters.seriesIds.length > 0 &&
+      (p.seriesIds.length > 1 || !p.seriesIds.some((id) => filters.seriesIds.includes(id)))
+    ) {
       return false;
     }
-    if (filters.multiSeries && p.seriesIds.length < 2) return false;
     const year = p.date.slice(0, 4);
     if (filters.yearFrom && year < filters.yearFrom) return false;
     if (filters.yearTo && year > filters.yearTo) return false;
