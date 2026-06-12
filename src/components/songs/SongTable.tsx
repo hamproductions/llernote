@@ -186,6 +186,15 @@ export function SongTable({
                 return (
                   <Table.Header
                     key={header.id}
+                    aria-sort={
+                      header.column.getCanSort()
+                        ? sorted === 'asc'
+                          ? 'ascending'
+                          : sorted === 'desc'
+                            ? 'descending'
+                            : 'none'
+                        : undefined
+                    }
                     hideBelow={meta.hideBelow}
                     w={meta.w}
                     minW={meta.minW}
@@ -194,10 +203,15 @@ export function SongTable({
                   >
                     {header.column.getCanSort() ? (
                       <HStack
+                        role="button"
+                        tabIndex={0}
                         onClick={header.column.getToggleSortingHandler()}
-                        aria-sort={
-                          sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'
-                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            header.column.getToggleSortingHandler()?.(e);
+                          }
+                        }}
                         cursor="pointer"
                         gap="1"
                         justifyContent={meta.textAlign === 'right' ? 'flex-end' : undefined}

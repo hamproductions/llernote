@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronDown, FaChevronUp, FaCopy, FaDownload } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
@@ -11,6 +11,7 @@ import { StatsCard } from '~/components/stats/StatsCard';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
+import { useAppSettings } from '~/hooks/useAppSettings';
 import { useAttendance } from '~/hooks/useAttendance';
 import {
   useEventYears,
@@ -413,8 +414,13 @@ export default function Page() {
   const [year, setYear] = useState('');
   const [seriesFilter, setSeriesFilter] = useState('');
   const [category, setCategory] = useState('');
+  const { inPersonOnly } = useAppSettings();
   const multiSeries = seriesFilter === MULTI_SERIES_FILTER;
   const seriesId = multiSeries ? '' : seriesFilter;
+
+  useEffect(() => {
+    if (inPersonOnly && category) setCategory('');
+  }, [inPersonOnly, category]);
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
@@ -510,17 +516,19 @@ export default function Page() {
             ]}
             onChange={setSeriesFilter}
           />
-          <NativeSelect
-            aria-label={t('events.category')}
-            value={category}
-            placeholder={`${t('events.category')}: ${t('common.all')}`}
-            options={[
-              { value: 'live', label: t('events.category_live') },
-              { value: 'online', label: t('events.category_online') },
-              { value: 'tv', label: t('events.category_tv') }
-            ]}
-            onChange={setCategory}
-          />
+          {!inPersonOnly && (
+            <NativeSelect
+              aria-label={t('events.category')}
+              value={category}
+              placeholder={`${t('events.category')}: ${t('common.all')}`}
+              options={[
+                { value: 'live', label: t('events.category_live') },
+                { value: 'online', label: t('events.category_online') },
+                { value: 'tv', label: t('events.category_tv') }
+              ]}
+              onChange={setCategory}
+            />
+          )}
         </HStack>
 
         {derived.pending ? (

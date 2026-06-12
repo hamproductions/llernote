@@ -15,13 +15,20 @@ export const resources = {
   }
 };
 
+const savedLanguage = (() => {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem('i18nextLng');
+  if (stored === 'en' || stored === 'ja') return stored;
+  return navigator.language.startsWith('ja') ? 'ja' : 'en';
+})();
+
 void i18n
   // pass the i18n instance to react-i18next.
   .use(initReactI18next)
   // init i18next
   // for all options read: https://www.i18next.com/overview/configuration-options
   .init({
-    lng: 'ja',
+    lng: savedLanguage ?? 'ja',
     fallbackLng: 'en',
     debug: false,
     resources,
