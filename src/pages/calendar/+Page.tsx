@@ -15,7 +15,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { usePerformance, usePerformances, useSeriesById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
-import { isFutureEvent } from '~/utils/event-filter';
+import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { legLabel } from '~/components/events/TourCard';
 import { getSeriesShortName } from '~/utils/series-short';
 import { clickable } from '~/utils/clickable';
@@ -23,7 +23,13 @@ import type { Performance } from '~/types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
+function MonthView({
+  onSelect,
+  multiSeries
+}: {
+  onSelect: (p: Performance) => void;
+  multiSeries: boolean;
+}) {
   const { t, i18n } = useTranslation();
   const performances = usePerformances();
   const seriesById = useSeriesById();
@@ -39,8 +45,9 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
     () =>
       performances
         .filter((p) => p.date.startsWith(monthPrefix))
+        .filter((p) => !multiSeries || p.seriesIds.length > 1)
         .sort((a, b) => a.date.localeCompare(b.date)),
-    [performances, monthPrefix]
+    [performances, monthPrefix, multiSeries]
   );
   const eventsByDay = useMemo(() => {
     const map = new Map<string, Performance[]>();
@@ -277,23 +284,23 @@ function MonthView({ onSelect }: { onSelect: (p: Performance) => void }) {
   );
 }
 
-const daysUntil = (date: string) => {
-  const now = new Date();
-  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  const [y, m, d] = date.split('-').map(Number);
-  return Math.round((Date.UTC(y!, m! - 1, d!) - todayUtc) / 86400000);
-};
-
-function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
+function Upcoming({
+  onSelect,
+  multiSeries
+}: {
+  onSelect: (p: Performance) => void;
+  multiSeries: boolean;
+}) {
   const { t } = useTranslation();
   const performances = usePerformances();
 
   const upcoming = useMemo(
     () =>
       performances
-        .filter((p) => daysUntil(p.date) >= 0)
+        .filter((p) => daysFromToday(p.date) >= 0)
+        .filter((p) => !multiSeries || p.seriesIds.length > 1)
         .sort((a, b) => a.date.localeCompare(b.date)),
-    [performances]
+    [performances, multiSeries]
   );
 
   if (upcoming.length === 0) {
@@ -303,7 +310,7 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
   return (
     <Grid gap="2" alignItems="start" gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}>
       {upcoming.map((p) => {
-        const days = daysUntil(p.date);
+        const days = daysFromToday(p.date);
         const label = legLabel(p);
         return (
           <HStack
@@ -314,7 +321,7 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
             borderColor="border.subtle"
             borderRadius="l2"
             borderWidth="1px"
-            p="2.5"
+            p="3"
             bgColor="bg.default"
             transition="colors"
             _hover={{ borderColor: 'accent.8' }}
@@ -322,21 +329,28 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
             <Stack
               gap="0"
               flexShrink={0}
+              justifyContent="center"
               alignItems="center"
-              borderRadius="l2"
-              minW="14"
-              py="1.5"
-              px="2"
-              bgColor="accent.a3"
+              minW={{ base: '16', md: '20' }}
             >
-              <Text textStyle="display" color="accent.default" fontSize="xl" lineHeight="1">
-                {Number(p.date.slice(8))}
+              <Text
+                textStyle="display"
+                color="red.9"
+                fontSize={{ base: '3xl', md: '4xl' }}
+                fontWeight="bold"
+                fontVariantNumeric="tabular-nums"
+                lineHeight="1"
+              >
+                {days}
               </Text>
-              <Text color="fg.muted" fontSize="2xs">
-                {p.date.slice(0, 7)}
+              <Text color="red.10" fontSize="2xs" fontWeight="bold">
+                {t(days === 0 ? 'upcoming.today_short' : 'upcoming.days')}
               </Text>
             </Stack>
             <Stack flex="1" gap="0.5" minW="0">
+              <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
+                {p.date}
+              </Text>
               <Text fontSize="sm" fontWeight="medium">
                 {p.tourName}
                 {label ? ` ${label}` : ''}
@@ -356,13 +370,6 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
               flexShrink={0}
               alignItems="flex-end"
             >
-              <Text color="accent.default" fontSize="xs" fontWeight="bold">
-                {days === 0
-                  ? t('upcoming.today')
-                  : days === 1
-                    ? t('upcoming.tomorrow')
-                    : t('upcoming.days_until', { count: days })}
-              </Text>
               <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} iconOnly />
             </Stack>
           </HStack>
@@ -372,15 +379,21 @@ function Upcoming({ onSelect }: { onSelect: (p: Performance) => void }) {
   );
 }
 
-function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
+function Timeline({
+  onSelect,
+  multiSeries
+}: {
+  onSelect: (p: Performance) => void;
+  multiSeries: boolean;
+}) {
   const { t } = useTranslation();
   const performances = usePerformances();
   const { records, map } = useAttendance();
 
   const attended = useMemo(() => {
     const ids = new Set(records.filter((r) => r.status === 'attended').map((r) => r.performanceId));
-    return performances.filter((p) => ids.has(p.id));
-  }, [performances, records]);
+    return performances.filter((p) => ids.has(p.id) && (!multiSeries || p.seriesIds.length > 1));
+  }, [performances, records, multiSeries]);
 
   if (attended.length === 0) {
     return <Text color="fg.muted">{t('timeline.empty')}</Text>;
@@ -473,13 +486,24 @@ function Timeline({ onSelect }: { onSelect: (p: Performance) => void }) {
 export default function Page() {
   const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string>();
+  const [multiSeries, setMultiSeries] = useState(false);
   const selected = usePerformance(selectedId);
 
   return (
     <>
       <Metadata title={`${t('calendar.title')} - LLerNote`} helmet />
       <Stack gap="4">
-        <SectionHeading size="2xl">{t('calendar.title')}</SectionHeading>
+        <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
+          <SectionHeading size="2xl">{t('calendar.title')}</SectionHeading>
+          <Button
+            size="sm"
+            variant={multiSeries ? 'solid' : 'outline'}
+            onClick={() => setMultiSeries((v) => !v)}
+            borderRadius="full"
+          >
+            {t('events.multi_series')}
+          </Button>
+        </HStack>
         <Tabs.Root defaultValue="calendar">
           <Tabs.List>
             <Tabs.Trigger value="calendar">{t('calendar.title')}</Tabs.Trigger>
@@ -488,13 +512,13 @@ export default function Page() {
             <Tabs.Indicator />
           </Tabs.List>
           <Tabs.Content value="calendar">
-            <MonthView onSelect={(p) => setSelectedId(p.id)} />
+            <MonthView multiSeries={multiSeries} onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="upcoming">
-            <Upcoming onSelect={(p) => setSelectedId(p.id)} />
+            <Upcoming multiSeries={multiSeries} onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="timeline">
-            <Timeline onSelect={(p) => setSelectedId(p.id)} />
+            <Timeline multiSeries={multiSeries} onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
         </Tabs.Root>
         <EventDetailDialog

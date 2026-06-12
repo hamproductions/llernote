@@ -96,8 +96,9 @@ export default function Page() {
   }, [performances, goingIds]);
 
   const recentAttended = useMemo(() => {
+    const today = todayString();
     const ids = new Set(records.filter((r) => r.status === 'attended').map((r) => r.performanceId));
-    return performances.filter((p) => ids.has(p.id)).slice(0, 3);
+    return performances.filter((p) => ids.has(p.id) && p.date <= today).slice(0, 3);
   }, [performances, records]);
 
   const hasData = stats.attendedCount > 0;

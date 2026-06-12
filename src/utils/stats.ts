@@ -15,25 +15,35 @@ export interface StatsSummary {
   byWatchType: { watchType: string; count: number }[];
   byCategory: { category: string; count: number }[];
   byMonth: Map<string, number>;
+  byMonthEvents: {
+    month: string;
+    total: number;
+    attended: number;
+    going: number;
+    attendanceRate: number;
+  }[];
 }
 
 export const computeStats = (
   records: AttendanceRecord[],
   performanceById: Map<string, Performance>,
-  setlists: Record<string, Setlist>
+  setlists: Record<string, Setlist>,
+  performances: Performance[] = [...performanceById.values()]
 ): StatsSummary => {
-  const attended = records
-    .filter((r) => r.status === 'attended')
-    .map((r) => ({ record: r, performance: performanceById.get(r.performanceId) }))
-    .filter((x): x is { record: AttendanceRecord; performance: Performance } => !!x.performance)
-    .sort((a, b) => a.performance.date.localeCompare(b.performance.date));
-
   const today = (() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   })();
-  const interestedCount = records.filter(
-    (r) => r.status === 'interested' && (performanceById.get(r.performanceId)?.date ?? '') >= today
+  const activeRecords = records.filter((r) => !r.deleted);
+  const recordByPerformanceId = new Map(activeRecords.map((r) => [r.performanceId, r]));
+  const attended = records
+    .filter((r) => r.status === 'attended' && !r.deleted)
+    .map((r) => ({ record: r, performance: performanceById.get(r.performanceId) }))
+    .filter((x): x is { record: AttendanceRecord; performance: Performance } => !!x.performance)
+    .sort((a, b) => a.performance.date.localeCompare(b.performance.date));
+
+  const interestedCount = activeRecords.filter(
+    (r) => r.status === 'interested' && (performanceById.get(r.performanceId)?.date ?? '') > today
   ).length;
 
   const byYear = new Map<string, number>();
@@ -42,7 +52,21 @@ export const computeStats = (
   const byWatchType = new Map<string, number>();
   const byCategory = new Map<string, number>();
   const byMonth = new Map<string, number>();
+  const byMonthEvents = new Map<
+    string,
+    { month: string; total: number; attended: number; going: number }
+  >();
   const songIds: string[] = [];
+
+  for (const performance of performances) {
+    const month = performance.date.slice(0, 7);
+    const entry = byMonthEvents.get(month) ?? { month, total: 0, attended: 0, going: 0 };
+    const record = recordByPerformanceId.get(performance.id);
+    entry.total += 1;
+    if (record?.status === 'attended') entry.attended += 1;
+    if (record?.status === 'interested' && performance.date > today) entry.going += 1;
+    byMonthEvents.set(month, entry);
+  }
 
   for (const { record, performance } of attended) {
     const year = performance.date.slice(0, 4);
@@ -90,6 +114,12 @@ export const computeStats = (
     byCategory: [...byCategory.entries()]
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count),
-    byMonth
+    byMonth,
+    byMonthEvents: [...byMonthEvents.values()]
+      .map((entry) => ({
+        ...entry,
+        attendanceRate: entry.total > 0 ? Math.round((entry.attended / entry.total) * 100) : 0
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month))
   };
 };

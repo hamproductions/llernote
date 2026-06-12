@@ -1,6 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCopy, FaDownload, FaFileExport, FaFileImport } from 'react-icons/fa6';
+import {
+  FaChevronDown,
+  FaChevronUp,
+  FaCopy,
+  FaDownload,
+  FaFileExport,
+  FaFileImport
+} from 'react-icons/fa6';
 import { saveAs } from 'file-saver';
 import { Box, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
@@ -119,6 +126,143 @@ function MonthHeatmap({ byMonth, years }: { byMonth: Map<string, number>; years:
   );
 }
 
+function SeriesPie({
+  items
+}: {
+  items: { key: string; label: string; count: number; color?: string }[];
+}) {
+  const { t } = useTranslation();
+  const total = items.reduce((sum, item) => sum + item.count, 0);
+  let offset = 25;
+  const slices = items.map((item) => {
+    const value = total > 0 ? (item.count / total) * 100 : 0;
+    const slice = { ...item, value, offset };
+    offset += value;
+    return slice;
+  });
+
+  return (
+    <Grid gap="4" alignItems="center" gridTemplateColumns={{ base: '1fr', md: 'auto 1fr' }}>
+      <Box position="relative" w="44" h="44" mx="auto">
+        <svg viewBox="0 0 44 44" width="100%" height="100%">
+          <circle
+            cx="22"
+            cy="22"
+            r="15.9155"
+            fill="none"
+            stroke="var(--colors-bg-subtle)"
+            strokeWidth="8"
+          />
+          {slices.map((item) => (
+            <circle
+              key={item.key}
+              cx="22"
+              cy="22"
+              r="15.9155"
+              fill="none"
+              stroke={item.color ?? '#e4007f'}
+              strokeDasharray={`${item.value} ${100 - item.value}`}
+              strokeDashoffset={100 - item.offset}
+              strokeWidth="8"
+            />
+          ))}
+        </svg>
+        <Stack
+          inset="0"
+          position="absolute"
+          gap="0"
+          justifyContent="center"
+          alignItems="center"
+          pointerEvents="none"
+        >
+          <Text textStyle="display" color="accent.default" fontSize="2xl" lineHeight="1">
+            {total}
+          </Text>
+          <Text color="fg.muted" fontSize="2xs">
+            {t('stats.events_total')}
+          </Text>
+        </Stack>
+      </Box>
+      <Stack gap="2">
+        {slices.map((item) => (
+          <HStack key={item.key} gap="2">
+            <Box
+              style={{ backgroundColor: item.color ?? '#e4007f' }}
+              flexShrink={0}
+              borderRadius="full"
+              w="2.5"
+              h="2.5"
+            />
+            <Text flex="1" minW="0" fontSize="sm" lineClamp={1}>
+              {item.label}
+            </Text>
+            <Text color="fg.muted" fontSize="sm" fontVariantNumeric="tabular-nums">
+              {Math.round(item.value)}%
+            </Text>
+          </HStack>
+        ))}
+      </Stack>
+    </Grid>
+  );
+}
+
+function MonthEventChart({
+  items
+}: {
+  items: {
+    month: string;
+    total: number;
+    attended: number;
+    going: number;
+    attendanceRate: number;
+  }[];
+}) {
+  const visible = items.slice(-18);
+  const max = Math.max(1, ...items.map((item) => item.total));
+
+  return (
+    <Stack gap="3">
+      <HStack gap="2" alignItems="flex-end" minH="44" pb="1" overflowX="auto">
+        {visible.map((item) => (
+          <Stack key={item.month} flex="1" gap="1" alignItems="center" minW="8">
+            <Box
+              title={`${item.month}: ${item.total}`}
+              borderRadius="full"
+              w="full"
+              minW="6"
+              h={`${Math.max(10, Math.round((item.total / max) * 160))}px`}
+              bgColor="accent.a8"
+            />
+            <Text color="fg.muted" fontSize="2xs" fontVariantNumeric="tabular-nums">
+              {item.month.slice(5)}
+            </Text>
+          </Stack>
+        ))}
+      </HStack>
+      <Grid gap="2" gridTemplateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}>
+        {visible.slice(-3).map((item) => (
+          <Stack key={item.month} gap="0" borderColor="border.subtle" borderWidth="1px" p="3">
+            <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
+              {item.month}
+            </Text>
+            <HStack gap="3" alignItems="baseline">
+              <Text textStyle="display" color="accent.default" fontSize="2xl" lineHeight="1">
+                {item.total}
+              </Text>
+              <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
+                {item.attendanceRate}%
+              </Text>
+              <Text color="amber.11" fontSize="xs" fontVariantNumeric="tabular-nums">
+                +{item.going}
+              </Text>
+            </HStack>
+          </Stack>
+        ))}
+      </Grid>
+    </Stack>
+  );
+}
+
 function ChartCard({
   title,
   children,
@@ -128,13 +272,20 @@ function ChartCard({
   children: React.ReactNode;
   span?: boolean;
 }) {
+  const [open, setOpen] = useState(true);
+
   return (
     <Card.Root gridColumn={span ? { base: 'auto', lg: 'span 2' } : undefined}>
       <Card.Body gap="4" p="5">
-        <Heading as="h3" textStyle="display" fontSize="md">
-          {title}
-        </Heading>
-        {children}
+        <HStack justifyContent="space-between" alignItems="center">
+          <Heading as="h3" textStyle="display" fontSize="md">
+            {title}
+          </Heading>
+          <Button size="xs" variant="ghost" onClick={() => setOpen((v) => !v)}>
+            {open ? <FaChevronUp /> : <FaChevronDown />}
+          </Button>
+        </HStack>
+        {open && children}
       </Card.Body>
     </Card.Root>
   );
@@ -154,6 +305,7 @@ export default function Page() {
   const [year, setYear] = useState('');
   const [seriesId, setSeriesId] = useState('');
   const [category, setCategory] = useState('');
+  const [multiSeries, setMultiSeries] = useState(false);
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
@@ -167,15 +319,28 @@ export default function Page() {
         if (!p) return false;
         if (year && !p.date.startsWith(year)) return false;
         if (seriesId && !p.seriesIds.includes(seriesId)) return false;
+        if (multiSeries && p.seriesIds.length < 2) return false;
         if (category && p.category !== (category as EventCategory)) return false;
         return true;
       }),
-    [records, performanceById, year, seriesId, category]
+    [records, performanceById, year, seriesId, category, multiSeries]
+  );
+
+  const filteredPerformances = useMemo(
+    () =>
+      performances.filter((p) => {
+        if (year && !p.date.startsWith(year)) return false;
+        if (seriesId && !p.seriesIds.includes(seriesId)) return false;
+        if (multiSeries && p.seriesIds.length < 2) return false;
+        if (category && p.category !== (category as EventCategory)) return false;
+        return true;
+      }),
+    [performances, year, seriesId, category, multiSeries]
   );
 
   const stats = useMemo(
-    () => computeStats(filteredRecords, performanceById, setlists),
-    [filteredRecords, performanceById, setlists]
+    () => computeStats(filteredRecords, performanceById, setlists, filteredPerformances),
+    [filteredRecords, performanceById, setlists, filteredPerformances]
   );
 
   const handleImport = async (file: File) => {
@@ -262,6 +427,14 @@ export default function Page() {
             ]}
             onChange={setCategory}
           />
+          <Button
+            size="sm"
+            variant={multiSeries ? 'solid' : 'outline'}
+            onClick={() => setMultiSeries((v) => !v)}
+            borderRadius="full"
+          >
+            {t('events.multi_series')}
+          </Button>
         </HStack>
 
         {empty ? (
@@ -306,6 +479,17 @@ export default function Page() {
               )}
               {stats.bySeries.length > 0 && (
                 <ChartCard title={t('stats.by_series')}>
+                  <SeriesPie
+                    items={stats.bySeries.map((s) => ({
+                      key: s.seriesId,
+                      label: getSeriesShortName(
+                        s.seriesId,
+                        seriesById.get(s.seriesId)?.name ?? s.seriesId
+                      ),
+                      count: s.count,
+                      color: seriesById.get(s.seriesId)?.color
+                    }))}
+                  />
                   <BarList
                     items={stats.bySeries.map((s) => ({
                       key: s.seriesId,
@@ -318,6 +502,11 @@ export default function Page() {
                     }))}
                     max={Math.max(...stats.bySeries.map((s) => s.count))}
                   />
+                </ChartCard>
+              )}
+              {stats.byMonthEvents.length > 0 && (
+                <ChartCard title={t('stats.events_by_month')} span>
+                  <MonthEventChart items={stats.byMonthEvents} />
                 </ChartCard>
               )}
               {stats.byVenue.length > 0 && (

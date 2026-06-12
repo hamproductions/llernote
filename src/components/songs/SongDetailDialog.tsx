@@ -9,6 +9,7 @@ import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { useArtistById } from '~/hooks/useData';
+import { daysFromToday } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
 import type { Performance, Song } from '~/types';
@@ -20,12 +21,16 @@ interface SongWithVideo extends Song {
 export function SongDetailDialog({
   song,
   heardAt,
+  performedAt,
+  performanceCount,
   open,
   onClose,
   onSelectEvent
 }: {
   song?: Song;
   heardAt: Performance[];
+  performedAt: Performance[];
+  performanceCount: number;
   open: boolean;
   onClose: () => void;
   onSelectEvent?: (performance: Performance) => void;
@@ -44,6 +49,12 @@ export function SongDetailDialog({
     )
   ].join('・');
   const videoId = (song as SongWithVideo).musicVideo?.videoId;
+  const relativeDate = (date: string) => {
+    const days = daysFromToday(date);
+    if (days === 0) return t('events.today');
+    if (days > 0) return t('events.days_until', { count: days });
+    return t('events.days_ago', { count: Math.abs(days) });
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
@@ -144,10 +155,53 @@ export function SongDetailDialog({
                       <Text color={onSelectEvent ? 'accent.text' : undefined} fontSize="sm">
                         {p.tourName}
                       </Text>
+                      <Text flexShrink={0} color="fg.subtle" fontSize="xs">
+                        {relativeDate(p.date)}
+                      </Text>
                     </HStack>
                   ))}
                 </Stack>
               )}
+            </Stack>
+
+            <Stack gap="2">
+              <HStack gap="2" alignItems="baseline">
+                <Text fontWeight="semibold">{t('songs.performed_at')}</Text>
+                <Text color="fg.muted" fontSize="sm">
+                  {t('songs.times', { count: performanceCount })}
+                </Text>
+              </HStack>
+              <Stack gap="0.5" maxH="56" overflowY="auto">
+                {performedAt.map((p) => (
+                  <HStack
+                    key={p.id}
+                    {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}
+                    cursor={onSelectEvent ? 'pointer' : undefined}
+                    gap="2"
+                    alignItems="baseline"
+                    borderRadius="l1"
+                    py="1"
+                    px="1.5"
+                    transition="colors"
+                    _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
+                  >
+                    <Text
+                      flexShrink={0}
+                      color="fg.muted"
+                      fontSize="xs"
+                      fontVariantNumeric="tabular-nums"
+                    >
+                      {p.date}
+                    </Text>
+                    <Text flex="1" minW="0" color="accent.text" fontSize="sm" lineClamp={1}>
+                      {p.tourName}
+                    </Text>
+                    <Text flexShrink={0} color="fg.subtle" fontSize="xs">
+                      {relativeDate(p.date)}
+                    </Text>
+                  </HStack>
+                ))}
+              </Stack>
             </Stack>
           </Stack>
           <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">

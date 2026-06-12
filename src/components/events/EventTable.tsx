@@ -8,7 +8,7 @@ import { Text } from '~/components/ui/text';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { legLabel } from './TourCard';
-import { isFutureEvent } from '~/utils/event-filter';
+import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { eventernoteSearchUrl } from '~/utils/share';
 import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
@@ -67,8 +67,17 @@ export function EventTable({
               bgColor={i % 2 === 1 ? 'bg.subtle' : undefined}
               _hover={{ bgColor: 'accent.a2' }}
             >
-              <Table.Cell color="fg.muted" fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
-                {p.date}
+              <Table.Cell fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
+                <Text color="fg.muted" fontSize="sm">
+                  {p.date}
+                </Text>
+                <Text color="fg.subtle" fontSize="2xs">
+                  {daysFromToday(p.date) > 0
+                    ? t('events.days_until', { count: daysFromToday(p.date) })
+                    : daysFromToday(p.date) === 0
+                      ? t('events.today')
+                      : t('events.days_ago', { count: Math.abs(daysFromToday(p.date)) })}
+                </Text>
               </Table.Cell>
               <Table.Cell maxW="md">
                 <Text fontSize="sm" fontWeight="medium">

@@ -41,9 +41,9 @@
     "year": "年",
     "cast": "キャスト",
     "attendance_filter": "参加状況",
-    "status_attended": "参加済み",
+    "status_attended": "参加した",
     "status_interested": "気になる",
-    "status_going": "参戦予定",
+    "status_going": "参加予定",
     "status_none": "未登録",
     "watched_live": "現地",
     "watched_stream": "配信",
@@ -64,7 +64,7 @@
     "memo_placeholder": "座席、感想など...",
     "rating": "評価",
     "mark_attended": "参加を記録",
-    "mark_interested": "参戦予定に追加",
+    "mark_interested": "参加予定に追加",
     "unmark": "登録解除",
     "songs_count": "{{ count }}曲",
     "encore": "アンコール",
@@ -79,7 +79,11 @@
     "first_witness": "初",
     "doors": "開場",
     "start": "開演",
-    "filters": "絞り込み"
+    "filters": "絞り込み",
+    "multi_series": "複数シリーズ",
+    "today": "今日",
+    "days_until": "あと{{ count }}日",
+    "days_ago": "{{ count }}日前"
   },
   "calendar": {
     "title": "カレンダー",
@@ -88,19 +92,21 @@
   },
   "timeline": {
     "title": "タイムライン",
-    "empty": "参加済みイベントがありません。イベントを参加済みにしましょう！"
+    "empty": "参加したイベントがありません。イベントを参加したにしましょう！"
   },
   "upcoming": {
     "title": "今後のイベント",
     "empty": "今後のイベントはありません",
     "days_until": "あと{{ count }}日",
+    "days": "日",
+    "today_short": "今日",
     "tomorrow": "明日",
     "today": "今日！"
   },
   "stats": {
     "title": "統計",
     "total_attended": "参加イベント数",
-    "total_interested": "参戦予定",
+    "total_interested": "参加予定",
     "songs_witnessed": "聴いた曲数",
     "unique_songs": "ユニーク曲数",
     "venues_visited": "訪れた会場数",
@@ -110,10 +116,12 @@
     "by_series": "シリーズ別",
     "by_venue": "会場トップ",
     "by_type": "イベント種別",
-    "empty": "データがありません。イベントを参加済みにすると統計が表示されます！",
+    "empty": "データがありません。イベントを参加したにすると統計が表示されます！",
     "share_title": "私のラブライブ！統計",
     "generated_by": "LLerNoteで作成",
-    "heatmap": "活動ヒートマップ"
+    "heatmap": "活動ヒートマップ",
+    "events_by_month": "月別イベント",
+    "events_total": "イベント"
   },
   "mypick": {
     "title": "MyPick",
@@ -198,7 +206,8 @@
     "times_one": "{{ count }}回",
     "times_other": "{{ count }}回",
     "witnessed_at": "聴いた場所",
-    "empty": "まだ楽曲がありません。セットリストのあるイベントを参加済みにしましょう！",
+    "performed_at": "全公演",
+    "empty": "まだ楽曲がありません。セットリストのあるイベントを参加したにしましょう！",
     "rank": "順位",
     "song": "楽曲",
     "count": "回数",

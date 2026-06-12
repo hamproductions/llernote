@@ -16,7 +16,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
 import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
-import { tallySongs } from '~/utils/song-tally';
+import { tallyAllSongPerformances, tallySongs } from '~/utils/song-tally';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
 import { foldKana } from '~/utils/event-filter';
@@ -55,6 +55,14 @@ export default function Page() {
     [records, performanceById, setlists]
   );
   const tallyById = useMemo(() => new Map(tally.map((e) => [e.songId, e])), [tally]);
+  const allPerformanceTally = useMemo(
+    () => tallyAllSongPerformances(performanceById, setlists),
+    [performanceById, setlists]
+  );
+  const allPerformanceTallyById = useMemo(
+    () => new Map(allPerformanceTally.map((e) => [e.songId, e])),
+    [allPerformanceTally]
+  );
 
   const filtered = useMemo(() => {
     const q = foldKana(search.trim());
@@ -93,6 +101,12 @@ export default function Page() {
 
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const selectedHeardAt = selected ? (tallyById.get(selected.id)?.performances ?? []) : [];
+  const selectedPerformedAt = selected
+    ? (allPerformanceTallyById.get(selected.id)?.performances ?? [])
+    : [];
+  const selectedPerformanceCount = selected
+    ? (allPerformanceTallyById.get(selected.id)?.count ?? 0)
+    : 0;
 
   return (
     <>
@@ -245,6 +259,8 @@ export default function Page() {
         <SongDetailDialog
           song={selected}
           heardAt={selectedHeardAt}
+          performedAt={selectedPerformedAt}
+          performanceCount={selectedPerformanceCount}
           open={selected !== undefined}
           onClose={() => setSelected(undefined)}
           onSelectEvent={(p) => {

@@ -9,6 +9,7 @@ export interface EventFilters {
   characterIds: string[];
   categories: EventCategory[];
   attendance?: 'attended' | 'interested' | 'none';
+  multiSeries?: boolean;
 }
 
 export const EMPTY_FILTERS: EventFilters = {
@@ -24,6 +25,13 @@ export const todayString = () => {
 };
 
 export const isFutureEvent = (performance: Performance) => performance.date > todayString();
+
+export const daysFromToday = (date: string) => {
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const [year, month, day] = date.split('-').map(Number);
+  return Math.round((Date.UTC(year!, month! - 1, day!) - todayUtc) / 86400000);
+};
 
 export const foldKana = (text: string) =>
   text.toLowerCase().replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
@@ -48,6 +56,7 @@ export const filterEvents = (
     if (filters.seriesIds.length > 0 && !p.seriesIds.some((id) => filters.seriesIds.includes(id))) {
       return false;
     }
+    if (filters.multiSeries && p.seriesIds.length < 2) return false;
     const year = p.date.slice(0, 4);
     if (filters.yearFrom && year < filters.yearFrom) return false;
     if (filters.yearTo && year > filters.yearTo) return false;

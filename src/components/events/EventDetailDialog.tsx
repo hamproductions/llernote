@@ -22,7 +22,7 @@ import {
   useSongById
 } from '~/hooks/useData';
 import { useToaster } from '~/context/ToasterContext';
-import { isFutureEvent } from '~/utils/event-filter';
+import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
 import {
   copyTextToClipboard,
@@ -137,6 +137,13 @@ export function EventDetailDialog({
     { value: 'stream', label: t('events.watched_stream') },
     { value: 'delay', label: t('events.watched_delay') }
   ];
+  const days = daysFromToday(performance.date);
+  const relativeDate =
+    days === 0
+      ? t('events.today')
+      : days > 0
+        ? t('events.days_until', { count: days })
+        : t('events.days_ago', { count: Math.abs(days) });
 
   const songNumbers = new Map<string, number>();
   if (setlist) {
@@ -186,6 +193,9 @@ export function EventDetailDialog({
               <Wrap gap="2">
                 <Text color="fg.muted" fontSize="sm">
                   {performance.date}
+                </Text>
+                <Text color="fg.subtle" fontSize="sm">
+                  {relativeDate}
                 </Text>
                 {performance.seriesIds.map((id) => (
                   <SeriesBadge key={id} seriesId={id} />

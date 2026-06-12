@@ -7,7 +7,7 @@ import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { useAttendance } from '~/hooks/useAttendance';
-import { isFutureEvent } from '~/utils/event-filter';
+import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
 
@@ -22,6 +22,13 @@ export function EventCard({
   const { get } = useAttendance();
   const record = get(performance.id);
   const future = isFutureEvent(performance);
+  const days = daysFromToday(performance.date);
+  const relativeDate =
+    days === 0
+      ? t('events.today')
+      : days > 0
+        ? t('events.days_until', { count: days })
+        : t('events.days_ago', { count: Math.abs(days) });
 
   return (
     <Card.Root
@@ -52,6 +59,9 @@ export function EventCard({
               <HStack gap="2" flexWrap="wrap">
                 <Text color="fg.muted" fontSize="sm" fontVariantNumeric="tabular-nums">
                   {performance.date}
+                </Text>
+                <Text color="fg.subtle" fontSize="xs">
+                  {relativeDate}
                 </Text>
                 {performance.seriesIds.map((id) => (
                   <SeriesBadge key={id} seriesId={id} />
