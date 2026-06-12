@@ -16,7 +16,7 @@ export interface PickItem {
   englishName?: string;
   phoneticName?: string;
   searchText?: string;
-  category?: string;
+  categories?: string[];
   disabled?: boolean;
 }
 
@@ -180,8 +180,9 @@ export function PickDialog({
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const item of items) {
-      if (!item.category) continue;
-      counts.set(item.category, (counts.get(item.category) ?? 0) + 1);
+      for (const category of item.categories ?? []) {
+        counts.set(category, (counts.get(category) ?? 0) + 1);
+      }
     }
     return counts;
   }, [items]);
@@ -198,7 +199,7 @@ export function PickDialog({
 
   const filtered = useMemo(() => {
     const scoped = activeCategory
-      ? items.filter((item) => item.category === activeCategory)
+      ? items.filter((item) => item.categories?.includes(activeCategory))
       : items;
     const q = search.trim();
     if (!q) return scoped.slice(0, 360);

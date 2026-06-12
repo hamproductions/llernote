@@ -23,7 +23,7 @@ import { Field } from '~/components/ui/field';
 import { IconButton } from '~/components/ui/icon-button';
 import { Input } from '~/components/ui/input';
 import { Tabs } from '~/components/ui/tabs';
-import { useMyPick } from '~/hooks/useAttendance';
+import { useAttendance, useMyPick } from '~/hooks/useAttendance';
 import {
   getLiveThumb,
   useArtistById,
@@ -89,6 +89,7 @@ export default function Page() {
   const { t, i18n } = useTranslation();
   const { toast } = useToaster();
   const { myPick } = useMyPick();
+  const { map: attendanceMap } = useAttendance();
   const series = useSeries();
   const artists = useArtists();
   const artistById = useArtistById();
@@ -214,13 +215,15 @@ export default function Page() {
               .filter(Boolean)
               .join(' '),
             image: hasSongThumb(s.id) ? getPicUrl(s.id, 'thumbnail') : undefined,
-            category: isGroupSong(ids, artistById)
-              ? 'group'
-              : isUnitSong(ids, artistById)
-                ? 'unit'
-                : isSoloSong(ids, artistById)
-                  ? 'solo'
-                  : 'others'
+            categories: [
+              isGroupSong(ids, artistById)
+                ? 'group'
+                : isUnitSong(ids, artistById)
+                  ? 'unit'
+                  : isSoloSong(ids, artistById)
+                    ? 'solo'
+                    : 'others'
+            ]
           };
         });
     }
@@ -231,13 +234,15 @@ export default function Page() {
       })
       .map((p) => {
         const image = getLiveThumb(p)?.image;
+        const record = attendanceMap[p.id];
+        const attended = record && !record.deleted && record.status === 'attended';
         return {
           id: p.id,
           label: p.tourName,
           sub: `${p.date} ${p.venue}`,
           searchText: `${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`,
           image,
-          category: image ? 'with_image' : undefined
+          categories: [...(image ? ['with_image'] : []), ...(attended ? ['attended'] : [])]
         };
       });
   };
@@ -245,7 +250,16 @@ export default function Page() {
   const dialogItems: PickItem[] = useMemo(() => {
     if (!picking) return [];
     return getPickItems(picking.row, picking.column);
-  }, [picking, characters, songs, performances, artistById, performanceCharacters, i18n.language]);
+  }, [
+    picking,
+    characters,
+    songs,
+    performances,
+    artistById,
+    performanceCharacters,
+    attendanceMap,
+    i18n.language
+  ]);
 
   const existingRows = new Set(config.rows.map(rowKey));
 
@@ -847,13 +861,16 @@ export default function Page() {
                 ]
               : (picking?.column.type === 'year' && picking.column.slot === 'event') ||
                   (picking?.column.type === 'slot' && picking.column.slot === 'event')
-                ? [{ key: 'with_image', label: t('mypick.with_image') }]
+                ? [
+                    { key: 'with_image', label: t('mypick.with_image') },
+                    { key: 'attended', label: t('events.status_attended') }
+                  ]
                 : undefined
           }
           defaultCategory={
             (picking?.column.type === 'year' && picking.column.slot === 'event') ||
             (picking?.column.type === 'slot' && picking.column.slot === 'event')
-              ? 'with_image'
+              ? 'attended'
               : undefined
           }
           display={
