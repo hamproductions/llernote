@@ -6,17 +6,26 @@ import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
+import { fuzzySearch, getSearchScore, type SearchableItem } from '~/utils/search';
 
 export interface PickItem {
   id: string;
   label: string;
   sub?: string;
   image?: string;
+  englishName?: string;
+  phoneticName?: string;
+  searchText?: string;
   disabled?: boolean;
 }
 
 function TileImage({ src }: { src?: string }) {
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
   return (
     <Box
       style={{ aspectRatio: '1 / 1' }}
@@ -54,22 +63,31 @@ function Tile({ item, active, onClick }: { item: PickItem; active: boolean; onCl
       position="relative"
       gap="2"
       alignItems="center"
-      borderColor={active ? 'accent.default' : 'border.subtle'}
-      borderRadius="l3"
-      borderWidth="2px"
+      borderColor={active ? 'mypick.borderStrong' : 'mypick.border'}
+      borderRadius="l2"
+      borderWidth="1px"
       p="2.5"
-      bgColor={active ? 'accent.a2' : 'white'}
-      opacity={item.disabled ? 0.35 : 1}
-      boxShadow="sm"
-      transition="all"
-      _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)', boxShadow: 'md' }}
+      bgColor={active ? 'mypick.action' : item.disabled ? 'mypick.tileDisabled' : 'mypick.tile'}
+      opacity={item.disabled ? 0.46 : 1}
+      transition="colors"
+      _hover={
+        item.disabled
+          ? undefined
+          : { borderColor: 'mypick.borderStrong', bgColor: 'mypick.accentSoft' }
+      }
     >
       <TileImage src={item.image} />
-      <Text fontSize="xs" fontWeight="medium" textAlign="center" lineClamp={2}>
+      <Text
+        color="mypick.text"
+        fontSize="xs"
+        fontWeight="semibold"
+        textAlign="center"
+        lineClamp={2}
+      >
         {item.label}
       </Text>
       {item.sub && (
-        <Text color="fg.muted" fontSize="2xs" textAlign="center" lineClamp={1}>
+        <Text color="mypick.muted" fontSize="2xs" textAlign="center" lineClamp={1}>
           {item.sub}
         </Text>
       )}
@@ -89,21 +107,25 @@ function Row({ item, active, onClick }: { item: PickItem; active: boolean; onCli
       aria-disabled={item.disabled}
       cursor={item.disabled ? 'not-allowed' : 'pointer'}
       gap="2"
-      borderColor={active ? 'accent.default' : 'border.subtle'}
+      borderColor={active ? 'mypick.borderStrong' : 'mypick.border'}
       borderRadius="l2"
       borderWidth="1px"
       p="2"
-      bgColor={active ? 'accent.a3' : 'bg.default'}
-      opacity={item.disabled ? 0.35 : 1}
+      bgColor={active ? 'mypick.action' : item.disabled ? 'mypick.tileDisabled' : 'mypick.tile'}
+      opacity={item.disabled ? 0.46 : 1}
       transition="colors"
-      _hover={{ borderColor: 'accent.8' }}
+      _hover={
+        item.disabled
+          ? undefined
+          : { borderColor: 'mypick.borderStrong', bgColor: 'mypick.accentSoft' }
+      }
     >
       <Stack flex="1" gap="0" minW="0">
-        <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
+        <Text color="mypick.text" fontSize="sm" fontWeight="semibold" lineClamp={1}>
           {item.label}
         </Text>
         {item.sub && (
-          <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+          <Text color="mypick.muted" fontSize="xs" lineClamp={1}>
             {item.sub}
           </Text>
         )}
@@ -146,10 +168,21 @@ export function PickDialog({
   }, [open]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = search.trim();
     if (!q) return items.slice(0, 120);
     return items
-      .filter((item) => `${item.label} ${item.sub ?? ''}`.toLowerCase().includes(q))
+      .map((item) => {
+        const searchable: SearchableItem = {
+          id: item.id,
+          name: item.label,
+          englishName: [item.englishName, item.sub, item.searchText].filter(Boolean).join(' '),
+          phoneticName: item.phoneticName
+        };
+        return { item, searchable };
+      })
+      .filter(({ searchable }) => fuzzySearch(searchable, q))
+      .toSorted((a, b) => getSearchScore(b.searchable, q) - getSearchScore(a.searchable, q))
+      .map(({ item }) => item)
       .slice(0, 120);
   }, [items, search]);
 
@@ -171,35 +204,42 @@ export function PickDialog({
           display="flex"
           flexDirection="column"
           w="full"
-          maxW="2xl"
+          maxW="xl"
           maxH="80vh"
           mx="4"
+          color="mypick.text"
+          bgColor="mypick.panelSolid"
         >
-          <Stack flex="1" gap="4" p={{ base: '4', md: '5' }} overflow="hidden">
+          <Stack flex="1" gap="3" p={{ base: '4', md: '5' }} overflow="hidden">
             <HStack justifyContent="space-between" pr="8">
               <Dialog.Title>
-                <Text textStyle="display" fontSize="xl">
+                <Text fontSize="xl" fontWeight="bold">
                   {title}
                 </Text>
               </Dialog.Title>
               {max > 1 && (
-                <Text color="fg.muted" fontSize="sm">
+                <Text color="mypick.muted" fontSize="sm">
                   {Number.isFinite(max) ? `${selectedIds.length}/${max}` : selectedIds.length}
                 </Text>
               )}
             </HStack>
-            {items.length > 12 && (
-              <Input
-                size="sm"
-                value={search}
-                placeholder={t('common.search')}
-                autoFocus
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            )}
+            <Input
+              value={search}
+              placeholder={t('common.search')}
+              onChange={(e) => setSearch(e.target.value)}
+              alignSelf="stretch"
+              borderColor="mypick.border"
+              borderRadius="l2"
+              h="12"
+              minH="12"
+              px="4"
+              color="mypick.text"
+              fontSize="md"
+              bgColor="mypick.tile"
+            />
             <Box flex="1" overflowY="auto">
               {filtered.length === 0 && (
-                <Text py="8" color="fg.muted" fontSize="sm" textAlign="center">
+                <Text py="8" color="mypick.muted" fontSize="sm" textAlign="center">
                   {t('common.no_results')}
                 </Text>
               )}
@@ -207,7 +247,7 @@ export function PickDialog({
                 <Grid
                   data-testid="pick-dialog-grid"
                   gap="2"
-                  gridTemplateColumns={{ base: 'repeat(3, 1fr)', sm: 'repeat(4, 1fr)' }}
+                  gridTemplateColumns={{ base: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' }}
                 >
                   {filtered.map((item) => (
                     <Tile

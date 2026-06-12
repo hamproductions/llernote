@@ -1,9 +1,20 @@
-import { Fragment, forwardRef, useState } from 'react';
+import { Fragment, forwardRef, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaMusic, FaPlus, FaXmark } from 'react-icons/fa6';
+import {
+  FaArrowDown,
+  FaArrowLeft,
+  FaArrowRight,
+  FaArrowUp,
+  FaEllipsis,
+  FaMusic,
+  FaPlus,
+  FaXmark
+} from 'react-icons/fa6';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
+import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
+import { Menu } from '~/components/ui/menu';
 import {
   useArtistById,
   useCharacters,
@@ -12,9 +23,9 @@ import {
   useSongById
 } from '~/hooks/useData';
 import { getPicUrl } from '~/utils/assets';
-import { getSeriesShortName } from '~/utils/series-short';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
+import { isGroupArtist } from '~/utils/mypick-options';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
 import type { MyPick, MyPickColumn, MyPickRow } from '~/types/attendance';
 
@@ -39,11 +50,90 @@ const hexToRgb = (hex: string) => {
 const rowTone = (color: string) => {
   const { r, g, b } = hexToRgb(color);
   return {
-    bg: `linear-gradient(to right, rgba(${r}, ${g}, ${b}, 0.16), rgba(255, 255, 255, 0.72))`,
-    border: `rgba(${r}, ${g}, ${b}, 0.28)`,
-    text: `rgb(${Math.max(r - 58, 35)}, ${Math.max(g - 58, 35)}, ${Math.max(b - 58, 35)})`
+    bg: `linear-gradient(to right, rgba(${r}, ${g}, ${b}, 0.14), color-mix(in srgb, var(--colors-mypick-panel-solid) 76%, transparent))`,
+    border: `rgba(${r}, ${g}, ${b}, 0.3)`,
+    text: `color-mix(in srgb, rgb(${r}, ${g}, ${b}) 34%, var(--colors-mypick-text))`
   };
 };
+
+function ActionMenu({
+  label,
+  items
+}: {
+  label: string;
+  items: { label: string; icon: ReactNode; onClick: () => void; disabled?: boolean }[];
+}) {
+  return (
+    <Menu.Root positioning={{ placement: 'bottom-end', gutter: 6 }}>
+      <Menu.Trigger
+        aria-label={label}
+        onClick={(e) => e.stopPropagation()}
+        style={{ appearance: 'none' }}
+        cursor="pointer"
+        display="inline-flex"
+        justifyContent="center"
+        alignItems="center"
+        borderColor="mypick.actionBorder"
+        borderRadius="l1"
+        borderWidth="1px"
+        w="7"
+        h="6"
+        color="mypick.muted"
+        bgColor="mypick.actionMuted"
+        _hover={{
+          color: 'accent.default',
+          borderColor: 'mypick.borderStrong',
+          bgColor: 'mypick.action'
+        }}
+      >
+        <FaEllipsis size={12} />
+      </Menu.Trigger>
+      <Menu.Positioner zIndex="20">
+        <Menu.Content
+          borderColor="mypick.border"
+          borderRadius="l2"
+          borderWidth="1px"
+          minW="9rem"
+          p="1"
+          color="mypick.text"
+          bgColor="mypick.panelSolid"
+          boxShadow="lg"
+        >
+          {items.map((item) => (
+            <Menu.Item
+              key={item.label}
+              value={item.label}
+              disabled={item.disabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!item.disabled) item.onClick();
+              }}
+              cursor={item.disabled ? 'not-allowed' : 'pointer'}
+              borderRadius="l1"
+              py="2"
+              px="2.5"
+              color={item.disabled ? 'mypick.subtle' : 'mypick.text'}
+              opacity={item.disabled ? 0.42 : 1}
+              _hover={
+                item.disabled
+                  ? undefined
+                  : {
+                      bgColor: 'mypick.action',
+                      color: 'accent.default'
+                    }
+              }
+            >
+              <HStack gap="2">
+                <Box w="3.5">{item.icon}</Box>
+                <Text fontSize="sm">{item.label}</Text>
+              </HStack>
+            </Menu.Item>
+          ))}
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root>
+  );
+}
 
 function CellImage({
   src,
@@ -92,7 +182,7 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
   const songById = useSongById();
   const performanceById = usePerformanceById();
 
-  if (column.slot === 'cast') {
+  if (column.type === 'member' || (column.type === 'slot' && column.slot === 'cast')) {
     const character = characters.find((c) => c.id === pickedId);
     if (!character) return null;
     return (
@@ -106,7 +196,10 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       </>
     );
   }
-  if (column.slot === 'song') {
+  if (
+    (column.type === 'year' && column.slot === 'song') ||
+    (column.type === 'slot' && column.slot === 'song')
+  ) {
     const song = songById.get(pickedId);
     if (!song) return null;
     return (
@@ -130,13 +223,14 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       justifyContent="center"
       alignItems="center"
       p="3"
+      color="mypick.text"
       textAlign="center"
-      bgColor="white"
+      bgColor="mypick.tile"
     >
-      <Text textStyle="display" color="accent.default" fontSize="sm" lineHeight="1">
+      <Text color="accent.default" fontSize="xs" fontWeight="bold" lineHeight="1">
         {performance.date}
       </Text>
-      <Text fontSize="2xs" fontWeight="bold" lineClamp={5}>
+      <Text color="mypick.muted" fontSize="2xs" fontWeight="semibold" lineClamp={4}>
         {performance.tourName}
       </Text>
     </Stack>
@@ -154,8 +248,12 @@ export const MyPickGrid = forwardRef<
     onClearCell?: (key: string) => void;
     onRemoveRow?: (row: MyPickRow) => void;
     onRemoveColumn?: (column: MyPickColumn) => void;
+    onMoveRow?: (row: MyPickRow, direction: -1 | 1) => void;
+    onMoveColumn?: (column: MyPickColumn, direction: -1 | 1) => void;
     onAddRow?: () => void;
     onAddColumn?: () => void;
+    onChangeRows?: () => void;
+    isCellDisabled?: (row: MyPickRow, column: MyPickColumn) => boolean;
     exporting?: boolean;
   }
 >(function MyPickGrid(
@@ -168,8 +266,12 @@ export const MyPickGrid = forwardRef<
     onClearCell,
     onRemoveRow,
     onRemoveColumn,
+    onMoveRow,
+    onMoveColumn,
     onAddRow,
     onAddColumn,
+    onChangeRows,
+    isCellDisabled,
     exporting = false
   },
   ref
@@ -180,30 +282,62 @@ export const MyPickGrid = forwardRef<
   const exportColumnWidth = 200;
   const exportLabelWidth = 192;
   const exportGap = 24;
+  const labelWidth = columns.length <= 3 ? '14rem' : 'minmax(11rem, 14rem)';
+  const cellWidth = columns.length <= 3 ? '7.25rem' : 'minmax(5.5rem, 7.25rem)';
   const exportWidth =
     exportLabelWidth + columns.length * exportColumnWidth + columns.length * exportGap;
 
-  const columnLabel = (col: MyPickColumn) =>
-    col.type === 'slot'
-      ? t(`mypick.slot_${col.slot}`)
-      : `${col.year} ${t(`mypick.slot_${col.slot}`)}`;
+  const columnLabel = (col: MyPickColumn) => {
+    if (col.type === 'member') return t('mypick.column_character');
+    if (col.type === 'slot') {
+      if (col.slot === 'cast') return t('mypick.column_character');
+      if (col.slot === 'song') return t('mypick.column_song');
+      return t('mypick.column_event');
+    }
+    return `${col.year} ${t(col.slot === 'song' ? 'mypick.column_song' : 'mypick.column_event')}`;
+  };
+  const emptyCellLabel = (col: MyPickColumn) => {
+    return columnLabel(col);
+  };
 
   const rowMeta = (row: MyPickRow) => {
     if (row.type === 'series') {
       const series = seriesById.get(row.id);
       const color = series?.color ?? '#e4007f';
       return {
-        label: series ? getSeriesShortName(series.id, series.name) : row.id,
-        sub: series?.name ?? row.id,
+        label: series?.name ?? row.id,
+        sub: t('mypick.row_series'),
         color,
         tone: rowTone(color)
       };
     }
+    if (row.type === 'category') {
+      const colors = {
+        group: '#d44785',
+        unit: '#8a68d8',
+        solo: '#6b8fd6',
+        others: '#8d7a88'
+      };
+      return {
+        label: t(`mypick.row_${row.id}`),
+        sub: t('mypick.row_artist'),
+        color: colors[row.id],
+        tone: rowTone(colors[row.id])
+      };
+    }
     const artist = artistById.get(row.id);
     const color = seriesById.get(String(artist?.seriesIds[0] ?? ''))?.color ?? '#e4007f';
+    const rowType =
+      !artist || artist.seriesIds.length > 1
+        ? t('mypick.row_others')
+        : isGroupArtist(artist)
+          ? t('mypick.row_group')
+          : artist.characters.filter((id) => typeof id === 'string' && id.length > 0).length === 1
+            ? t('mypick.row_solo')
+            : t('mypick.row_unit');
     return {
       label: artist?.name ?? row.id,
-      sub: artist?.englishName ?? t('mypick.row_group'),
+      sub: rowType,
       color,
       tone: rowTone(color)
     };
@@ -218,13 +352,13 @@ export const MyPickGrid = forwardRef<
         borderWidth="2px"
         w="full"
         p="8"
-        bgColor="white"
+        bgColor="mypick.panelSolid"
       >
         <Stack gap="3" alignItems="center">
           <Text color="fg.muted" fontSize="sm">
             {t('mypick.empty')}
           </Text>
-          {editable && (
+          {editable && !exporting && (
             <HStack gap="2">
               {columns.length === 0 && onAddColumn && (
                 <IconButton
@@ -249,132 +383,113 @@ export const MyPickGrid = forwardRef<
 
   const gridColumns = exporting
     ? `${exportLabelWidth}px repeat(${columns.length}, ${exportColumnWidth}px)`
-    : `minmax(4.25rem, 0.82fr) repeat(${columns.length}, minmax(0, 1fr))`;
+    : `${labelWidth} repeat(${columns.length}, ${cellWidth})`;
 
   return (
     <Box
       ref={ref}
       style={{ backdropFilter: exporting ? undefined : 'blur(18px)' }}
       position="relative"
-      borderColor="black.a1"
+      borderColor="mypick.border"
       borderRadius={{ base: '2xl', md: '3xl' }}
       borderWidth="1px"
-      w={exporting ? `${exportWidth}px` : 'full'}
-      maxW={exporting ? undefined : '7xl'}
+      w={exporting ? `${exportWidth}px` : 'fit-content'}
+      maxW={exporting ? undefined : '100%'}
       mx="auto"
-      p={exporting ? '8' : { base: '3', md: '8' }}
-      bgColor="rgba(255, 255, 255, 0.78)"
-      boxShadow="xl"
-      overflow="hidden"
+      p={exporting ? '8' : { base: '3', md: '4' }}
+      bgColor="mypick.panel"
+      boxShadow="0 18px 60px var(--colors-mypick-shadow)"
+      overflowX="auto"
+      overflowY="hidden"
     >
-      <Box
-        style={{ background: 'rgba(236, 72, 153, 0.04)', filter: 'blur(48px)' }}
-        position="absolute"
-        top="-24"
-        right="-20"
-        borderRadius="full"
-        w="96"
-        h="96"
-        pointerEvents="none"
-      />
-      <Box
-        style={{ background: 'rgba(6, 182, 212, 0.04)', filter: 'blur(48px)' }}
-        position="absolute"
-        left="-20"
-        bottom="-24"
-        borderRadius="full"
-        w="96"
-        h="96"
-        pointerEvents="none"
-      />
       <Stack zIndex="1" position="relative" gap={exporting ? '6' : { base: '3.5', md: '6' }}>
         {exporting && (
           <Stack gap="1" alignItems="center" textAlign="center">
-            <Text
-              textStyle="display"
-              color="fg.default"
-              fontSize="4xl"
-              letterSpacing="0.04em"
-              textTransform="uppercase"
-            >
-              My Pick LLerNote
-            </Text>
-            <Text color="fg.muted" fontSize="sm" letterSpacing="0.18em">
-              LoveLive! favorites collection
+            <Text color="mypick.text" fontSize="4xl" fontWeight="bold">
+              MyPick LLerNote
             </Text>
           </Stack>
         )}
         <Grid
           style={{ gridTemplateColumns: gridColumns }}
-          gap={exporting ? `${exportGap}px` : { base: '2', md: '4' }}
-          alignItems="end"
+          gap={exporting ? `${exportGap}px` : { base: '2', md: '3' }}
+          justifyContent="start"
+          alignItems="center"
         >
-          <Stack gap="0.5" justifyContent="end" alignItems="flex-start" pb="1">
+          <HStack gap="2" justifyContent="center" alignItems="center" minW="0" minH="10">
             <Text
-              textStyle="display"
-              color="fg.default"
-              fontSize={{ base: '2xs', sm: 'xs', md: 'md' }}
-              letterSpacing="0.08em"
+              color="mypick.text"
+              fontSize={{ base: '2xs', sm: 'xs', md: 'sm' }}
+              fontWeight="bold"
               lineHeight="1"
-              textTransform="uppercase"
             >
               Selections
             </Text>
-          </Stack>
-          {columns.map((col) => (
-            <HStack
-              key={columnKey(col)}
-              position="relative"
-              gap="1"
-              justifyContent="center"
-              alignItems="center"
-              py="1"
-            >
-              <Stack gap="0" alignItems="center" minW="0">
+            {editable && !exporting && onChangeRows && (
+              <ActionMenu
+                label={t('mypick.change_rows')}
+                items={[
+                  {
+                    label: t('mypick.change_rows'),
+                    icon: <FaArrowDown size={11} />,
+                    onClick: onChangeRows
+                  }
+                ]}
+              />
+            )}
+          </HStack>
+          {columns.map((col, columnIndex) => (
+            <Center key={columnKey(col)} minW="0" minH="10">
+              <HStack gap="2" justifyContent="center" alignItems="center" w="full" minW="0">
                 <Text
-                  textStyle="display"
-                  color="fg.default"
-                  fontSize={{ base: '2xs', sm: 'xs', md: 'lg' }}
-                  lineHeight="1.1"
+                  flex="0 1 auto"
+                  minW="0"
+                  color="mypick.text"
+                  fontSize={exporting ? 'lg' : { base: '2xs', sm: 'xs', md: 'sm' }}
+                  fontWeight="bold"
+                  lineHeight="1"
                   textAlign="center"
-                  lineClamp={2}
+                  textOverflow="ellipsis"
+                  overflow="hidden"
+                  whiteSpace="nowrap"
                 >
                   {columnLabel(col)}
                 </Text>
-                {col.type === 'year' && (
-                  <Text
-                    color="fg.muted"
-                    fontSize={{ base: '3xs', md: '2xs' }}
-                    letterSpacing="0.1em"
-                    lineHeight="1.1"
-                    textTransform="uppercase"
-                  >
-                    {col.year}
-                  </Text>
+                {editable && !exporting && onRemoveColumn && columns.length > 1 && (
+                  <ActionMenu
+                    label={`${columnLabel(col)} ${t('common.actions')}`}
+                    items={[
+                      ...(onMoveColumn
+                        ? [
+                            {
+                              label: t('mypick.move_left'),
+                              icon: <FaArrowLeft size={11} />,
+                              onClick: () => onMoveColumn(col, -1),
+                              disabled: columnIndex === 0
+                            },
+                            {
+                              label: t('mypick.move_right'),
+                              icon: <FaArrowRight size={11} />,
+                              onClick: () => onMoveColumn(col, 1),
+                              disabled: columnIndex === columns.length - 1
+                            }
+                          ]
+                        : []),
+                      {
+                        label: t('common.delete'),
+                        icon: <FaXmark size={11} />,
+                        onClick: () => onRemoveColumn(col)
+                      }
+                    ]}
+                  />
                 )}
-              </Stack>
-              {editable && onRemoveColumn && columns.length > 1 && (
-                <IconButton
-                  aria-label={t('common.delete')}
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => onRemoveColumn(col)}
-                  position="absolute"
-                  top="-2"
-                  right="-2"
-                  minW="4"
-                  h="4"
-                  color="fg.subtle"
-                >
-                  <FaXmark size={10} />
-                </IconButton>
-              )}
-            </HStack>
+              </HStack>
+            </Center>
           ))}
         </Grid>
 
-        <Stack gap={exporting ? '4' : { base: '2', md: '4' }}>
-          {rows.map((row) => {
+        <Stack gap={exporting ? '4' : { base: '2', md: '2.5' }}>
+          {rows.map((row, rowIndex) => {
             const meta = rowMeta(row);
             return (
               <Grid
@@ -386,59 +501,72 @@ export const MyPickGrid = forwardRef<
                   gap: exporting ? `${exportGap}px` : undefined
                 }}
                 position="relative"
-                gap={exporting ? undefined : { base: '2', md: '4' }}
+                gap={exporting ? undefined : { base: '2', md: '3' }}
+                justifyContent="start"
                 alignItems="center"
                 borderRadius={{ base: 'xl', md: '2xl' }}
                 borderWidth={exporting ? '2px' : '1px'}
-                p={exporting ? '5' : { base: '1.5', sm: '2', md: '3.5' }}
+                p={exporting ? '5' : { base: '1.5', sm: '2', md: '2' }}
                 transition="all"
               >
-                <Center minW="0" h={exporting ? '20' : { base: '10', sm: '12', md: '16' }}>
-                  <Stack gap="0.5" alignItems="center" minW="0" textAlign="center">
+                <Center
+                  minW="0"
+                  minH={exporting ? '20' : { base: '12', sm: '14', md: '16' }}
+                  px="1"
+                >
+                  <HStack gap="2" justifyContent="center" alignItems="center" w="full" minW="0">
                     <Text
-                      textStyle="display"
                       title={meta.sub}
                       style={{ color: meta.tone.text }}
-                      fontSize={exporting ? 'xl' : { base: 'xs', md: 'md' }}
+                      flex="1"
+                      minW="0"
+                      fontSize={exporting ? 'xl' : { base: 'xs', md: 'sm' }}
+                      fontWeight="bold"
                       lineHeight="1.05"
-                      lineClamp={2}
+                      textAlign="center"
+                      overflowWrap="anywhere"
+                      whiteSpace="normal"
                     >
                       {meta.label}
                     </Text>
-                    <Text
-                      hideBelow={exporting ? undefined : 'sm'}
-                      color="fg.muted"
-                      fontSize={exporting ? 'xs' : { base: '3xs', md: '2xs' }}
-                      lineHeight="1.1"
-                      lineClamp={2}
-                    >
-                      {meta.sub}
-                    </Text>
-                  </Stack>
-                  {editable && onRemoveRow && rows.length > 1 && (
-                    <IconButton
-                      aria-label={t('common.delete')}
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => onRemoveRow(row)}
-                      position="absolute"
-                      top="-1.5"
-                      left="-1.5"
-                      minW="4"
-                      h="4"
-                      color="fg.subtle"
-                    >
-                      <FaXmark size={10} />
-                    </IconButton>
-                  )}
+                    {editable && !exporting && onRemoveRow && rows.length > 1 && (
+                      <ActionMenu
+                        label={`${meta.label} ${t('common.actions')}`}
+                        items={[
+                          ...(onMoveRow
+                            ? [
+                                {
+                                  label: t('mypick.move_up'),
+                                  icon: <FaArrowUp size={11} />,
+                                  onClick: () => onMoveRow(row, -1),
+                                  disabled: rowIndex === 0
+                                },
+                                {
+                                  label: t('mypick.move_down'),
+                                  icon: <FaArrowDown size={11} />,
+                                  onClick: () => onMoveRow(row, 1),
+                                  disabled: rowIndex === rows.length - 1
+                                }
+                              ]
+                            : []),
+                          {
+                            label: t('common.delete'),
+                            icon: <FaXmark size={11} />,
+                            onClick: () => onRemoveRow(row)
+                          }
+                        ]}
+                      />
+                    )}
+                  </HStack>
                 </Center>
                 {columns.map((col) => {
                   const key = cellKey(row, col);
                   const pickedId = myPick?.cells?.[key] ?? null;
+                  const disabled = !pickedId && (isCellDisabled?.(row, col) ?? false);
                   return (
                     <Box
                       key={key}
-                      {...(editable
+                      {...(editable && !exporting && !disabled
                         ? clickable(
                             () => onPickCell?.(row, col),
                             `${meta.label} ${columnLabel(col)}`
@@ -449,20 +577,29 @@ export const MyPickGrid = forwardRef<
                         width: exporting ? `${exportColumnWidth}px` : undefined,
                         height: exporting ? `${exportColumnWidth}px` : undefined
                       }}
-                      cursor={editable ? 'pointer' : undefined}
+                      cursor={
+                        editable && !exporting && !disabled
+                          ? 'pointer'
+                          : disabled
+                            ? 'not-allowed'
+                            : undefined
+                      }
                       position="relative"
-                      borderColor={pickedId ? 'white' : 'border.subtle'}
+                      borderColor={pickedId ? 'mypick.panelSolid' : 'mypick.border'}
                       borderRadius={{ base: 'xl', md: '2xl' }}
                       borderWidth={pickedId ? '0' : exporting ? '2px' : '1px'}
-                      bgColor={pickedId ? 'bg.subtle' : 'rgba(255, 255, 255, 0.38)'}
-                      boxShadow={pickedId ? 'md' : 'sm'}
+                      bgColor={
+                        pickedId ? 'bg.subtle' : disabled ? 'mypick.tileDisabled' : 'mypick.tile'
+                      }
+                      opacity={disabled ? 0.46 : 1}
+                      boxShadow={pickedId ? 'sm' : undefined}
                       overflow="hidden"
-                      borderStyle={pickedId ? undefined : 'dashed'}
+                      borderStyle={pickedId || disabled ? undefined : 'dashed'}
                       _hover={
-                        editable
+                        editable && !exporting && !disabled
                           ? {
                               borderColor: 'accent.8',
-                              bgColor: 'rgba(255, 255, 255, 0.62)',
+                              bgColor: 'mypick.accentSoft',
                               transform: 'translateY(-1px)'
                             }
                           : undefined
@@ -477,9 +614,9 @@ export const MyPickGrid = forwardRef<
                             justifyContent="center"
                             alignItems="center"
                             p={{ base: '1.5', sm: '3' }}
-                            color="fg.subtle"
+                            color={disabled ? 'mypick.subtle' : 'mypick.muted'}
                           >
-                            <FaPlus size={exporting ? 28 : 18} />
+                            {!disabled && <FaPlus size={exporting ? 28 : 18} />}
                             <Text
                               fontSize={exporting ? 'xs' : { base: '3xs', md: '2xs' }}
                               fontWeight="semibold"
@@ -487,13 +624,19 @@ export const MyPickGrid = forwardRef<
                               lineHeight="1.15"
                               textAlign="center"
                               textTransform="uppercase"
+                              wordBreak="keep-all"
+                              whiteSpace="nowrap"
                             >
-                              {editable ? t(`mypick.slot_${col.slot}`) : t('mypick.no_pick')}
+                              {disabled
+                                ? t('mypick.no_options')
+                                : editable
+                                  ? emptyCellLabel(col)
+                                  : t('mypick.no_pick')}
                             </Text>
                           </Stack>
                         </Center>
                       )}
-                      {editable && pickedId && (
+                      {editable && !exporting && pickedId && (
                         <Box
                           onClick={(e) => {
                             e.stopPropagation();
@@ -520,66 +663,63 @@ export const MyPickGrid = forwardRef<
           })}
         </Stack>
 
-        {editable && (
+        {editable && !exporting && (
           <HStack gap="2" justifyContent="center" flexWrap="wrap">
             {onAddColumn && (
-              <HStack
-                {...clickable(onAddColumn, t('mypick.add_column'))}
-                cursor="pointer"
+              <Button
+                type="button"
+                onClick={onAddColumn}
+                variant="outline"
+                size="sm"
                 gap="2"
-                justifyContent="center"
-                borderColor="border.default"
-                borderRadius="full"
-                borderWidth="1px"
-                py="2"
-                px="4"
-                color="fg.muted"
-                bgColor="white"
-                borderStyle="dashed"
-                _hover={{ borderColor: 'accent.8', color: 'accent.default' }}
+                borderColor="mypick.actionBorder"
+                borderRadius="l2"
+                minW="9rem"
+                color="mypick.text"
+                bgColor="mypick.actionMuted"
+                _hover={{
+                  borderColor: 'mypick.borderStrong',
+                  color: 'accent.default',
+                  bgColor: 'mypick.action'
+                }}
               >
                 <FaPlus size={11} />
                 <Text fontSize="xs" fontWeight="medium">
                   {t('mypick.add_column')}
                 </Text>
-              </HStack>
+              </Button>
             )}
             {onAddRow && (
-              <HStack
-                {...clickable(onAddRow, t('mypick.add_row'))}
-                cursor="pointer"
+              <Button
+                type="button"
+                onClick={onAddRow}
+                variant="outline"
+                size="sm"
                 gap="2"
-                justifyContent="center"
-                borderColor="border.default"
-                borderRadius="full"
-                borderWidth="1px"
-                py="2"
-                px="4"
-                color="fg.muted"
-                bgColor="white"
-                borderStyle="dashed"
-                _hover={{ borderColor: 'accent.8', color: 'accent.default' }}
+                borderColor="mypick.actionBorder"
+                borderRadius="l2"
+                minW="9rem"
+                color="mypick.text"
+                bgColor="mypick.actionMuted"
+                _hover={{
+                  borderColor: 'mypick.borderStrong',
+                  color: 'accent.default',
+                  bgColor: 'mypick.action'
+                }}
               >
                 <FaPlus size={11} />
                 <Text fontSize="xs" fontWeight="medium">
                   {t('mypick.add_row')}
                 </Text>
-              </HStack>
+              </Button>
             )}
           </HStack>
         )}
 
         {exporting && (
           <Fragment>
-            <Box borderTopWidth="2px" borderTopColor="black.a1" h="0" />
-            <Text
-              textStyle="display"
-              color="fg.default"
-              fontSize="2xl"
-              letterSpacing="0.45em"
-              textAlign="center"
-              textTransform="uppercase"
-            >
+            <Box borderTopWidth="2px" borderTopColor="mypick.border" h="0" />
+            <Text color="mypick.text" fontSize="xl" fontWeight="bold" textAlign="center">
               llernote.app
             </Text>
           </Fragment>

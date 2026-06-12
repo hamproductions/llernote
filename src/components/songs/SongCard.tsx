@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { HStack, Stack } from 'styled-system/jsx';
+import { Grid, HStack, Stack } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import { localizedName } from '~/utils/names';
@@ -32,10 +32,11 @@ export function SongCard({
   ].join('・');
 
   return (
-    <HStack
+    <Grid
       {...clickable(onClick)}
       cursor="pointer"
       gap="2.5"
+      gridTemplateColumns={hasSongThumb(song.id) ? 'auto minmax(0, 1fr)' : 'minmax(0, 1fr)'}
       borderColor={heard ? 'accent.7' : 'border.subtle'}
       borderRadius="l2"
       borderWidth="1px"
@@ -48,35 +49,39 @@ export function SongCard({
     >
       {hasSongThumb(song.id) && <SongThumb songId={song.id} dim={!heard} />}
       <Stack flex="1" gap="0.5" minW="0">
-        <Text
-          title={song.name}
-          color={heard ? 'fg.default' : 'fg.muted'}
-          fontSize="sm"
-          fontWeight="medium"
-          lineClamp={2}
-        >
-          {localizedName(i18n.language, song.name, song.englishName)}
-        </Text>
+        <HStack gap="2" alignItems="flex-start" minW="0">
+          <Text
+            title={song.name}
+            flex="1"
+            minW="0"
+            color={heard ? 'fg.default' : 'fg.muted'}
+            fontSize="sm"
+            fontWeight="medium"
+            lineClamp={2}
+          >
+            {localizedName(i18n.language, song.name, song.englishName)}
+          </Text>
+          {heard ? (
+            <Badge size="sm" variant="solid" flexShrink={0}>
+              {t('songs.times', { count: heardCount })}
+            </Badge>
+          ) : (
+            <Badge size="sm" variant="outline" flexShrink={0} color="fg.subtle">
+              {t('songs.unheard')}
+            </Badge>
+          )}
+        </HStack>
         <HStack gap="1.5" alignItems="center" flexWrap="wrap">
           {song.seriesIds.slice(0, 2).map((id) => (
             <SeriesBadge key={id} seriesId={String(id)} />
           ))}
           {artistNames && (
-            <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
+            <Text flex="1" minW="0" color="fg.muted" fontSize="2xs" lineClamp={1}>
               {artistNames}
             </Text>
           )}
         </HStack>
       </Stack>
-      {heard ? (
-        <Badge size="sm" variant="solid" flexShrink={0}>
-          {t('songs.times', { count: heardCount })}
-        </Badge>
-      ) : (
-        <Badge size="sm" variant="outline" flexShrink={0} color="fg.subtle">
-          {t('songs.unheard')}
-        </Badge>
-      )}
-    </HStack>
+    </Grid>
   );
 }

@@ -1,9 +1,11 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const RAW_PATH = join(here, '../../the-sorter/data/raw/llfans-performances.json');
+const localRawPath = join(here, '../data/raw/llfans-performances.json');
+const sorterRawPath = join(here, '../../the-sorter/data/raw/llfans-performances.json');
+const RAW_PATH = existsSync(localRawPath) ? localRawPath : sorterRawPath;
 const OUT_PATH = join(here, '../data/event-extra.json');
 
 interface RawEntry {

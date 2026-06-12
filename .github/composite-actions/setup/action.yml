@@ -1,0 +1,14 @@
+name: 'Install'
+description: 'Sets up Bun and installs dependencies'
+
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@v2
+    - uses: oven-sh/setup-bun@v2
+    - name: Install dependencies
+      shell: bash
+      run: bun install --frozen-lockfile
+    - name: Codegen
+      shell: bash
+      run: bun panda codegen

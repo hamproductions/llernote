@@ -12,6 +12,7 @@ import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
+import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
 import {
   useArtistById,
@@ -29,6 +30,7 @@ import {
   formatEventShareText,
   xShareUrl
 } from '~/utils/share';
+import { hasSongThumb } from '~/utils/song-thumbs';
 import type { Performance, SetlistItem } from '~/types';
 import type { WatchType } from '~/types/attendance';
 
@@ -66,7 +68,7 @@ function SetlistItemRow({
     )
   ].join('・');
   return (
-    <HStack gap="2" alignItems="baseline" py="0.5">
+    <HStack gap="2" alignItems="center" py="0.5">
       <Text
         minW="8"
         color="fg.subtle"
@@ -76,6 +78,7 @@ function SetlistItemRow({
       >
         {index}.
       </Text>
+      {song && hasSongThumb(song.id) && <SongThumb songId={song.id} />}
       <Text fontSize="sm">
         {song ? localizedName(i18n.language, song.name, song.englishName) : item.customSongName}
       </Text>

@@ -89,6 +89,59 @@ export const theme: PartialTheme = {
         text: {
           value: '{colors.ll.a11}'
         }
+      },
+      mypick: {
+        canvas: {
+          value: { base: '#fffaf7', _dark: '#18131a' }
+        },
+        canvasTint: {
+          value: { base: '#fdf2f7', _dark: '#241621' }
+        },
+        panel: {
+          value: { base: '#fffdfbcc', _dark: '#261d27dd' }
+        },
+        panelSolid: {
+          value: { base: '#fffdfb', _dark: '#261d27' }
+        },
+        tile: {
+          value: { base: '#fffefa99', _dark: '#2f263066' }
+        },
+        tileDisabled: {
+          value: { base: '#f5eeeeb8', _dark: '#32283180' }
+        },
+        border: {
+          value: { base: '#eadde5', _dark: '#594653' }
+        },
+        borderStrong: {
+          value: { base: '#f2a0bd', _dark: '#d76a9a' }
+        },
+        text: {
+          value: { base: '#191821', _dark: '#fff7fb' }
+        },
+        muted: {
+          value: { base: '#7d7482', _dark: '#cbbec8' }
+        },
+        subtle: {
+          value: { base: '#9a92a0', _dark: '#9f929e' }
+        },
+        action: {
+          value: { base: '#ffffffd9', _dark: '#302632d9' }
+        },
+        actionMuted: {
+          value: { base: '#f8f4f8cc', _dark: '#261f27cc' }
+        },
+        actionText: {
+          value: { base: '#342c36', _dark: '#fff7fb' }
+        },
+        actionBorder: {
+          value: { base: '#eadde5', _dark: '#594653' }
+        },
+        accentSoft: {
+          value: { base: '#fff0f7', _dark: '#3a1f31' }
+        },
+        shadow: {
+          value: { base: '#d6c0ca4d', _dark: '#07050899' }
+        }
       }
     }
   },

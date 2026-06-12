@@ -20,5 +20,6 @@ describe('PickDialog', () => {
 
     expect(screen.getByTestId('pick-dialog-grid')).not.toBeNull();
     expect(screen.queryByTestId('pick-dialog-list')).toBeNull();
+    expect(screen.getByRole('textbox')).not.toBeNull();
   });
 });

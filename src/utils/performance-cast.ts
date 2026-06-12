@@ -17,7 +17,8 @@ export const buildPerformanceCharacterMap = (
       for (const songArtist of song?.artists ?? []) {
         const artist = artistById.get(songArtist.id);
         for (const characterId of artist?.characters ?? []) {
-          characterIds.add(characterId);
+          if (typeof characterId === 'string' && characterId.length > 0)
+            characterIds.add(characterId);
         }
       }
     }

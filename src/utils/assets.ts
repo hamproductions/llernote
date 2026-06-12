@@ -1,4 +1,5 @@
 import { join } from 'path-browserify';
+import { getSongThumbId } from './song-thumbs';
 
 export const assetsURL = import.meta.env.PUBLIC_ENV__BASE_URL + 'assets/';
 
@@ -23,7 +24,8 @@ export const getPicUrl = (
         return 'assets/';
     }
   })();
-  const photoId = type !== 'seiyuu' ? id.split('-')[0] : id;
+  const photoId =
+    type === 'thumbnail' ? (getSongThumbId(id) ?? id) : type !== 'seiyuu' ? id.split('-')[0] : id;
 
   return getAssetUrl(join(prefix, `${photoId}.webp`));
 };

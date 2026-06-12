@@ -12,13 +12,19 @@ export interface AttendanceRecord {
   updatedAt: string;
 }
 
-export type MyPickSlot = 'cast' | 'song' | 'event';
+export type MyPickYearSlot = 'event' | 'song';
+export type MyPickLegacySlot = 'cast' | 'song' | 'event';
+export type MyPickSlot = MyPickYearSlot | 'member';
 
-export type MyPickRow = { type: 'series'; id: string } | { type: 'artist'; id: string };
+export type MyPickRow =
+  | { type: 'series'; id: string }
+  | { type: 'artist'; id: string }
+  | { type: 'category'; id: 'group' | 'unit' | 'solo' | 'others' };
 
 export type MyPickColumn =
-  | { type: 'slot'; slot: MyPickSlot }
-  | { type: 'year'; year: number; slot: MyPickSlot };
+  | { type: 'member' }
+  | { type: 'year'; year: number; slot: MyPickYearSlot }
+  | { type: 'slot'; slot: MyPickLegacySlot };
 
 export interface MyPickConfig {
   rows: MyPickRow[];
@@ -33,7 +39,11 @@ export interface MyPick {
 
 export const rowKey = (row: MyPickRow) => `${row.type}:${row.id}`;
 export const columnKey = (col: MyPickColumn) =>
-  col.type === 'slot' ? `slot:${col.slot}` : `year:${col.year}:${col.slot}`;
+  col.type === 'year'
+    ? `year:${col.year}:${col.slot}`
+    : col.type === 'slot'
+      ? `slot:${col.slot}`
+      : col.type;
 export const cellKey = (row: MyPickRow, col: MyPickColumn) => `${rowKey(row)}|${columnKey(col)}`;
 
 export interface BackupData {

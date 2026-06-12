@@ -4,9 +4,11 @@ import { Table } from '~/components/ui/table';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
+import { SongThumb } from './SongThumb';
 import { useArtistById } from '~/hooks/useData';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
+import { hasSongThumb } from '~/utils/song-thumbs';
 import type { Song } from '~/types';
 
 export function SongTable({
@@ -36,6 +38,7 @@ export function SongTable({
       <Table.Root size="sm">
         <Table.Head zIndex="1" position="sticky" top="0" bgColor="bg.default">
           <Table.Row>
+            <Table.Header w="12" />
             <Table.Header>{t('songs.song')}</Table.Header>
             <Table.Header>{t('events.cast')}</Table.Header>
             <Table.Header hideBelow="lg">{t('events.series')}</Table.Header>
@@ -58,6 +61,9 @@ export function SongTable({
                 bgColor={i % 2 === 1 ? 'bg.subtle' : undefined}
                 _hover={{ bgColor: 'accent.a2' }}
               >
+                <Table.Cell w="12">
+                  {hasSongThumb(song.id) && <SongThumb songId={song.id} dim={count === 0} />}
+                </Table.Cell>
                 <Table.Cell minW="48">
                   <Text
                     color={count > 0 ? 'fg.default' : 'fg.muted'}

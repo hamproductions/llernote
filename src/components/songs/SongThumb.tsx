@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaMusic } from 'react-icons/fa6';
 import { Box, Center } from 'styled-system/jsx';
 import { getPicUrl } from '~/utils/assets';
@@ -13,6 +13,10 @@ export function SongThumb({
   dim?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [songId]);
 
   return (
     <Box
