@@ -152,9 +152,19 @@ export function SongDetailDialog({
                       >
                         {p.date}
                       </Text>
-                      <Text color={onSelectEvent ? 'accent.text' : undefined} fontSize="sm">
-                        {p.tourName}
-                      </Text>
+                      <Stack flex="1" gap="0" minW="0">
+                        <Text
+                          lang="ja"
+                          color={onSelectEvent ? 'accent.text' : undefined}
+                          fontSize="sm"
+                          lineClamp={2}
+                        >
+                          {p.tourName}
+                        </Text>
+                        <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+                          {[p.concertName, p.performanceName, p.venue].filter(Boolean).join('・')}
+                        </Text>
+                      </Stack>
                       <Text flexShrink={0} color="fg.subtle" fontSize="xs">
                         {relativeDate(p.date)}
                       </Text>
@@ -193,9 +203,14 @@ export function SongDetailDialog({
                     >
                       {p.date}
                     </Text>
-                    <Text flex="1" minW="0" color="accent.text" fontSize="sm" lineClamp={1}>
-                      {p.tourName}
-                    </Text>
+                    <Stack flex="1" gap="0" minW="0">
+                      <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={2}>
+                        {p.tourName}
+                      </Text>
+                      <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+                        {[p.concertName, p.performanceName, p.venue].filter(Boolean).join('・')}
+                      </Text>
+                    </Stack>
                     <Text flexShrink={0} color="fg.subtle" fontSize="xs">
                       {relativeDate(p.date)}
                     </Text>

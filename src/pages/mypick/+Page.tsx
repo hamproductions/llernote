@@ -354,13 +354,13 @@ export default function Page() {
   };
   const shareUrl = async () => {
     if (!myPick) return;
-    const url = myPickShareUrl(encodeMyPick(myPick, config.rows, config.columns));
+    const url = myPickShareUrl(encodeMyPick({ ...myPick, cells: {} }, config.rows, config.columns));
     await navigator.clipboard.writeText(url);
     toast({ title: t('share.copied'), type: 'success' });
   };
   const shareToX = () => {
     if (!myPick) return;
-    const url = myPickShareUrl(encodeMyPick(myPick, config.rows, config.columns));
+    const url = myPickShareUrl(encodeMyPick({ ...myPick, cells: {} }, config.rows, config.columns));
     const text = `${t('mypick.share_text')}\n${url}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -612,7 +612,15 @@ export default function Page() {
             flexWrap="wrap"
           >
             <Text fontSize="sm">{t('mypick.shared_view')}</Text>
-            <Button size="xs" onClick={() => (window.location.href = window.location.pathname)}>
+            <Button
+              size="xs"
+              onClick={() => {
+                if (shared) {
+                  setMyPickConfig({ rows: shared.rows, columns: shared.columns });
+                }
+                window.location.href = window.location.pathname;
+              }}
+            >
               {t('mypick.make_own')}
             </Button>
           </HStack>

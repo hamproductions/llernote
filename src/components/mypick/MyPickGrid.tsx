@@ -517,14 +517,16 @@ export const MyPickGrid = forwardRef<
               fontSize="3xl"
               fontWeight="bold"
               lineHeight="1"
+              whiteSpace="nowrap"
             >
               MY PICK LOVELIVE
             </Text>
             <Text
               lang="ja"
-              style={{ color: EXPORT_THEME.ink, letterSpacing: '0.24em' }}
+              style={{ color: EXPORT_THEME.ink, letterSpacing: '0.18em' }}
               fontSize="xs"
               fontWeight="semibold"
+              whiteSpace="nowrap"
             >
               {t('mypick.export_subtitle')}
             </Text>
