@@ -48,6 +48,8 @@ jobs:
   lighthouse:
     runs-on: ubuntu-latest
     needs: deploy
+    env:
+      PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Audit URLs using Lighthouse
@@ -58,9 +60,9 @@ jobs:
           temporaryPublicStorage: true
       - name: Running Page Speed Insights
         uses: jakepartusch/psi-action@v1.3
-        if: ${{ secrets.PSI_API_KEY != '' }}
+        if: ${{ env.PSI_API_KEY != '' }}
         with:
           url: ${{ needs.deploy.outputs.url }}
-          key: ${{ secrets.PSI_API_KEY }}
+          key: ${{ env.PSI_API_KEY }}
           threshold: 80
           strategy: desktop
