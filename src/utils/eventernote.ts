@@ -26,7 +26,7 @@ interface EventernoteResponse {
 }
 
 export const eventernoteApiBase = () =>
-  import.meta.env.PUBLIC_ENV__EVENTERNOTE_API_URL || 'http://localhost:3002';
+  (import.meta.env.PUBLIC_ENV__EVENTERNOTE_API_URL || 'http://localhost:3002').replace(/\/+$/, '');
 
 export const eventernoteEventUrl = (href: string) => `https://www.eventernote.com${href}`;
 
