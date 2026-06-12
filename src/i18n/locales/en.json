@@ -194,7 +194,10 @@
     "move_left": "Move left",
     "move_right": "Move right",
     "move_up": "Move up",
-    "move_down": "Move down"
+    "move_down": "Move down",
+    "share_x": "Share to X",
+    "share_text": "My LoveLive! MyPick #LLerNote",
+    "export_subtitle": "LoveLive! Series Favorite Selection"
   },
   "songs": {
     "title": "Songs",
@@ -246,7 +249,9 @@
   },
   "footer": {
     "footer_text": "LLerNote - Your LoveLive! event attendance log",
-    "data_updated": "Data updated: {{ date }}"
+    "data_updated": "Data updated: {{ date }}",
+    "created_by": "Created by",
+    "source_code": "Check out source code on "
   },
   "error_page": {
     "title": "Something went wrong",

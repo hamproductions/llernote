@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import vike from 'vike/plugin';
 import { cjsInterop } from 'vite-plugin-cjs-interop';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { partytownVite } from '@builder.io/partytown/utils';
+import { join } from 'path';
 import fs from 'fs';
 
 const ReactCompilerConfig = {};
@@ -23,6 +25,9 @@ export default defineConfig({
   },
   plugins: [
     tsconfigPaths(),
+    partytownVite({
+      dest: join(__dirname, 'dist', 'client', '~partytown')
+    }),
     cjsInterop({
       dependencies: ['path-browserify', 'lz-string', 'react-helmet-async', 'file-saver']
     }),

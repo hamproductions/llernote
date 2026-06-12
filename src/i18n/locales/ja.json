@@ -193,7 +193,10 @@
     "move_left": "左へ移動",
     "move_right": "右へ移動",
     "move_up": "上へ移動",
-    "move_down": "下へ移動"
+    "move_down": "下へ移動",
+    "share_x": "Xでシェア",
+    "share_text": "私のラブライブ！MyPick #LLerNote",
+    "export_subtitle": "ラブライブ！シリーズ お気に入りセレクション"
   },
   "songs": {
     "title": "楽曲",
@@ -244,7 +247,9 @@
   },
   "footer": {
     "footer_text": "LLerNote - ラブライブ！イベント参加記録",
-    "data_updated": "データ更新日: {{ date }}"
+    "data_updated": "データ更新日: {{ date }}",
+    "created_by": "作者：",
+    "source_code": "ソースコードをチェックしてみてね"
   },
   "error_page": {
     "title": "エラーが発生しました",

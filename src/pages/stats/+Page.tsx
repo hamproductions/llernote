@@ -274,8 +274,7 @@ function MonthEventChart({
           strokeLinejoin="round"
         />
         {points.map(({ item, x, y }, index) => {
-          const showLabel =
-            index === 0 || index === points.length - 1 || item.attended === max;
+          const showLabel = index === 0 || index === points.length - 1 || item.attended === max;
           const showMonth =
             index === 0 || index === points.length - 1 || index % markerModulo === 0;
           return (

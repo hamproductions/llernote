@@ -26,6 +26,7 @@ import { getPicUrl } from '~/utils/assets';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
 import { isGroupArtist } from '~/utils/mypick-options';
+import { SITE_DISPLAY_URL } from '~/utils/site';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
 import type { MyPick, MyPickColumn, MyPickRow } from '~/types/attendance';
 
@@ -53,6 +54,27 @@ const rowTone = (color: string) => {
     bg: `linear-gradient(to right, rgba(${r}, ${g}, ${b}, 0.14), color-mix(in srgb, var(--colors-mypick-panel-solid) 76%, transparent))`,
     border: `rgba(${r}, ${g}, ${b}, 0.3)`,
     text: `color-mix(in srgb, rgb(${r}, ${g}, ${b}) 34%, var(--colors-mypick-text))`
+  };
+};
+
+export const EXPORT_BG = '#16131b';
+
+const EXPORT_THEME = {
+  bg: EXPORT_BG,
+  ink: '#f4f1ea',
+  tile: '#ffffff',
+  tileBorder: 'rgba(244, 241, 234, 0.24)',
+  emptyText: 'rgba(244, 241, 234, 0.45)',
+  divider: 'rgba(244, 241, 234, 0.18)',
+  serif: "'Didot', 'Bodoni 72', Georgia, 'Hiragino Mincho ProN', 'Yu Mincho', serif"
+};
+
+const exportTone = (color: string) => {
+  const { r, g, b } = hexToRgb(color);
+  return {
+    bg: `linear-gradient(to right, rgba(${r}, ${g}, ${b}, 0.2), rgba(${r}, ${g}, ${b}, 0.05))`,
+    border: `rgba(${r}, ${g}, ${b}, 0.4)`,
+    text: `color-mix(in srgb, rgb(${r}, ${g}, ${b}) 55%, ${'#f4f1ea'})`
   };
 };
 
@@ -237,22 +259,26 @@ function CellContent({
   if (!performance) return null;
   return (
     <Stack
+      style={exporting ? { backgroundColor: EXPORT_THEME.tile, color: '#232c4a' } : undefined}
       inset="0"
       position="absolute"
       gap="2"
       justifyContent="center"
       alignItems="center"
       p="3"
-      color="mypick.text"
+      color={exporting ? undefined : 'mypick.text'}
       textAlign="center"
-      bgColor="mypick.tile"
+      bgColor={exporting ? undefined : 'mypick.tile'}
     >
       <Text
         lang="ja"
-        style={{ wordBreak: 'auto-phrase' as 'normal' }}
+        style={{
+          wordBreak: 'auto-phrase' as 'normal',
+          color: exporting ? '#232c4a' : undefined
+        }}
         minW="0"
         maxW="full"
-        color="mypick.text"
+        color={exporting ? undefined : 'mypick.text'}
         fontSize={exporting ? 'sm' : 'xs'}
         fontWeight="bold"
         lineHeight="1.25"
@@ -314,7 +340,7 @@ export const MyPickGrid = forwardRef<
   },
   ref
 ) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const seriesById = useSeriesById();
   const artistById = useArtistById();
   const exportColumnWidth = columns.length <= 3 ? 152 : 124;
@@ -382,7 +408,7 @@ export const MyPickGrid = forwardRef<
             ? t('mypick.row_solo')
             : t('mypick.row_unit');
     return {
-      label: artist?.name ?? row.id,
+      label: artist ? localizedName(i18n.language, artist.name, artist.englishName) : row.id,
       sub: rowType,
       color,
       tone: rowTone(color)
@@ -437,17 +463,19 @@ export const MyPickGrid = forwardRef<
       style={{
         backdropFilter: exporting ? undefined : 'blur(18px)',
         width: exporting ? `${exportWidth}px` : undefined,
-        maxWidth: exporting ? undefined : panelMaxWidth
+        maxWidth: exporting ? undefined : panelMaxWidth,
+        background: exporting ? EXPORT_THEME.bg : undefined,
+        color: exporting ? EXPORT_THEME.ink : undefined
       }}
       position="relative"
       borderColor="mypick.border"
       borderRadius={{ base: '2xl', md: '3xl' }}
-      borderWidth="1px"
+      borderWidth={exporting ? '0' : '1px'}
       w={exporting ? undefined : 'full'}
       mx="auto"
       p={exporting ? `${exportPadding}px` : { base: '3', md: '4' }}
-      bgColor="mypick.panel"
-      boxShadow="0 18px 60px var(--colors-mypick-shadow)"
+      bgColor={exporting ? undefined : 'mypick.panel'}
+      boxShadow={exporting ? undefined : '0 18px 60px var(--colors-mypick-shadow)'}
       overflowX={exporting ? 'visible' : 'auto'}
       overflowY="hidden"
     >
@@ -458,13 +486,36 @@ export const MyPickGrid = forwardRef<
         gap={exporting ? '6' : { base: '3.5', md: '6' }}
       >
         {exporting && (
-          <Stack gap="0" alignItems="center" textAlign="center">
-            <Text color="mypick.text" fontSize="2xl" fontWeight="bold" lineHeight="1">
-              MyPick
+          <Stack gap="2.5" alignItems="center" pt="2" textAlign="center">
+            <Text
+              style={{
+                color: EXPORT_THEME.ink,
+                fontFamily: EXPORT_THEME.serif,
+                letterSpacing: '0.32em'
+              }}
+              fontSize="3xl"
+              fontWeight="bold"
+              lineHeight="1"
+            >
+              MY PICK LOVELIVE
             </Text>
-            <Text color="mypick.text" fontSize="3xl" fontWeight="bold" lineHeight="1.15">
-              LLerNote
+            <Text
+              lang="ja"
+              style={{ color: EXPORT_THEME.ink, letterSpacing: '0.24em' }}
+              fontSize="xs"
+              fontWeight="semibold"
+            >
+              {t('mypick.export_subtitle')}
             </Text>
+            <HStack gap="1.5" justifyContent="center" pt="1">
+              {rows.map((row) => (
+                <Box
+                  key={rowKey(row)}
+                  style={{ backgroundColor: rowMeta(row).color, width: 26, height: 9 }}
+                  borderRadius="full"
+                />
+              ))}
+            </HStack>
           </Stack>
         )}
         <Grid
@@ -481,10 +532,20 @@ export const MyPickGrid = forwardRef<
         >
           <HStack gap="2" justifyContent="center" alignItems="center" minW="0" minH="10">
             <Text
-              color="mypick.text"
-              fontSize={{ base: '2xs', sm: 'xs', md: 'sm' }}
+              style={
+                exporting
+                  ? {
+                      color: EXPORT_THEME.ink,
+                      fontFamily: EXPORT_THEME.serif,
+                      letterSpacing: '0.2em'
+                    }
+                  : undefined
+              }
+              color={exporting ? undefined : 'mypick.text'}
+              fontSize={exporting ? 'sm' : { base: '2xs', sm: 'xs', md: 'sm' }}
               fontWeight="bold"
               lineHeight="1"
+              textTransform={exporting ? 'uppercase' : undefined}
             >
               Selections
             </Text>
@@ -504,19 +565,41 @@ export const MyPickGrid = forwardRef<
           {columns.map((col, columnIndex) => (
             <Center key={columnKey(col)} minW="0" minH="10">
               <HStack gap="2" justifyContent="center" alignItems="center" w="full" minW="0">
-                <Text
-                  flex="0 1 auto"
-                  minW="0"
-                  color="mypick.text"
-                  fontSize={exporting ? 'lg' : { base: '3xs', sm: 'xs', md: 'sm' }}
-                  fontWeight="bold"
-                  lineHeight="1.1"
-                  textAlign="center"
-                  lineClamp={2}
-                  whiteSpace="normal"
-                >
-                  {columnLabel(col)}
-                </Text>
+                {exporting ? (
+                  <Stack gap="1.5" alignItems="center" minW="0">
+                    <Text
+                      lang="ja"
+                      style={{
+                        color: EXPORT_THEME.ink,
+                        fontFamily: EXPORT_THEME.serif,
+                        letterSpacing: '0.12em'
+                      }}
+                      fontSize="xl"
+                      fontWeight="bold"
+                      lineHeight="1.1"
+                      textAlign="center"
+                    >
+                      {columnLabel(col)}
+                    </Text>
+                    <Box
+                      style={{ width: 72, height: 2, backgroundColor: EXPORT_THEME.tileBorder }}
+                    />
+                  </Stack>
+                ) : (
+                  <Text
+                    flex="0 1 auto"
+                    minW="0"
+                    color="mypick.text"
+                    fontSize={{ base: '3xs', sm: 'xs', md: 'sm' }}
+                    fontWeight="bold"
+                    lineHeight="1.1"
+                    textAlign="center"
+                    lineClamp={2}
+                    whiteSpace="normal"
+                  >
+                    {columnLabel(col)}
+                  </Text>
+                )}
                 {editable && !exporting && onRemoveColumn && columns.length > 1 && (
                   <ActionMenu
                     label={`${columnLabel(col)} ${t('common.actions')}`}
@@ -558,8 +641,8 @@ export const MyPickGrid = forwardRef<
                 key={rowKey(row)}
                 style={{
                   gridTemplateColumns: gridColumns,
-                  background: meta.tone.bg,
-                  borderColor: meta.tone.border,
+                  background: exporting ? exportTone(meta.color).bg : meta.tone.bg,
+                  borderColor: exporting ? exportTone(meta.color).border : meta.tone.border,
                   gap: exporting ? `${exportGap}px` : undefined
                 }}
                 position="relative"
@@ -567,7 +650,7 @@ export const MyPickGrid = forwardRef<
                 justifyContent="start"
                 alignItems="center"
                 borderRadius={{ base: 'xl', md: '2xl' }}
-                borderWidth={exporting ? '2px' : '1px'}
+                borderWidth="1px"
                 p={exporting ? '4' : { base: '1.5', sm: '2', md: '2' }}
                 transition="all"
               >
@@ -581,7 +664,8 @@ export const MyPickGrid = forwardRef<
                       title={meta.sub}
                       lang="ja"
                       style={{
-                        color: meta.tone.text,
+                        color: exporting ? exportTone(meta.color).text : meta.tone.text,
+                        fontFamily: exporting ? EXPORT_THEME.serif : undefined,
                         wordBreak: 'auto-phrase' as 'normal'
                       }}
                       flex="1"
@@ -642,7 +726,19 @@ export const MyPickGrid = forwardRef<
                       style={{
                         aspectRatio: '1 / 1',
                         width: exporting ? `${exportColumnWidth}px` : undefined,
-                        height: exporting ? `${exportColumnWidth}px` : undefined
+                        height: exporting ? `${exportColumnWidth}px` : undefined,
+                        backgroundColor: exporting
+                          ? pickedId
+                            ? EXPORT_THEME.tile
+                            : disabled
+                              ? 'rgba(255, 255, 255, 0.03)'
+                              : 'rgba(255, 255, 255, 0.05)'
+                          : undefined,
+                        borderColor: exporting
+                          ? pickedId
+                            ? 'transparent'
+                            : EXPORT_THEME.tileBorder
+                          : undefined
                       }}
                       cursor={
                         pickable && !exporting && !disabled
@@ -652,14 +748,28 @@ export const MyPickGrid = forwardRef<
                             : undefined
                       }
                       position="relative"
-                      borderColor={pickedId ? 'mypick.panelSolid' : 'mypick.border'}
+                      borderColor={
+                        exporting ? undefined : pickedId ? 'mypick.panelSolid' : 'mypick.border'
+                      }
                       borderRadius={{ base: 'xl', md: '2xl' }}
-                      borderWidth={pickedId ? '0' : exporting ? '2px' : '1px'}
+                      borderWidth={pickedId ? '0' : '1px'}
                       bgColor={
-                        pickedId ? 'bg.subtle' : disabled ? 'mypick.tileDisabled' : 'mypick.tile'
+                        exporting
+                          ? undefined
+                          : pickedId
+                            ? 'bg.subtle'
+                            : disabled
+                              ? 'mypick.tileDisabled'
+                              : 'mypick.tile'
                       }
                       opacity={disabled ? 0.46 : 1}
-                      boxShadow={pickedId ? 'sm' : undefined}
+                      boxShadow={
+                        pickedId
+                          ? exporting
+                            ? '0 4px 14px rgba(29, 39, 66, 0.1)'
+                            : 'sm'
+                          : undefined
+                      }
                       overflow="hidden"
                       borderStyle={pickedId || disabled ? undefined : 'dashed'}
                       _hover={
@@ -677,11 +787,14 @@ export const MyPickGrid = forwardRef<
                       ) : (
                         <Center h="full">
                           <Stack
+                            style={{ color: exporting ? EXPORT_THEME.emptyText : undefined }}
                             gap={{ base: '1', md: '2' }}
                             justifyContent="center"
                             alignItems="center"
                             p={{ base: '1.5', sm: '3' }}
-                            color={disabled ? 'mypick.subtle' : 'mypick.muted'}
+                            color={
+                              exporting ? undefined : disabled ? 'mypick.subtle' : 'mypick.muted'
+                            }
                           >
                             {!disabled && (pickable || exporting) && (
                               <FaPlus size={exporting ? 28 : 18} />
@@ -788,9 +901,19 @@ export const MyPickGrid = forwardRef<
 
         {exporting && (
           <Fragment>
-            <Box borderTopWidth="2px" borderTopColor="mypick.border" h="0" />
-            <Text color="mypick.text" fontSize="xl" fontWeight="bold" textAlign="center">
-              llernote.app
+            <Box style={{ borderTopColor: EXPORT_THEME.divider }} borderTopWidth="1px" h="0" />
+            <Text
+              style={{
+                color: EXPORT_THEME.ink,
+                fontFamily: EXPORT_THEME.serif,
+                letterSpacing: '0.35em'
+              }}
+              fontSize="sm"
+              fontWeight="semibold"
+              textAlign="center"
+              textTransform="uppercase"
+            >
+              {SITE_DISPLAY_URL}
             </Text>
           </Fragment>
         )}

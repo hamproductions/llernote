@@ -9,13 +9,14 @@ import {
   FaRegCalendar,
   FaRotateLeft,
   FaUser,
+  FaXTwitter,
   FaXmark
 } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
-import { MyPickGrid } from '~/components/mypick/MyPickGrid';
+import { EXPORT_BG, MyPickGrid } from '~/components/mypick/MyPickGrid';
 import { Metadata } from '~/components/layout/Metadata';
 import { Dialog } from '~/components/ui/dialog';
 import { Field } from '~/components/ui/field';
@@ -37,7 +38,7 @@ import { setMyPick, setMyPickCell, setMyPickConfig } from '~/utils/attendance/st
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { getPicUrl } from '~/utils/assets';
 import { hasSongThumb } from '~/utils/song-thumbs';
-import { localizedName } from '~/utils/names';
+import { castName, localizedName } from '~/utils/names';
 import { decodeMyPick, encodeMyPick, myPickShareUrl } from '~/utils/mypick-share';
 import { clickable } from '~/utils/clickable';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
@@ -175,10 +176,15 @@ export default function Page() {
           id: c.id,
           label: localizedName(i18n.language, c.fullName, c.englishName),
           sub: c.casts
-            .map((cast) => localizedName(i18n.language, cast.seiyuu, cast.englishName))
+            .map((cast) => castName(i18n.language, cast.seiyuu, cast.englishName))
             .join('・'),
           englishName: c.englishName,
-          searchText: c.casts.map((cast) => `${cast.seiyuu} ${cast.englishName ?? ''}`).join(' '),
+          searchText: c.casts
+            .map(
+              (cast) =>
+                `${cast.seiyuu} ${cast.englishName ?? ''} ${castName('en', cast.seiyuu, cast.englishName)}`
+            )
+            .join(' '),
           image: getPicUrl(c.id, c.hasIcon ? 'icons' : 'character')
         }));
     }
@@ -319,7 +325,8 @@ export default function Page() {
     try {
       await downloadElementAsImage(
         exportGridRef.current,
-        `mypick-${new Date().toISOString().slice(0, 10)}.png`
+        `mypick-${new Date().toISOString().slice(0, 10)}.png`,
+        EXPORT_BG
       );
     } finally {
       setExporting(false);
@@ -330,6 +337,12 @@ export default function Page() {
     const url = myPickShareUrl(encodeMyPick(myPick, config.rows, config.columns));
     await navigator.clipboard.writeText(url);
     toast({ title: t('share.copied'), type: 'success' });
+  };
+  const shareToX = () => {
+    if (!myPick) return;
+    const url = myPickShareUrl(encodeMyPick(myPick, config.rows, config.columns));
+    const text = `${t('mypick.share_text')}\n${url}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
   const rowBuckets = useMemo(
     () => ({
@@ -520,6 +533,21 @@ export default function Page() {
               >
                 <FaLink size={12} />
                 {t('mypick.share_url')}
+              </Button>
+            )}
+            {!shared && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!myPick}
+                onClick={shareToX}
+                gap="2"
+                borderColor="mypick.actionBorder"
+                color={myPick ? 'mypick.text' : 'mypick.subtle'}
+                bgColor="mypick.actionMuted"
+              >
+                <FaXTwitter size={12} />
+                {t('mypick.share_x')}
               </Button>
             )}
             <Button
@@ -802,12 +830,6 @@ export default function Page() {
               setPicking(undefined);
             }
           }}
-          display={
-            (picking?.column.type === 'year' && picking.column.slot === 'song') ||
-            (picking?.column.type === 'slot' && picking.column.slot === 'song')
-              ? 'tiles'
-              : 'auto'
-          }
           categories={
             (picking?.column.type === 'year' && picking.column.slot === 'song') ||
             (picking?.column.type === 'slot' && picking.column.slot === 'song')
@@ -818,6 +840,12 @@ export default function Page() {
                   { key: 'others', label: t('mypick.row_others') }
                 ]
               : undefined
+          }
+          display={
+            (picking?.column.type === 'year' && picking.column.slot === 'song') ||
+            (picking?.column.type === 'slot' && picking.column.slot === 'song')
+              ? 'tiles'
+              : 'auto'
           }
         />
 

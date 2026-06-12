@@ -101,9 +101,7 @@ export const artistsForRow = (
 ) => {
   if (row.type === 'artist') {
     const ids = buckets.aliasIds.get(row.id) ?? new Set([row.id]);
-    return [...ids]
-      .map((id) => artistById.get(id))
-      .filter((artist): artist is Artist => !!artist);
+    return [...ids].map((id) => artistById.get(id)).filter((artist): artist is Artist => !!artist);
   }
   if (row.type === 'category' && row.id === 'group') return buckets.group;
   if (row.type === 'category' && row.id === 'unit') return buckets.unit;

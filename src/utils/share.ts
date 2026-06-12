@@ -13,12 +13,16 @@ export const xShareUrl = (text: string, url?: string) => {
   return `https://x.com/intent/post?${params.toString()}`;
 };
 
-export const downloadElementAsImage = async (element: HTMLElement, filename: string) => {
+export const downloadElementAsImage = async (
+  element: HTMLElement,
+  filename: string,
+  backgroundColor?: string
+) => {
   const blob = await domToBlob(element, {
     scale: 2,
     width: element.scrollWidth,
     height: element.scrollHeight,
-    backgroundColor: getComputedStyle(document.body).backgroundColor,
+    backgroundColor: backgroundColor ?? getComputedStyle(document.body).backgroundColor,
     style: { overflow: 'visible' }
   });
   if (blob) saveAs(blob, filename);

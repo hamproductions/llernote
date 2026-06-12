@@ -8,7 +8,7 @@ import { Badge } from '~/components/ui/badge';
 import { useCharacters } from '~/hooks/useData';
 import { foldKana } from '~/utils/event-filter';
 import { getPicUrl } from '~/utils/assets';
-import { localizedName } from '~/utils/names';
+import { castName, localizedName } from '~/utils/names';
 
 export function CastFilter({
   selectedIds,
@@ -147,7 +147,7 @@ export function CastFilter({
                 </Text>
                 <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
                   {c.casts
-                    .map((cast) => localizedName(i18n.language, cast.seiyuu, cast.englishName))
+                    .map((cast) => castName(i18n.language, cast.seiyuu, cast.englishName))
                     .join('・')}
                 </Text>
               </Stack>

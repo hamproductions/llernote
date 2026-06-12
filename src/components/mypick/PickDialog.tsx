@@ -276,8 +276,8 @@ export function PickDialog({
                     : items.length;
                   return (
                     <Box
-                      key={category.key}
                       as="button"
+                      key={category.key}
                       onClick={() => setActiveCategory(category.key)}
                       cursor="pointer"
                       borderColor={selected ? 'mypick.borderStrong' : 'mypick.border'}
