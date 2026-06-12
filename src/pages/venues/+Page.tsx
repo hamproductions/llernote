@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   FaArrowUpRightFromSquare,
   FaLocationDot,
@@ -11,6 +12,7 @@ import { Box, Center, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
+import { DataTable } from '~/components/ui/data-table';
 import { Input } from '~/components/ui/input';
 import { Link } from '~/components/ui/link';
 import { Pagination } from '~/components/ui/pagination';
@@ -51,6 +53,9 @@ export default function Page() {
   const [page, setPage] = useState(1);
   const [selectedVenueId, setSelectedVenueId] = useState<string>();
   const [detailVenue, setDetailVenue] = useState<VenueSummary>();
+  const [tableSorting, setTableSorting] = useState<SortingState>([
+    { id: 'performances', desc: true }
+  ]);
   const columns = useColumnCount();
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-venues-view', 'cards');
   const effectiveView = columns === 1 ? 'cards' : view;
@@ -122,6 +127,71 @@ export default function Page() {
       .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city))
       .slice(0, 12);
   }, [venues]);
+
+  const tableColumns = useMemo<ColumnDef<VenueSummary, unknown>[]>(
+    () => [
+      {
+        id: 'name',
+        accessorKey: 'name',
+        header: t('venues.col_venue'),
+        sortingFn: (a, b) => a.original.name.localeCompare(b.original.name, 'ja'),
+        cell: ({ row }) => (
+          <Stack gap="0.5" minW="0">
+            <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
+              {row.original.name}
+            </Text>
+            {row.original.address && (
+              <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
+                {row.original.address}
+              </Text>
+            )}
+          </Stack>
+        )
+      },
+      {
+        id: 'region',
+        accessorFn: (venue) => venue.location ?? venue.locality,
+        header: t('venues.col_region'),
+        sortUndefined: 'last',
+        cell: ({ getValue }) => (
+          <Text color="fg.muted" fontSize="sm" whiteSpace="nowrap">
+            {(getValue() as string | undefined) ?? '—'}
+          </Text>
+        ),
+        meta: { width: '40' }
+      },
+      {
+        id: 'performances',
+        accessorKey: 'performanceCount',
+        header: t('venues.col_performances'),
+        sortDescFirst: true,
+        cell: ({ row }) => (
+          <Text fontSize="sm" fontVariantNumeric="tabular-nums">
+            {row.original.performanceCount}
+          </Text>
+        ),
+        meta: { textAlign: 'right', width: '24' }
+      },
+      {
+        id: 'attended',
+        accessorKey: 'attendedCount',
+        header: t('venues.col_attended'),
+        sortDescFirst: true,
+        cell: ({ row }) => (
+          <Text
+            color={row.original.attendedCount > 0 ? 'accent.default' : 'fg.muted'}
+            fontSize="sm"
+            fontWeight={row.original.attendedCount > 0 ? 'semibold' : undefined}
+            fontVariantNumeric="tabular-nums"
+          >
+            {row.original.attendedCount}
+          </Text>
+        ),
+        meta: { textAlign: 'right', width: '24' }
+      }
+    ],
+    [t]
+  );
 
   const attendedVenueCount = venues.filter((venue) => venue.attendedCount > 0).length;
   const percent = venues.length ? Math.round((attendedVenueCount / venues.length) * 100) : 0;
@@ -227,18 +297,20 @@ export default function Page() {
                 setPage(1);
               }}
             />
-            <NativeSelect
-              aria-label={t('venues.sort')}
-              value={sort}
-              options={[
-                { value: 'performances', label: t('venues.sort_performances') },
-                { value: 'attended', label: t('venues.sort_attended') },
-                { value: 'latest', label: t('venues.sort_latest') },
-                { value: 'first', label: t('venues.sort_first') },
-                { value: 'name', label: t('venues.sort_name') }
-              ]}
-              onChange={(value) => setSort(value as SortKey)}
-            />
+            {effectiveView !== 'table' && (
+              <NativeSelect
+                aria-label={t('venues.sort')}
+                value={sort}
+                options={[
+                  { value: 'performances', label: t('venues.sort_performances') },
+                  { value: 'attended', label: t('venues.sort_attended') },
+                  { value: 'latest', label: t('venues.sort_latest') },
+                  { value: 'first', label: t('venues.sort_first') },
+                  { value: 'name', label: t('venues.sort_name') }
+                ]}
+                onChange={(value) => setSort(value as SortKey)}
+              />
+            )}
             <Button
               size="xs"
               variant="ghost"
@@ -269,39 +341,16 @@ export default function Page() {
         )}
 
         {effectiveView === 'table' ? (
-          <Stack gap="2">
-            {pageItems.map((venue) => (
-              <Card.Root key={venue.id} onClick={() => setDetailVenue(venue)} cursor="pointer">
-                <Card.Body p="3">
-                  <HStack gap="3" justifyContent="space-between" alignItems="center">
-                    <Stack flex="1" gap="0.5" minW="0">
-                      <Text fontWeight="bold" lineClamp={1}>
-                        {venue.name}
-                      </Text>
-                      <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-                        {venue.location ??
-                          venue.address ??
-                          `${venue.firstDate} - ${venue.lastDate}`}
-                      </Text>
-                    </Stack>
-                    <HStack hideBelow="md" gap="2">
-                      <Badge variant="subtle">
-                        {t('venues.performance_count', { count: venue.performanceCount })}
-                      </Badge>
-                      <Badge variant="outline">
-                        {t('venues.attended_count', { count: venue.attendedCount })}
-                      </Badge>
-                    </HStack>
-                    <Wrap hideBelow="lg" gap="1.5">
-                      {venue.seriesIds.slice(0, 3).map((id) => (
-                        <SeriesBadge key={id} seriesId={id} />
-                      ))}
-                    </Wrap>
-                  </HStack>
-                </Card.Body>
-              </Card.Root>
-            ))}
-          </Stack>
+          <DataTable
+            data={filtered}
+            sorting={tableSorting}
+            onSortingChange={setTableSorting}
+            pageSize={PAGE_SIZE}
+            onRowClick={(venue) => setDetailVenue(venue)}
+            minW="2xl"
+            columns={tableColumns}
+            page={page}
+          />
         ) : (
           <Grid gap="3" gridTemplateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}>
             {pageItems.map((venue) => (

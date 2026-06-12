@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaXmark } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
@@ -9,6 +9,7 @@ import { useCharacters } from '~/hooks/useData';
 import { foldKana } from '~/utils/event-filter';
 import { getPicUrl } from '~/utils/assets';
 import { castName, localizedName } from '~/utils/names';
+import { getSeriesShortName } from '~/utils/series-short';
 
 export function CastFilter({
   selectedIds,
@@ -37,9 +38,12 @@ export function CastFilter({
         return foldKana(
           `${c.fullName} ${c.englishName ?? ''} ${c.casts.map((cast) => `${cast.seiyuu} ${cast.englishName ?? ''}`).join(' ')}`
         ).includes(q);
-      })
-      .slice(0, 8);
+      });
   }, [characters, query, selectedIds]);
+
+  useEffect(() => {
+    document.getElementById(`cast-option-${highlighted}`)?.scrollIntoView({ block: 'nearest' });
+  }, [highlighted]);
 
   const open = focused && suggestions.length > 0;
 
@@ -109,49 +113,67 @@ export function CastFilter({
           overflowY="auto"
         >
           {suggestions.map((c, i) => (
-            <HStack
-              key={c.id}
-              id={`cast-option-${i}`}
-              role="option"
-              aria-selected={i === highlighted}
-              onMouseEnter={() => setHighlighted(i)}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                pick(c.id);
-              }}
-              cursor="pointer"
-              gap="2"
-              py="1.5"
-              px="2"
-              bgColor={i === highlighted ? 'bg.subtle' : undefined}
-              _hover={{ bgColor: 'bg.subtle' }}
-            >
-              <Box
-                flexShrink={0}
-                borderRadius="full"
-                w="7"
-                h="7"
-                bgColor="bg.subtle"
-                overflow="hidden"
+            <Box key={c.id}>
+              {c.seriesId !== suggestions[i - 1]?.seriesId && (
+                <Text
+                  role="presentation"
+                  style={{ color: c.seriesColor }}
+                  borderColor="border.subtle"
+                  borderTopWidth={i > 0 ? '1px' : undefined}
+                  py="1"
+                  px="2"
+                  color="fg.subtle"
+                  fontSize="2xs"
+                  fontWeight="bold"
+                  letterSpacing="wider"
+                  textTransform="uppercase"
+                >
+                  {getSeriesShortName(c.seriesId, c.series)}
+                </Text>
+              )}
+              <HStack
+                id={`cast-option-${i}`}
+                role="option"
+                aria-selected={i === highlighted}
+                onMouseEnter={() => setHighlighted(i)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  pick(c.id);
+                }}
+                cursor="pointer"
+                gap="2"
+                py="1.5"
+                px="2"
+                bgColor={i === highlighted ? 'bg.subtle' : undefined}
+                _hover={{ bgColor: 'bg.subtle' }}
               >
-                <img
-                  src={getPicUrl(c.id, c.hasIcon ? 'icons' : 'character')}
-                  alt=""
-                  loading="lazy"
-                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                />
-              </Box>
-              <Stack gap="0" minW="0">
-                <Text fontSize="xs" fontWeight="medium" lineClamp={1}>
-                  {localizedName(i18n.language, c.fullName, c.englishName)}
-                </Text>
-                <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
-                  {c.casts
-                    .map((cast) => castName(i18n.language, cast.seiyuu, cast.englishName))
-                    .join('・')}
-                </Text>
-              </Stack>
-            </HStack>
+                <Box
+                  flexShrink={0}
+                  borderRadius="full"
+                  w="7"
+                  h="7"
+                  bgColor="bg.subtle"
+                  overflow="hidden"
+                >
+                  <img
+                    src={getPicUrl(c.id, c.hasIcon ? 'icons' : 'character')}
+                    alt=""
+                    loading="lazy"
+                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                  />
+                </Box>
+                <Stack gap="0" minW="0">
+                  <Text fontSize="xs" fontWeight="medium" lineClamp={1}>
+                    {localizedName(i18n.language, c.fullName, c.englishName)}
+                  </Text>
+                  <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
+                    {c.casts
+                      .map((cast) => castName(i18n.language, cast.seiyuu, cast.englishName))
+                      .join('・')}
+                  </Text>
+                </Stack>
+              </HStack>
+            </Box>
           ))}
         </Stack>
       )}

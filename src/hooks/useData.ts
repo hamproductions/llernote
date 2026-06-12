@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useAppSettings } from './useAppSettings';
 import performanceInfo from '../../data/performance-info.json';
 import eventExtra from '../../data/event-extra.json';
 import setlistInfo from '../../data/performance-setlists.json';
@@ -57,6 +58,13 @@ const venues = venueInfo as VenueInfo[];
 
 const sortedPerformances = [...performances].sort((a, b) => b.date.localeCompare(a.date));
 const performanceById = new Map(performances.map((p) => [p.id, p]));
+const livePerformances = sortedPerformances.filter((p) => p.category === 'live');
+const livePerformanceById = new Map(livePerformances.map((p) => [p.id, p]));
+const liveSetlists = Object.fromEntries(
+  Object.entries(setlistInfo as unknown as Record<string, Setlist>).filter(([id]) =>
+    livePerformanceById.has(id)
+  )
+);
 const songById = new Map(songs.map((s) => [s.id, s]));
 const artistById = new Map(artists.map((a) => [a.id, a]));
 const seriesById = new Map(series.map((s) => [s.id, s]));
@@ -70,13 +78,19 @@ const performanceByEventernoteId = new Map(
     .filter((entry): entry is [string, Performance] => entry[1] !== undefined)
 );
 
-export const usePerformances = () => sortedPerformances;
-export const usePerformanceById = () => performanceById;
-export const usePerformance = (id: string | undefined) =>
-  id !== undefined ? performanceById.get(id) : undefined;
-export const useSetlists = () => setlists;
-export const useSetlist = (performanceId: string | undefined) =>
-  performanceId !== undefined ? setlists[performanceId] : undefined;
+export const usePerformances = () =>
+  useAppSettings().inPersonOnly ? livePerformances : sortedPerformances;
+export const usePerformanceById = () =>
+  useAppSettings().inPersonOnly ? livePerformanceById : performanceById;
+export const usePerformance = (id: string | undefined) => {
+  const byId = usePerformanceById();
+  return id !== undefined ? byId.get(id) : undefined;
+};
+export const useSetlists = () => (useAppSettings().inPersonOnly ? liveSetlists : setlists);
+export const useSetlist = (performanceId: string | undefined) => {
+  const all = useSetlists();
+  return performanceId !== undefined ? all[performanceId] : undefined;
+};
 export const useSongs = () => songs;
 export const useSongById = () => songById;
 export const useCharacters = () => characters;
@@ -90,8 +104,10 @@ export const useVenueById = () => venueById;
 export const useEventernoteIdByPerformanceId = () => eventernoteIdByPerformanceId;
 export const usePerformanceByEventernoteId = () => performanceByEventernoteId;
 
-export const useEventYears = () =>
-  useMemo(() => {
-    const years = new Set(performances.map((p) => p.date.slice(0, 4)));
+export const useEventYears = () => {
+  const visible = usePerformances();
+  return useMemo(() => {
+    const years = new Set(visible.map((p) => p.date.slice(0, 4)));
     return [...years].sort((a, b) => b.localeCompare(a));
-  }, []);
+  }, [visible]);
+};

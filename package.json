@@ -27,6 +27,7 @@
     "@pandacss/dev": "^1.7.1",
     "@park-ui/panda-preset": "^0.43.1",
     "@sentry/browser": "^10.57.0",
+    "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.16",
     "file-saver": "^2.0.5",
     "i18next": "^24.2.1",

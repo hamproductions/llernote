@@ -207,10 +207,8 @@
     "unheard": "未聴",
     "progress": "{{ heard }} / {{ total }}曲 聴取済み（{{ percent }}%）",
     "results_count": "{{ count }}曲",
-    "sort": "並び順",
-    "sort_count": "回数順",
-    "sort_release": "発売日順",
-    "sort_name": "名前順",
+    "performed": "披露回数",
+    "performed_times": "披露{{ count }}回",
     "never_heard": "まだライブで聴いていません",
     "times_one": "{{ count }}回",
     "times_other": "{{ count }}回",
@@ -243,7 +241,12 @@
     "import_success": "インポートしました",
     "import_error": "無効なバックアップファイルです",
     "data_management": "データ管理",
-    "copy_history": "参加履歴をコピー"
+    "copy_history": "参加履歴をコピー",
+    "display": "表示",
+    "in_person_only": "現地イベントのみ表示",
+    "in_person_only_hint": "配信・バーチャルライブ・TV出演をすべて非表示にします",
+    "delete_all": "全データを削除",
+    "delete_all_warning": "参加記録・MyPick・設定を含むすべてのローカルデータを完全に削除します。この操作は取り消せません。"
   },
   "footer": {
     "footer_text": "LLerNote - ラブライブ！イベント参加記録",
@@ -293,7 +296,11 @@
     "sort_name": "名前順",
     "location_filter": "位置情報",
     "located": "位置情報あり",
-    "unlocated": "位置情報なし"
+    "unlocated": "位置情報なし",
+    "col_venue": "会場",
+    "col_region": "都道府県・地域",
+    "col_performances": "公演数",
+    "col_attended": "参加"
   },
   "eventernote": {
     "title": "イベンターノートインポート",

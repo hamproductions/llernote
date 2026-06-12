@@ -208,10 +208,8 @@
     "unheard": "Not yet",
     "progress": "{{ heard }} / {{ total }} witnessed ({{ percent }}%)",
     "results_count": "{{ count }} songs",
-    "sort": "Sort",
-    "sort_count": "By count",
-    "sort_release": "By release",
-    "sort_name": "By name",
+    "performed": "Performed",
+    "performed_times": "{{ count }}× performed",
     "never_heard": "You haven't witnessed this song live yet",
     "times_one": "{{ count }} time",
     "times_other": "{{ count }} times",
@@ -245,7 +243,12 @@
     "import_success": "Data imported",
     "import_error": "Invalid backup file",
     "data_management": "Data Management",
-    "copy_history": "Copy attendance history"
+    "copy_history": "Copy attendance history",
+    "display": "Display",
+    "in_person_only": "Only show in-person events",
+    "in_person_only_hint": "Hide streams, virtual lives, and TV appearances everywhere",
+    "delete_all": "Delete all data",
+    "delete_all_warning": "This permanently deletes all your local data: attendance records, MyPick, and settings. This cannot be undone."
   },
   "footer": {
     "footer_text": "LLerNote - Your LoveLive! event attendance log",
@@ -298,7 +301,11 @@
     "sort_name": "Name",
     "location_filter": "Location data",
     "located": "Located",
-    "unlocated": "Unlocated"
+    "unlocated": "Unlocated",
+    "col_venue": "Venue",
+    "col_region": "Region",
+    "col_performances": "Shows",
+    "col_attended": "Attended"
   },
   "eventernote": {
     "title": "Eventernote Import",

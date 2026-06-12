@@ -1,5 +1,6 @@
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
-import { filterEvents, foldKana, type EventFilters } from '~/utils/event-filter';
+import { filterEvents, type EventFilters } from '~/utils/event-filter';
+import { filterSongs, type SongFilters } from '~/utils/song-filter';
 import { groupByTour, type TourGroup } from '~/utils/tour';
 import { computeStats, type StatsSummary } from '~/utils/stats';
 import { tallyAllSongPerformances, tallySongs, type SongTallyEntry } from '~/utils/song-tally';
@@ -42,10 +43,8 @@ type WorkerRequest =
         performances: Performance[];
         setlists: Record<string, Setlist>;
         songs: Song[];
-        search: string;
-        seriesId: string;
-        heardFilter: '' | 'heard' | 'unheard';
-        sort: 'count' | 'release' | 'name';
+        artists: Artist[];
+        filters: SongFilters;
       };
     };
 
@@ -125,47 +124,28 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     return;
   }
 
-  const { records, performances, setlists, songs, search, seriesId, heardFilter, sort } =
-    request.payload;
+  const { records, performances, setlists, songs, artists, filters } = request.payload;
   const performanceById = new Map(performances.map((performance) => [performance.id, performance]));
+  const artistById = new Map(artists.map((artist) => [artist.id, artist]));
   const tally = tallySongs(records, performanceById, setlists);
   const tallyById = new Map(tally.map((entry) => [entry.songId, entry]));
-  const q = foldKana(search.trim());
-  const filtered = songs.filter((song) => {
-    if (q) {
-      const haystack = foldKana(
-        `${song.name} ${song.phoneticName ?? ''} ${song.englishName ?? ''}`
-      );
-      if (!haystack.includes(q)) return false;
-    }
-    if (seriesId && !song.seriesIds.map(String).includes(seriesId)) return false;
-    const heard = (tallyById.get(song.id)?.count ?? 0) > 0;
-    if (heardFilter === 'heard' && !heard) return false;
-    if (heardFilter === 'unheard' && heard) return false;
-    return true;
-  });
-  const count = (song: Song) => tallyById.get(song.id)?.count ?? 0;
-  if (sort === 'count') {
-    filtered.sort(
-      (a, b) => count(b) - count(a) || (b.releasedOn ?? '').localeCompare(a.releasedOn ?? '')
-    );
-  } else if (sort === 'release') {
-    filtered.sort((a, b) => (b.releasedOn ?? '').localeCompare(a.releasedOn ?? ''));
-  } else {
-    filtered.sort((a, b) =>
-      (a.phoneticName ?? a.name).localeCompare(b.phoneticName ?? b.name, 'ja')
-    );
-  }
-  const scopeSongs = seriesId
-    ? songs.filter((song) => song.seriesIds.map(String).includes(seriesId))
-    : songs;
-  const heardInScope = scopeSongs.filter((song) => (tallyById.get(song.id)?.count ?? 0) > 0).length;
+  const allPerformanceTally = tallyAllSongPerformances(performanceById, setlists);
+  const performedById = new Map(allPerformanceTally.map((entry) => [entry.songId, entry]));
+  const heardCount = (songId: string) => tallyById.get(songId)?.count ?? 0;
+  const performedCount = (songId: string) => performedById.get(songId)?.count ?? 0;
+  const filtered = filterSongs(songs, filters, artistById, heardCount).sort(
+    (a, b) =>
+      performedCount(b.id) - performedCount(a.id) ||
+      (b.releasedOn ?? '').localeCompare(a.releasedOn ?? '')
+  );
+  const scopeSongs = filterSongs(songs, { ...filters, heard: undefined }, artistById, heardCount);
+  const heardInScope = scopeSongs.filter((song) => heardCount(song.id) > 0).length;
   const response: WorkerResponse = {
     id: request.id,
     type: request.type,
     result: {
       tally,
-      allPerformanceTally: tallyAllSongPerformances(performanceById, setlists),
+      allPerformanceTally,
       filtered,
       heardInScope,
       scopeTotal: scopeSongs.length,

@@ -3,27 +3,24 @@ import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
-import { Input } from '~/components/ui/input';
-import { Button } from '~/components/ui/button';
 import { Pagination } from '~/components/ui/pagination';
 import { IconButton } from '~/components/ui/icon-button';
 import { Skeleton } from '~/components/ui/skeleton';
-import { NativeSelect } from '~/components/events/NativeSelect';
 import { SongCard } from '~/components/songs/SongCard';
 import { SongTable } from '~/components/songs/SongTable';
+import { SongFiltersBar } from '~/components/songs/SongFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
-import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
+import { useArtists, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
+import { EMPTY_SONG_FILTERS, type SongFilters } from '~/utils/song-filter';
 import type { Performance, Song } from '~/types';
 
 const PAGE_SIZE = 48;
 
-type HeardFilter = '' | 'heard' | 'unheard';
-type SortKey = 'count' | 'release' | 'name';
 const SongDetailDialog = lazy(() =>
   import('~/components/songs/SongDetailDialog').then((module) => ({
     default: module.SongDetailDialog
@@ -39,13 +36,10 @@ export default function Page() {
   const { t } = useTranslation();
   const { records } = useAttendance();
   const songs = useSongs();
-  const series = useSeries();
+  const artists = useArtists();
   const performances = usePerformances();
   const setlists = useSetlists();
-  const [search, setSearch] = useState('');
-  const [seriesId, setSeriesId] = useState('');
-  const [heardFilter, setHeardFilter] = useState<HeardFilter>('');
-  const [sort, setSort] = useState<SortKey>('count');
+  const [filters, setFilters] = useState<SongFilters>(EMPTY_SONG_FILTERS);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Song>();
   const [selectedEvent, setSelectedEvent] = useState<Performance>();
@@ -55,8 +49,8 @@ export default function Page() {
 
   const derived = useDerivedDataWorker(
     'songs',
-    { records, performances, setlists, songs, search, seriesId, heardFilter, sort },
-    [records, performances, setlists, songs, search, seriesId, heardFilter, sort]
+    { records, performances, setlists, songs, artists, filters },
+    [records, performances, setlists, songs, artists, filters]
   );
   const tally = useMemo(() => derived.result?.tally ?? [], [derived.result]);
   const tallyById = useMemo(() => new Map(tally.map((e) => [e.songId, e])), [tally]);
@@ -73,6 +67,8 @@ export default function Page() {
   const heardInScope = derived.result?.heardInScope ?? 0;
   const percent = derived.result?.percent ?? 0;
 
+  const heardCount = (id: string) => tallyById.get(id)?.count ?? 0;
+  const performedCount = (id: string) => allPerformanceTallyById.get(id)?.count ?? 0;
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const selectedHeardAt = selected ? (tallyById.get(selected.id)?.performances ?? []) : [];
   const selectedPerformedAt = selected
@@ -120,72 +116,13 @@ export default function Page() {
             bgColor="accent.default"
           />
         </Box>
-        <Box
-          borderColor="border.subtle"
-          borderRadius="l2"
-          borderWidth="1px"
-          p="3"
-          bgColor="bg.subtle"
-        >
-          <HStack gap="2" flexWrap="wrap">
-            <Box flex="1" minW="48">
-              <Input
-                size="sm"
-                value={search}
-                placeholder={t('songs.search_placeholder')}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </Box>
-            <NativeSelect
-              aria-label={t('events.series')}
-              value={seriesId}
-              placeholder={`${t('events.series')}: ${t('common.all')}`}
-              options={series.map((s) => ({ value: s.id, label: s.name }))}
-              onChange={(v) => {
-                setSeriesId(v);
-                setPage(1);
-              }}
-            />
-            <NativeSelect
-              aria-label={t('songs.heard_filter')}
-              value={heardFilter}
-              placeholder={`${t('songs.heard_filter')}: ${t('common.all')}`}
-              options={[
-                { value: 'heard', label: t('songs.heard') },
-                { value: 'unheard', label: t('songs.unheard') }
-              ]}
-              onChange={(v) => {
-                setHeardFilter(v as HeardFilter);
-                setPage(1);
-              }}
-            />
-            <NativeSelect
-              aria-label={t('songs.sort')}
-              value={sort}
-              options={[
-                { value: 'count', label: t('songs.sort_count') },
-                { value: 'release', label: t('songs.sort_release') },
-                { value: 'name', label: t('songs.sort_name') }
-              ]}
-              onChange={(v) => setSort(v as SortKey)}
-            />
-            <Button
-              size="xs"
-              variant="ghost"
-              onClick={() => {
-                setSearch('');
-                setSeriesId('');
-                setHeardFilter('');
-                setPage(1);
-              }}
-            >
-              {t('common.clear')}
-            </Button>
-          </HStack>
-        </Box>
+        <SongFiltersBar
+          filters={filters}
+          onChange={(next) => {
+            setFilters(next);
+            setPage(1);
+          }}
+        />
         <Text color="fg.muted" fontSize="sm">
           {t('songs.results_count', { count: filtered.length })}
         </Text>
@@ -207,9 +144,12 @@ export default function Page() {
           <Text color="fg.muted">{t('songs.no_results')}</Text>
         ) : effectiveView === 'table' ? (
           <SongTable
-            songs={pageItems}
-            heardCount={(id) => tallyById.get(id)?.count ?? 0}
+            songs={filtered}
+            pageSize={PAGE_SIZE}
+            heardCount={heardCount}
+            performedCount={performedCount}
             onSelect={setSelected}
+            page={page}
           />
         ) : (
           <Grid
@@ -225,7 +165,8 @@ export default function Page() {
               <SongCard
                 key={song.id}
                 song={song}
-                heardCount={tallyById.get(song.id)?.count ?? 0}
+                heardCount={heardCount(song.id)}
+                performedCount={performedCount(song.id)}
                 onClick={() => setSelected(song)}
               />
             ))}

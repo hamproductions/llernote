@@ -12,7 +12,7 @@ const BACKUP_VERSION = 1;
 
 type Listener = () => void;
 
-class SyncedStore<T> {
+export class SyncedStore<T> {
   private storage: LocalStorage<T>;
   private listeners = new Set<Listener>();
   private cache: T | null = null;

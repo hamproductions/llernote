@@ -13,10 +13,12 @@ import type { Song } from '~/types';
 export function SongCard({
   song,
   heardCount,
+  performedCount,
   onClick
 }: {
   song: Song;
   heardCount: number;
+  performedCount: number;
   onClick: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -78,6 +80,11 @@ export function SongCard({
           {artistNames && (
             <Text flex="1" minW="0" color="fg.muted" fontSize="2xs" lineClamp={1}>
               {artistNames}
+            </Text>
+          )}
+          {performedCount > 0 && (
+            <Text flexShrink={0} color="fg.subtle" fontSize="2xs">
+              {t('songs.performed_times', { count: performedCount })}
             </Text>
           )}
         </HStack>
