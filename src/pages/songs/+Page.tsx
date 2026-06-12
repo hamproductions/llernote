@@ -1,11 +1,13 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
+import { FaArrowDownLong, FaArrowUpLong, FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
+import type { SortingState } from '@tanstack/react-table';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Pagination } from '~/components/ui/pagination';
 import { IconButton } from '~/components/ui/icon-button';
 import { Skeleton } from '~/components/ui/skeleton';
+import { NativeSelect } from '~/components/events/NativeSelect';
 import { SongCard } from '~/components/songs/SongCard';
 import { SongTable } from '~/components/songs/SongTable';
 import { SongFiltersBar } from '~/components/songs/SongFiltersBar';
@@ -46,6 +48,8 @@ export default function Page() {
   const columns = useColumnCount();
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-songs-view', 'cards');
   const effectiveView = columns === 1 ? 'cards' : view;
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'performed', desc: true }]);
+  const sort = sorting[0] ?? { id: 'performed', desc: true };
 
   const derived = useDerivedDataWorker(
     'songs',
@@ -69,7 +73,26 @@ export default function Page() {
 
   const heardCount = (id: string) => tallyById.get(id)?.count ?? 0;
   const performedCount = (id: string) => allPerformanceTallyById.get(id)?.count ?? 0;
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const sorted = useMemo(() => {
+    const dir = sort.desc ? -1 : 1;
+    return [...filtered].sort((a, b) => {
+      if (sort.id === 'performed') {
+        return (
+          ((allPerformanceTallyById.get(a.id)?.count ?? 0) -
+            (allPerformanceTallyById.get(b.id)?.count ?? 0)) *
+          dir
+        );
+      }
+      if (sort.id === 'heard') {
+        return ((tallyById.get(a.id)?.count ?? 0) - (tallyById.get(b.id)?.count ?? 0)) * dir;
+      }
+      if (sort.id === 'release') {
+        return (a.releasedOn ?? '').localeCompare(b.releasedOn ?? '') * dir;
+      }
+      return (a.phoneticName ?? a.name).localeCompare(b.phoneticName ?? b.name, 'ja') * dir;
+    });
+  }, [filtered, sort.id, sort.desc, tallyById, allPerformanceTallyById]);
+  const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const selectedHeardAt = selected ? (tallyById.get(selected.id)?.performances ?? []) : [];
   const selectedPerformedAt = selected
     ? (allPerformanceTallyById.get(selected.id)?.performances ?? [])
@@ -123,9 +146,40 @@ export default function Page() {
             setPage(1);
           }}
         />
-        <Text color="fg.muted" fontSize="sm">
-          {t('songs.results_count', { count: filtered.length })}
-        </Text>
+        <HStack gap="2" justifyContent="space-between" alignItems="center" flexWrap="wrap">
+          <Text color="fg.muted" fontSize="sm">
+            {t('songs.results_count', { count: filtered.length })}
+          </Text>
+          {effectiveView === 'cards' && (
+            <HStack gap="1" alignItems="center">
+              <NativeSelect
+                aria-label={t('songs.sort_by')}
+                value={sort.id}
+                options={[
+                  { value: 'performed', label: t('songs.performed') },
+                  { value: 'heard', label: t('songs.heard') },
+                  { value: 'release', label: t('songs.release') },
+                  { value: 'name', label: t('songs.title') }
+                ]}
+                onChange={(id) => {
+                  setSorting([{ id, desc: id === 'performed' || id === 'heard' }]);
+                  setPage(1);
+                }}
+              />
+              <IconButton
+                aria-label={t('songs.sort_direction')}
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSorting([{ id: sort.id, desc: !sort.desc }]);
+                  setPage(1);
+                }}
+              >
+                {sort.desc ? <FaArrowDownLong /> : <FaArrowUpLong />}
+              </IconButton>
+            </HStack>
+          )}
+        </HStack>
         {derived.pending ? (
           <Grid
             gap="2"
@@ -149,6 +203,8 @@ export default function Page() {
             heardCount={heardCount}
             performedCount={performedCount}
             onSelect={setSelected}
+            sorting={sorting}
+            onSortingChange={setSorting}
             page={page}
           />
         ) : (

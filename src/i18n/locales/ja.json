@@ -222,7 +222,9 @@
     "first_seen": "初回",
     "total_witnessed": "{{ unique }}曲・のべ{{ total }}回",
     "no_results": "楽曲が見つかりません",
-    "release": "リリース"
+    "release": "リリース",
+    "sort_by": "並び替え",
+    "sort_direction": "並び順"
   },
   "share": {
     "share": "シェア",

@@ -35,7 +35,9 @@ export function SongTable({
   pageSize,
   heardCount,
   performedCount,
-  onSelect
+  onSelect,
+  sorting: controlledSorting,
+  onSortingChange
 }: {
   songs: Song[];
   page: number;
@@ -43,10 +45,16 @@ export function SongTable({
   heardCount: (songId: string) => number;
   performedCount: (songId: string) => number;
   onSelect: (song: Song) => void;
+  sorting?: SortingState;
+  onSortingChange?: (updater: SortingState | ((old: SortingState) => SortingState)) => void;
 }) {
   const { t, i18n } = useTranslation();
   const artistById = useArtistById();
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'performed', desc: true }]);
+  const [internalSorting, setInternalSorting] = useState<SortingState>([
+    { id: 'performed', desc: true }
+  ]);
+  const sorting = controlledSorting ?? internalSorting;
+  const setSorting = onSortingChange ?? setInternalSorting;
 
   const artistNames = (song: Song) =>
     [
