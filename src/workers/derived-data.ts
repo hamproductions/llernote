@@ -69,13 +69,14 @@ const statsPerformanceFilter = (
   filters: { year: string; seriesId: string; category: string; multiSeries: boolean }
 ) => {
   if (filters.year && !performance.date.startsWith(filters.year)) return false;
-  if (
-    filters.seriesId &&
-    (performance.seriesIds.length > 1 || !performance.seriesIds.includes(filters.seriesId))
-  ) {
-    return false;
+  if (filters.multiSeries || filters.seriesId) {
+    const matchesMulti = filters.multiSeries && performance.seriesIds.length > 1;
+    const matchesSingle =
+      !!filters.seriesId &&
+      performance.seriesIds.length === 1 &&
+      performance.seriesIds[0] === filters.seriesId;
+    if (!matchesMulti && !matchesSingle) return false;
   }
-  if (filters.multiSeries && performance.seriesIds.length < 2) return false;
   if (filters.category && performance.category !== (filters.category as EventCategory))
     return false;
   return true;

@@ -56,17 +56,17 @@ describe('filterSongs', () => {
     expect(result.map((s) => s.id)).toEqual(['4']);
   });
 
-  it('combines multi-series toggle with series chips as involvement', () => {
-    const involving = (seriesIds: string[]) =>
+  it('unions multi-series toggle with single-series chips', () => {
+    const union = (seriesIds: string[]) =>
       filterSongs(
         songs,
         { ...EMPTY_SONG_FILTERS, multiSeries: true, seriesIds },
         artistById,
         heard({})
       ).map((s) => s.id);
-    expect(involving(['1'])).toEqual(['4']);
-    expect(involving(['2'])).toEqual(['4']);
-    expect(involving(['3'])).toEqual([]);
+    expect(union(['1'])).toEqual(['4', '5']);
+    expect(union(['2'])).toEqual(['1', '2', '3', '4']);
+    expect(union([])).toEqual(['4']);
   });
 
   it('filters by category', () => {

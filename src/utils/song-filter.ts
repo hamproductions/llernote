@@ -63,20 +63,13 @@ export const filterSongs = (
       );
       if (!haystack.includes(q)) return false;
     }
-    if (filters.multiSeries) {
-      if (song.seriesIds.length < 2) return false;
-      if (
+    if (filters.multiSeries || filters.seriesIds.length > 0) {
+      const matchesMulti = filters.multiSeries && song.seriesIds.length > 1;
+      const matchesSingle =
         filters.seriesIds.length > 0 &&
-        !song.seriesIds.some((id) => filters.seriesIds.includes(String(id)))
-      ) {
-        return false;
-      }
-    } else if (
-      filters.seriesIds.length > 0 &&
-      (song.seriesIds.length > 1 ||
-        !song.seriesIds.some((id) => filters.seriesIds.includes(String(id))))
-    ) {
-      return false;
+        song.seriesIds.length === 1 &&
+        filters.seriesIds.includes(String(song.seriesIds[0]));
+      if (!matchesMulti && !matchesSingle) return false;
     }
     if (
       filters.categories.length > 0 &&

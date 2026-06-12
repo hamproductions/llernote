@@ -53,19 +53,13 @@ export const filterEvents = (
     ) {
       return false;
     }
-    if (filters.multiSeries) {
-      if (p.seriesIds.length < 2) return false;
-      if (
+    if (filters.multiSeries || filters.seriesIds.length > 0) {
+      const matchesMulti = filters.multiSeries && p.seriesIds.length > 1;
+      const matchesSingle =
         filters.seriesIds.length > 0 &&
-        !p.seriesIds.some((id) => filters.seriesIds.includes(id))
-      ) {
-        return false;
-      }
-    } else if (
-      filters.seriesIds.length > 0 &&
-      (p.seriesIds.length > 1 || !p.seriesIds.some((id) => filters.seriesIds.includes(id)))
-    ) {
-      return false;
+        p.seriesIds.length === 1 &&
+        filters.seriesIds.includes(p.seriesIds[0]);
+      if (!matchesMulti && !matchesSingle) return false;
     }
     const year = p.date.slice(0, 4);
     if (filters.yearFrom && year < filters.yearFrom) return false;
