@@ -16,6 +16,7 @@ import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
 import { Menu } from '~/components/ui/menu';
 import {
+  getLiveThumb,
   useArtistById,
   useCharacters,
   usePerformanceById,
@@ -257,6 +258,26 @@ function CellContent({
   }
   const performance = performanceById.get(pickedId);
   if (!performance) return null;
+  const thumb = getLiveThumb(performance);
+  if (thumb) {
+    return (
+      <>
+        <CellImage src={thumb.image} />
+        <Box insetX="0" position="absolute" bottom="0" p="2" bgColor="black.a8">
+          <Text
+            lang="ja"
+            color="white"
+            fontSize={exporting ? 'xs' : '2xs'}
+            fontWeight="bold"
+            textAlign="center"
+            lineClamp={2}
+          >
+            {performance.tourName}
+          </Text>
+        </Box>
+      </>
+    );
+  }
   return (
     <Stack
       style={exporting ? { backgroundColor: EXPORT_THEME.tile, color: '#232c4a' } : undefined}

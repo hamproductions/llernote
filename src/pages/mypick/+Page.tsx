@@ -25,6 +25,7 @@ import { Input } from '~/components/ui/input';
 import { Tabs } from '~/components/ui/tabs';
 import { useMyPick } from '~/hooks/useAttendance';
 import {
+  getLiveThumb,
   useArtistById,
   useArtists,
   useCharacters,
@@ -232,7 +233,8 @@ export default function Page() {
         id: p.id,
         label: p.tourName,
         sub: `${p.date} ${p.venue}`,
-        searchText: `${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`
+        searchText: `${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`,
+        image: getLiveThumb(p)?.image
       }));
   };
 

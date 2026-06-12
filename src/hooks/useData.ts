@@ -108,11 +108,13 @@ export const useArtistById = () => artistById;
 export const useSeries = () => series;
 export const useSeriesById = () => seriesById;
 export const useUnits = () => units;
-export const useLiveThumb = (performance: Performance | undefined, tourOnly = false) =>
+export const getLiveThumb = (performance: Performance | undefined, tourOnly = false) =>
   performance
     ? ((tourOnly ? undefined : liveThumbByPerformanceId.get(performance.id)) ??
       liveThumbByTourName.get(performance.tourName))
     : undefined;
+export const useLiveThumb = (performance: Performance | undefined, tourOnly = false) =>
+  getLiveThumb(performance, tourOnly);
 export const useVenues = () => venues;
 export const useVenueById = () => venueById;
 export const useEventernoteIdByPerformanceId = () => eventernoteIdByPerformanceId;
