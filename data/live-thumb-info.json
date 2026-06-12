@@ -1,0 +1,368 @@
+{
+  "tour:ラブライブ！サンシャイン!! Aqours First LoveLive! ～Step! ZERO to ONE!!～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/7/7f/Aqours_First_Love_Live%21_~Step%21_ZERO_to_ONE~_BD_BOX_Cover.png/revision/latest/scale-to-width-down/400?cb=20170924213302",
+    "source": "Aqours First Love Live! ~Step! ZERO to ONE~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours 2nd LoveLive! HAPPY PARTY TRAIN TOUR": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/7/77/Aqours_2nd_Love_Live%21_HAPPY_PARTY_TRAIN_TOUR_Blu-Ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20210320061610",
+    "source": "Aqours 2nd Love Live! HAPPY PARTY TRAIN TOUR",
+    "confidence": 0.95
+  },
+  "tour:Saint Snow PRESENTS LOVELIVE! SUNSHINE!! HAKODATE UNIT CARNIVAL": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/a/ae/Saint_Snow_Presents_Love_Live%21_Sunshine%21%21_Hakodate_Unit_Carnival_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20210408125904",
+    "source": "HAKODATE UNIT CARNIVAL",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours 3rd LoveLive! Tour ～WONDERFUL STORIES～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/0/0f/Aqours_3rd_LoveLive%21_Tour_WONDERFUL_STORIES_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20210408130157",
+    "source": "Aqours 3rd LoveLive! Tour ～WONDERFUL STORIES～",
+    "confidence": 0.95
+  },
+  "tour:LOVELIVE! SUNSHINE!! Aqours World Love Live! in LA ~Beyond the Pacific~": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/5/52/Aqours_World_Love_Live_in_LA_Beyond_the_Pacific_Logo.jpeg/revision/latest/scale-to-width-down/400?cb=20210918185546",
+    "source": "Aqours World Love Live! in LA ~Beyond the Pacific~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours 4th LoveLive! ～Sailing to the Sunshine～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/e/e5/Aqours_4th_Love_Live%21_Sailing_to_the_Sunshine_Blu-Ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/322?cb=20210408130059",
+    "source": "Aqours 4th LoveLive! ～Sailing to the Sunshine～",
+    "confidence": 0.95
+  },
+  "tour:LOVE LIVE! SUNSHINE!! Aqours World LoveLive! ASIA TOUR 2019": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/0/0d/Aqours_World_LoveLive%21_ASIA_TOUR_2019.png/revision/latest/scale-to-width-down/268?cb=20230423102836",
+    "source": "Aqours World LoveLive! ASIA TOUR 2019",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours 5th LoveLive! ～Next SPARKLING!!～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/46/Aqours_5th_LoveLive%21_Next_SPARKLING%21%21_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20210408130256",
+    "source": "Aqours 5th LoveLive! ～Next SPARKLING!!～",
+    "confidence": 0.95
+  },
+  "tour:LOVE LIVE! SUNSHINE!! Aqours World LoveLive! in LA ～BRAND NEW WAVE～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/f/f7/Aqours_World_LoveLive%21_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20220216084018",
+    "source": "Aqours World LoveLive! in LA ～BRAND NEW WAVE～",
+    "confidence": 0.88
+  },
+  "tour:LOVELIVE! SUNSHINE!! UNIT LIVE ADVENTURE 2020": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/8/86/Love_Live%21_Sunshine%21%21_Unit_Live_Adventure_2020.jpg/revision/latest/scale-to-width-down/283?cb=20191218132350",
+    "source": "Love Live! Sunshine!! Unit Live Adventure 2020",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours ONLINE LoveLive! ～LOST WORLD～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/3/3a/Aqours_ONLINE_Love_Live%21_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20210625141345",
+    "source": "Aqours ONLINE LoveLive!",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！サンシャイン!! Saint Snow 1st GIG ～Welcome to Dazzling White Town～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/b/bd/Saint_Snow_1st_GIG_~Welcome_to_Dazzling_White_Town~_Blu-Ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20210320061158",
+    "source": "Saint Snow 1st GIG ~Welcome to Dazzling White Town~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 First Live “with You”": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/d/da/Nijigaku_First_Live_with_You_poster.jpg/revision/latest/scale-to-width-down/283?cb=20220622105802",
+    "source": "Nijigasaki High School Idol Club First Live \"with You\"",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！ μ's First LoveLive!": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/8/8f/M%27s_First_Love_Live%21.jpg/revision/latest/scale-to-width-down/314?cb=20130531223106",
+    "source": "Muse's First Love Live!",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！ μ's New Year LoveLive! 2013": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/46/New_Year_Love_Live_2013.jpg/revision/latest/scale-to-width-down/283?cb=20150607050314",
+    "source": "Muse's New Year LoveLive! 2013",
+    "confidence": 0.95
+  },
+  "tour:μ's 3rd Anniversary LoveLive!": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/8/82/%CE%9Cuse%27s_3rd_Anniversary_Love_Live%21.jpg/revision/latest/scale-to-width-down/316?cb=20150327192522",
+    "source": "Muse's 3rd Anniversary Love Live!",
+    "confidence": 0.95
+  },
+  "tour:μ's →NEXT LoveLive! 2014 ～ENDLESS PARADE～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/f/ff/%CE%9C%27s_%E2%86%92NEXT_LoveLive%21_2014.jpg/revision/latest/scale-to-width-down/313?cb=20150125081401",
+    "source": "Muse's NEXT LoveLive! 2014 ENDLESS PARADE",
+    "confidence": 0.95
+  },
+  "tour:μ's Go→Go! LoveLive! 2015 ～Dream Sensation!～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/47/%CE%9C%27s_Go%E2%86%92Go%21_LoveLive%21_2015_~Dream_Sensation%21~_Memorial_BOX.jpg/revision/latest?cb=20160827060209",
+    "source": "Muse's Go Go! LoveLive! 2015 Dream Sensation!",
+    "confidence": 0.95
+  },
+  "tour:～Anisong World Tour～ Lantis Festival 2015": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/a/a4/ANISONG_WORLD_TOUR_2015.jpg/revision/latest/scale-to-width-down/273?cb=20230426215925",
+    "source": "ANISONG World Tour Lantis Festival 2015",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 3rd Live! School Idol Festival ～夢の始まり～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/4b/%E2%80%8DNijigaku_3rd_live_Yume_no_Hajimari_poster.jpg/revision/latest/scale-to-width-down/281?cb=20220625112505",
+    "source": "Nijigasaki High School Idol Club 3rd Live! School Idol Festival ~Yume no Hajimari~",
+    "confidence": 0.88
+  },
+  "tour:μ's Fan Meeting Tour 2015 ～あなたの街でラブライブ！～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/3/35/%CE%9C%27s_Fan_Meeting_Tour_2015_Love_Live%21_in_your_town.png/revision/latest/scale-to-width-down/400?cb=20220611110920",
+    "source": "Muse's Fan Meeting Tour 2015 ~ Love Live! in your town ~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！μ's Final LoveLive!〜μ'sic Forever♪♪♪♪♪♪♪♪♪〜": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/f/f1/%CE%9C%27s_Final_LoveLive%21_~%C2%B5%27sic_Forever%E2%99%AA%E2%99%AA%E2%99%AA%E2%99%AA%E2%99%AA%E2%99%AA%E2%99%AA%E2%99%AA%E2%99%AA~_Memorial_BOX.jpg/revision/latest/scale-to-width-down/315?cb=20160926173510",
+    "source": "Muse's Final LoveLive! Mu'sic Forever",
+    "confidence": 0.967
+  },
+  "tour:ラブライブ！サンシャイン!! AZALEA 1st LoveLive! ～In The Dark /*秘密の物語*/～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/5/52/AZALEA_1st_LoveLive_Blu-Ray_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20220622123244",
+    "source": "AZALEA 1st LoveLive! ~In The Dark /*Himitsu no Story*/~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！サンシャイン!! Guilty Kiss 2nd LoveLive! ～Return To Love ♡ Kiss Kiss Kiss～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/2/21/Love_Live%21_Sunshine%21%21_Guilty_Kiss_2nd_LoveLive%21_%EF%BD%9EReturn_To_Love_%E2%99%A1_Kiss_Kiss_Kiss%EF%BD%9E.jpg/revision/latest/scale-to-width-down/283?cb=20210716091254",
+    "source": "Guilty Kiss 2nd LoveLive! ~Return To Love ♡ Kiss Kiss Kiss~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！サンシャイン!! AZALEA 2nd LoveLive! ～Amazing Travel DNA Reboot～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/3/34/AZALEA_2nd_LoveLive_Amazing_Travel_DNA_Reboot.jpg/revision/latest/scale-to-width-down/283?cb=20210828125310",
+    "source": "AZALEA 2nd LoveLive! ~Amazing Travel DNA Reboot~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours EXTRA LoveLive! ～DREAMY CONCERT 2021～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/3/32/DREAMY_CONCERT_Memorial_BOX_Cover.jpeg/revision/latest/scale-to-width-down/321?cb=20220719124919",
+    "source": "Aqours EXTRA LoveLive! ~DREAMY CONCERT 2021~",
+    "confidence": 0.95
+  },
+  "tour:LoveLive! Series Presents COUNTDOWN LoveLive! 2021→2022 ～LIVE with a smile!～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/c/c3/Countdown_Love_Live_Memorial_BOX.jpg/revision/latest/scale-to-width-down/321?cb=20231012120857",
+    "source": "LoveLive! Series Presents COUNTDOWN LoveLive! 2021→2022 〜LIVE with a smile!〜",
+    "confidence": 0.95
+  },
+  "tour:Aqours 6th LoveLive! 〜KU-RU-KU-RU Rock 'n' Roll TOUR〜": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/a/ab/Aqours_6th_Live_KURUKURU_Rock_n_Roll_TOUR_OCEAN_STAGE_visual.jpg/revision/latest/scale-to-width-down/290?cb=20220117164420",
+    "source": "Aqours 6th LoveLive! ~KU-RU-KU-RU Rock 'n' Roll TOUR~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！スーパースター!! Liella! First LoveLive! Tour ～Starlines～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/e/e0/Liella_First_LL_Tour_Starlines_Memorial_BOX_Cover.jpeg/revision/latest/scale-to-width-down/400?cb=20220528062523",
+    "source": "Liella! First LoveLive! Tour ~Starlines~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 4th Live! 〜Love the Life We Live〜": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/f/f7/Nijigasaki_4th_Live_Blu-Ray_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20220604123736",
+    "source": "Nijigasaki High School Idol Club 4th Live! ~Love the Life We Live~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 2nd LoveLive! ～What a Wonderful Dream!!～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/f/f1/Liella%21_2nd_LoveLive%21_~What_a_Wonderful_Dream%21%21~_Memorial_BOX_Cover.jpg/revision/latest/scale-to-width-down/400?cb=20240729024252",
+    "source": "Liella! 2nd LoveLive! ~What a Wonderful Dream!!~",
+    "confidence": 0.95
+  },
+  "tour:MTV Unplugged Presents: LoveLive! Superstar!! Liella!": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/a/a4/MTV_Unplugged_Presents_LoveLive%21_Superstar%21%21_Liella%21_Official_Visual.jpg/revision/latest/scale-to-width-down/345?cb=20240430013027",
+    "source": "MTV Unplugged Presents: LoveLive! Superstar!! Liella!",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours EXTRA LoveLive! 2023 ～It’s a 無限大☆WORLD～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/9/9b/Aqours_EXTRA_LoveLive%21_2023_~It%27s_a_MUGENDAI_WORLD~.jpg/revision/latest/scale-to-width-down/283?cb=20230127103734",
+    "source": "Aqours EXTRA LoveLive! 2023 ~It's a Mugendai☆WORLD~",
+    "confidence": 0.857
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 3rd LoveLive! Tour ～WE WILL!!～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/3/30/Liella%21_3rd_LoveLive%21_Tour_~WE_WILL%21%21~_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20230924110813",
+    "source": "Liella! 3rd LoveLive! Tour ~WE WILL!!~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 にじたび！TOKIMEKI FAN MEETING TOUR": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/2/25/Nijigasaki_High_School_Idol_Club_Nijitabi_TOKIMEKI_FAN_MEETING_TOUR.jpg/revision/latest/scale-to-width-down/283?cb=20230422131606",
+    "source": "Nijigasaki High School Idol Club Nijitabi! TOKIMEKI FAN MEETING TOUR",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ OPENING LIVE EVENT～Bloom the Dream～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/9/93/Hasunosora_Girls%27_High_School_Idol_Club_OPENING_LIVE_EVENT_~Bloom_the_Dream~_Poster_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20230310092947",
+    "source": "Hasunosora Girls' High School Idol Club OPENING LIVE EVENT ~Bloom the Dream~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 4th LoveLive! Tour ～brand new Sparkle～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/2/2d/Liella%21_4th_LoveLive%21_Tour_~brand_new_Sparkle~_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20240716122024",
+    "source": "Liella! 4th LoveLive! Tour ~brand new Sparkle~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 6th Live! I love You ⇆ You love Me": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/d/d5/Nijigasaki_High_School_Idol_Club_6th_Live%21_I_love_You_%E2%87%86_You_love_Me_Blu-Ray_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20240424063501",
+    "source": "Nijigasaki High School Idol Club 6th Live! I love You ⇆ You love Me",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ 1st Live Tour ～RUN！CAN！FUN！～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/e/e9/Hasunosora_Girls%27_High_School_Idol_Club_1st_Live_Tour_~RUN%21_CAN%21_FUN%21~_Key_Visual.jpg/revision/latest/scale-to-width-down/284?cb=20230715043629",
+    "source": "Hasunosora Girls' High School Idol Club 1st Live Tour ~RUN! CAN! FUN!~",
+    "confidence": 0.88
+  },
+  "tour:幻日のヨハネ -The Story of the Sound of Heart-": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/6/63/Yohane_the_Parhelion_The_Story_of_the_Sound_of_Heart_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20231118073432",
+    "source": "Yohane the Parhelion: The Story of the Sound of Heart",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 5th LoveLive! 〜Twinkle Triangle〜": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/4c/Liella%21_5th_LoveLive%21_~Twinkle_Triangle~_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20240729023027",
+    "source": "Liella! 5th LoveLive! ~Twinkle Triangle~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ 2nd Live Tour 〜Blooming with ○○○〜": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/4f/Hasunosora_Girls%27_High_School_Idol_Club_2nd_Live_Tour_~Blooming_with_%E2%97%8B%E2%97%8B%E2%97%8B~_Poster_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20231228114905",
+    "source": "Hasunosora Girls' High School Idol Club 2nd Live Tour ~Blooming with ○○○~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 7th Live! NEW TOKIMEKI LAND": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/f/ff/Love_Live%21_Nijigasaki_High_School_Idol_Club_7th_Live%21_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20250226132630",
+    "source": "Nijigasaki High School Idol Club 7th Live! NEW TOKIMEKI LAND",
+    "confidence": 0.88
+  },
+  "tour:Love Live! TV Animation 10th Anniversary Overseas Events": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/a/a6/Love_Live%21_Anime_10th_Anniversary_Overseas_Events.png/revision/latest/scale-to-width-down/283?cb=20240718014023",
+    "source": "Love Live! Anime 10th Anniversary Overseas Event",
+    "confidence": 0.851
+  },
+  "tour:LoveLive! Series Asia Tour 2024 ～みんなで叶える物語～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/1/17/Love_Live%21_Series_Asia_Tour_2024_~Minna_de_Kanaeru_Monogatari~_visual.jpg/revision/latest/scale-to-width-down/283?cb=20240705031350",
+    "source": "Love Live! Series Asia Tour 2024 ~Minna de Kanaeru Monogatari~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 6th LoveLive! Tour ～Let's be ONE～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/c/ca/Liella%21_6th_LoveLive%21_Tour_~Let%27s_be_ONE~_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20251202082946",
+    "source": "Liella! 6th LoveLive! Tour ~Let's be ONE~",
+    "confidence": 0.95
+  },
+  "tour:AiScReam presents TOPPING LIVE とけちゃう前に会いに来て♡♡♡": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/d/dc/AiScReam_presents_TOPPING_LIVE_~Tokechau_Mae_ni_Ai_ni_Kite%E2%99%A1%E2%99%A1%E2%99%A1~_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20250328184715",
+    "source": "AiScReam presents TOPPING LIVE ~Tokechau Mae ni Ai ni Kite♡♡♡~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！サンシャイン!! Aqours Finale LoveLive! ～永久stage～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/f/f5/Aqours_Finale_LoveLive%21_~Eikyuu_stage~_Blu-ray_Memorial_BOX.jpg/revision/latest/scale-to-width-down/400?cb=20260119111000",
+    "source": "Aqours Finale LoveLive! ~Eikyuu stage~",
+    "confidence": 0.852
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ 4th Live Dream ～Bloom, The Dream Believers～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/e/ef/Love_Live%21_Days_Volume_62_May_2025_Hasunosora_4th_Live.jpg/revision/latest/scale-to-width-down/283?cb=20250328084437",
+    "source": "Hasunosora Girls' High School Idol Club 4th Live Dream ~Bloom, The Dream Believers~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！スーパースター!! Liella! First Generation LoveLive! ～Wonderful Starlines～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/1/1d/Liella%21_First_Generation_LoveLive%21_~Wonderful_Starlines~_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20250425110801",
+    "source": "Liella! First Generation LoveLive! ~Wonderful Starlines~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 FLOWER MUSIC LIVE『Boooooom Boooooom Bee!!』": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/e/eb/Nijigasaki_High_School_Idol_Club_FLOWER_MUSIC_LIVE_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20250824051438",
+    "source": "Nijigasaki High School Idol Club FLOWER MUSIC LIVE \"Boooooom Boooooom Bee!!\"",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ 5th Live Tour ～4Pair Power Spread!!!!～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/9/96/Hasunosora_Girls%27_High_School_Idol_Club_5th_Live_Tour_~4Pair_Power_Spread%21%21%21%21~_Key_Visual.jpg/revision/latest/scale-to-width-down/284?cb=20250814142226",
+    "source": "Hasunosora Girls' High School Idol Club 5th Live Tour ~4Pair Power Spread!!!!~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！スーパースター!! Liella! Special LoveLive! ～Connect the Stars～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/9/92/Liella%21_Special_LoveLive%21_~Connect_the_Stars~_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20250620130945",
+    "source": "Liella! Special LoveLive! ~Connect the Stars~",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 7th LoveLive! ～Fly! MUSIC WORLD♪～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/43/Liella%21_7th_LoveLive%21_~Fly%21_MUSIC_WORLD%E2%99%AA~_Key_Visual.jpg/revision/latest/scale-to-width-down/282?cb=20251024010011",
+    "source": "Liella! 7th LoveLive! ~Fly! MUSIC WORLD♪~",
+    "confidence": 0.95
+  },
+  "tour:いきづらい部！ 1st LIVE ～ What is my L ? ～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/4/48/Ikizurai-Bu%21_1st_LIVE_~What_is_my_L%3F~_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20251002121136",
+    "source": "Ikizurai-Bu! 1st LIVE ~What is my L?~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ 103-105th Fes×ReC：LIVE ～Road to Bloom～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/7/74/Hasunosora_103-105th_Fes%C3%97ReC_LIVE_~Road_to_Bloom_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20251031134403",
+    "source": "Hasunosora Girls' High School Idol Club 103-105th Fes×ReC: LIVE ~Road to Bloom~",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！サンシャイン!! Guilty Kiss × Saint Snow TWO-MAN LIVE \"VS\"": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/5/54/Guilty_Kiss_%C3%97_Saint_Snow_TWO-MAN_LIVE_%22VS%22_Key_Visual.jpg/revision/latest/scale-to-width-down/282?cb=20260303110616",
+    "source": "Guilty Kiss × Saint Snow TWO-MAN LIVE \"VS\"",
+    "confidence": 0.95
+  },
+  "tour:ラブライブ！虹ヶ咲学園スクールアイドル同好会 8th Live! TOKIMEKI Express": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/a/ad/Nijigasaki_High_School_Idol_Club_8th_Live%21_TOKIMEKI_Express_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20260309090550",
+    "source": "Nijigasaki High School Idol Club 8th Live! TOKIMEKI Express",
+    "confidence": 0.88
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ 6th Live Dream ～Bloom Garden Party～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/0/0a/Hasunosora_Girls%27_High_School_Idol_Club_6th_Live_Dream_~Bloom_Garden_Party~_Key_Visual.jpg/revision/latest/scale-to-width-down/282?cb=20260130090234",
+    "source": "Hasunosora Girls' High School Idol Club 6th Live Dream ~Bloom Garden Party~",
+    "confidence": 0.88
+  },
+  "tour:いきづらい部！ 2nd LIVE Dou-Da? DOING! ～Reply to L～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/d/de/Ikizurai-Bu%21_2nd_LIVE_Dou-Da%3F_DOING%21_~Reply_to_L~_Logo.jpg/revision/latest/scale-to-width-down/400?cb=20260409030832",
+    "source": "Ikizurai-Bu! 2nd LIVE Dou-Da? DOING! ~Reply to L~",
+    "confidence": 0.88
+  },
+  "tour:LoveLive! Series 15th Anniversary ラブライブ！フェス": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/2/22/LoveLive%21_Series_15th_Anniversary_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20250630064450",
+    "source": "LoveLive! Series 15th Anniversary Love Live! Fest",
+    "confidence": 0.88
+  }
+}

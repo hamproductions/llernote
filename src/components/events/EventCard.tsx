@@ -6,6 +6,7 @@ import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
+import { EventThumb } from './EventThumb';
 import { VenueText } from './VenueText';
 import { useAttendance } from '~/hooks/useAttendance';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
@@ -90,6 +91,7 @@ export function EventCard({
                 </Text>
               )}
             </Stack>
+            <EventThumb performance={performance} />
           </HStack>
           <Wrap gap="2" mt="auto">
             <AttendanceButtons performanceId={performance.id} future={future} />

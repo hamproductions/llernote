@@ -8,6 +8,7 @@ import { IconButton } from '~/components/ui/icon-button';
 import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
+import { EventThumb } from './EventThumb';
 import { VenueText } from './VenueText';
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
@@ -130,39 +131,42 @@ function CardHeader({ tour }: { tour: TourGroup }) {
     tour.startDate === tour.endDate ? tour.startDate : `${tour.startDate} 〜 ${tour.endDate}`;
 
   return (
-    <Stack gap="1">
-      <HStack gap="1.5" justifyContent="space-between">
-        <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
-          {dateRange}
-        </Text>
-        <IconButton
-          asChild
-          aria-label={t('share.eventernote')}
-          title={t('share.eventernote')}
-          variant="ghost"
-          size="xs"
-          color="fg.muted"
-        >
-          <a
-            href={eventernoteSearchUrl(first)}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => e.stopPropagation()}
+    <HStack gap="2" alignItems="flex-start">
+      <Stack flex="1" gap="1" minW="0">
+        <HStack gap="1.5" justifyContent="space-between">
+          <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
+            {dateRange}
+          </Text>
+          <IconButton
+            asChild
+            aria-label={t('share.eventernote')}
+            title={t('share.eventernote')}
+            variant="ghost"
+            size="xs"
+            color="fg.muted"
           >
-            <FaArrowUpRightFromSquare />
-          </a>
-        </IconButton>
-      </HStack>
-      <Text fontSize="sm" fontWeight="semibold" lineHeight="tight">
-        {tour.tourName}
-      </Text>
-      <Wrap gap="1">
-        {tour.seriesIds.map((id) => (
-          <SeriesBadge key={id} seriesId={id} />
-        ))}
-        <CategoryBadge category={first.category} tourType={first.tourType} />
-      </Wrap>
-    </Stack>
+            <a
+              href={eventernoteSearchUrl(first)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <FaArrowUpRightFromSquare />
+            </a>
+          </IconButton>
+        </HStack>
+        <Text fontSize="sm" fontWeight="semibold" lineHeight="tight">
+          {tour.tourName}
+        </Text>
+        <Wrap gap="1">
+          {tour.seriesIds.map((id) => (
+            <SeriesBadge key={id} seriesId={id} />
+          ))}
+          <CategoryBadge category={first.category} tourType={first.tourType} />
+        </Wrap>
+      </Stack>
+      <EventThumb performance={first} tourOnly={tour.legs.length > 1} />
+    </HStack>
   );
 }
 

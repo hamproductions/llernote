@@ -15,6 +15,7 @@
     "fix": "bun lint:fix",
     "fetch:album-art": "bun scripts/wiki-album-art.ts",
     "enrich:venues": "bun scripts/enrich-venues.ts",
+    "enrich:live-thumbs": "bun scripts/enrich-live-thumbs.ts",
     "preview": "vite preview",
     "prepare": "panda codegen",
     "test": "vitest",

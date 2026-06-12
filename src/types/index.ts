@@ -97,6 +97,13 @@ export interface VenueInfo {
   candidates?: unknown[];
 }
 
+export interface LiveThumb {
+  scope: 'performance' | 'tour';
+  image: string;
+  source: string;
+  confidence: number;
+}
+
 export interface VenueSummary {
   id: string;
   name: string;

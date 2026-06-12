@@ -10,9 +10,11 @@ import seriesInfo from '../../data/series-info.json';
 import unitsInfo from '../../data/units.json';
 import venueInfo from '../../data/venue-info.json';
 import eventernoteMap from '../../data/eventernote-map.json';
+import liveThumbInfo from '../../data/live-thumb-info.json';
 import type {
   Artist,
   Character,
+  LiveThumb,
   Performance,
   Series,
   Setlist,
@@ -69,6 +71,13 @@ const songById = new Map(songs.map((s) => [s.id, s]));
 const artistById = new Map(artists.map((a) => [a.id, a]));
 const seriesById = new Map(series.map((s) => [s.id, s]));
 const venueById = new Map(venues.map((v) => [v.id, v]));
+const liveThumbs = Object.entries(liveThumbInfo as Record<string, LiveThumb>);
+const liveThumbByPerformanceId = new Map(liveThumbs.filter(([key]) => !key.startsWith('tour:')));
+const liveThumbByTourName = new Map(
+  liveThumbs
+    .filter(([key]) => key.startsWith('tour:'))
+    .map(([key, thumb]) => [key.slice('tour:'.length), thumb])
+);
 const eventernoteIdByPerformanceId = new Map(
   Object.entries(eventernoteMap as Record<string, string>)
 );
@@ -99,6 +108,11 @@ export const useArtistById = () => artistById;
 export const useSeries = () => series;
 export const useSeriesById = () => seriesById;
 export const useUnits = () => units;
+export const useLiveThumb = (performance: Performance | undefined, tourOnly = false) =>
+  performance
+    ? ((tourOnly ? undefined : liveThumbByPerformanceId.get(performance.id)) ??
+      liveThumbByTourName.get(performance.tourName))
+    : undefined;
 export const useVenues = () => venues;
 export const useVenueById = () => venueById;
 export const useEventernoteIdByPerformanceId = () => eventernoteIdByPerformanceId;
