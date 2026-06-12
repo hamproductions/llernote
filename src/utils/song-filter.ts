@@ -16,6 +16,7 @@ export interface SongFilters {
   search: string;
   seriesIds: string[];
   categories: SongCategory[];
+  multiSeries: boolean;
   yearFrom?: string;
   yearTo?: string;
   heard?: 'heard' | 'unheard';
@@ -24,7 +25,8 @@ export interface SongFilters {
 export const EMPTY_SONG_FILTERS: SongFilters = {
   search: '',
   seriesIds: [],
-  categories: []
+  categories: [],
+  multiSeries: false
 };
 
 export const songReleaseYears = (songs: Song[]) =>
@@ -67,6 +69,7 @@ export const filterSongs = (
     ) {
       return false;
     }
+    if (filters.multiSeries && song.seriesIds.length < 2) return false;
     if (
       filters.categories.length > 0 &&
       !filters.categories.some((category) => songMatchesCategory(song, category, artistById))

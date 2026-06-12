@@ -130,6 +130,14 @@ export function SongFiltersBar({
             {t('events.series')}
           </Text>
           <Wrap gap="1">
+            <Button
+              size="xs"
+              variant={filters.multiSeries ? 'solid' : 'outline'}
+              onClick={() => onChange({ ...filters, multiSeries: !filters.multiSeries })}
+              borderRadius="full"
+            >
+              {t('events.multi_series')}
+            </Button>
             {series.map((s) => {
               const active = filters.seriesIds.includes(s.id);
               return (

@@ -46,6 +46,16 @@ describe('filterSongs', () => {
     expect(result.map((s) => s.id)).toEqual(['4', '5']);
   });
 
+  it('filters multi-series songs with their own toggle', () => {
+    const result = filterSongs(
+      songs,
+      { ...EMPTY_SONG_FILTERS, multiSeries: true },
+      artistById,
+      heard({})
+    );
+    expect(result.map((s) => s.id)).toEqual(['4']);
+  });
+
   it('filters by category', () => {
     const byCategory = (categories: ('group' | 'unit' | 'solo' | 'others')[]) =>
       filterSongs(songs, { ...EMPTY_SONG_FILTERS, categories }, artistById, heard({})).map(
