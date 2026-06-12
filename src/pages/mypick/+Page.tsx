@@ -118,7 +118,15 @@ export default function Page() {
 
   useEffect(() => {
     const d = new URLSearchParams(window.location.search).get('d');
-    if (d) setShared(decodeMyPick(d));
+    if (!d) return;
+    const decoded = decodeMyPick(d);
+    if (!decoded) return;
+    if (Object.keys(decoded.myPick.cells).length === 0) {
+      setMyPickConfig({ rows: decoded.rows, columns: decoded.columns });
+      window.history.replaceState(null, '', window.location.pathname);
+      return;
+    }
+    setShared(decoded);
   }, []);
 
   const storedConfig = myPick?.config;
