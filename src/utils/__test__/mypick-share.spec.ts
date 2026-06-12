@@ -29,4 +29,38 @@ describe('mypick share', () => {
 
     expect(decodeMyPick(encoded)?.columns).toEqual([{ type: 'slot', slot: 'song' }]);
   });
+
+  it('round-trips rows, columns, and cells through the compact format', () => {
+    const rows = [
+      { type: 'series', id: '1' },
+      { type: 'artist', id: '23' },
+      { type: 'category', id: 'group' }
+    ] as const;
+    const columns = [
+      { type: 'member' },
+      { type: 'slot', slot: 'song' },
+      { type: 'year', year: 2026, slot: 'event' }
+    ] as const;
+    const encoded = encodeMyPick(
+      { cells: { 'series:1|slot:song': '120', 'artist:23|member': '7' }, updatedAt: '' },
+      [...rows],
+      [...columns]
+    );
+
+    const decoded = decodeMyPick(encoded);
+    expect(decoded?.rows).toEqual(rows);
+    expect(decoded?.columns).toEqual(columns);
+    expect(decoded?.myPick.cells).toEqual({ 'series:1|slot:song': '120', 'artist:23|member': '7' });
+  });
+
+  it('encodes a default structure-only share compactly', () => {
+    const encoded = encodeMyPick(
+      { cells: {}, updatedAt: '' },
+      Array.from({ length: 8 }, (_, i) => ({ type: 'series' as const, id: String(i + 1) })),
+      [{ type: 'member' }, { type: 'slot', slot: 'song' }, { type: 'slot', slot: 'event' }]
+    );
+
+    expect(encoded.length).toBeLessThan(45);
+    expect(encodeURIComponent(encoded)).toBe(encoded);
+  });
 });
