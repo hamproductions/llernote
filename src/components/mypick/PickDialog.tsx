@@ -156,6 +156,7 @@ export function PickDialog({
   open,
   display = 'auto',
   categories,
+  defaultCategory = '',
   onClose,
   onChange
 }: {
@@ -166,6 +167,7 @@ export function PickDialog({
   open: boolean;
   display?: 'auto' | 'tiles' | 'rows';
   categories?: { key: string; label: string }[];
+  defaultCategory?: string;
   onClose: () => void;
   onChange: (ids: string[]) => void;
 }) {
@@ -175,13 +177,6 @@ export function PickDialog({
   const hasImages = items.some((item) => item.image);
   const showTiles = display === 'tiles' || (display === 'auto' && hasImages);
 
-  useEffect(() => {
-    if (open) {
-      setSearch('');
-      setActiveCategory('');
-    }
-  }, [open]);
-
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const item of items) {
@@ -190,6 +185,13 @@ export function PickDialog({
     }
     return counts;
   }, [items]);
+
+  useEffect(() => {
+    if (open) {
+      setSearch('');
+      setActiveCategory(categoryCounts.get(defaultCategory) ? defaultCategory : '');
+    }
+  }, [open, defaultCategory, categoryCounts]);
   const visibleCategories = (categories ?? []).filter(
     (category) => (categoryCounts.get(category.key) ?? 0) > 0
   );

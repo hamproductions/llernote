@@ -196,7 +196,8 @@
     "move_down": "下へ移動",
     "share_x": "Xでシェア",
     "share_text": "私のラブライブ！MyPick #LLerNote",
-    "export_subtitle": "ラブライブ！シリーズ お気に入りセレクション"
+    "export_subtitle": "ラブライブ！シリーズ お気に入りセレクション",
+    "with_image": "ビジュアルあり"
   },
   "songs": {
     "title": "楽曲",

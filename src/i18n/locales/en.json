@@ -197,7 +197,8 @@
     "move_down": "Move down",
     "share_x": "Share to X",
     "share_text": "My LoveLive! MyPick #LLerNote",
-    "export_subtitle": "LoveLive! Series Favorite Selection"
+    "export_subtitle": "LoveLive! Series Favorite Selection",
+    "with_image": "With visual"
   },
   "songs": {
     "title": "Songs",

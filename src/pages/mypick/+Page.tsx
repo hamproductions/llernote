@@ -229,13 +229,17 @@ export default function Page() {
         if (year && !p.date.startsWith(year)) return false;
         return matchesRowPerformance(p.id, p.seriesIds);
       })
-      .map((p) => ({
-        id: p.id,
-        label: p.tourName,
-        sub: `${p.date} ${p.venue}`,
-        searchText: `${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`,
-        image: getLiveThumb(p)?.image
-      }));
+      .map((p) => {
+        const image = getLiveThumb(p)?.image;
+        return {
+          id: p.id,
+          label: p.tourName,
+          sub: `${p.date} ${p.venue}`,
+          searchText: `${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`,
+          image,
+          category: image ? 'with_image' : undefined
+        };
+      });
   };
 
   const dialogItems: PickItem[] = useMemo(() => {
@@ -841,6 +845,15 @@ export default function Page() {
                   { key: 'solo', label: t('mypick.row_solo') },
                   { key: 'others', label: t('mypick.row_others') }
                 ]
+              : (picking?.column.type === 'year' && picking.column.slot === 'event') ||
+                  (picking?.column.type === 'slot' && picking.column.slot === 'event')
+                ? [{ key: 'with_image', label: t('mypick.with_image') }]
+                : undefined
+          }
+          defaultCategory={
+            (picking?.column.type === 'year' && picking.column.slot === 'event') ||
+            (picking?.column.type === 'slot' && picking.column.slot === 'event')
+              ? 'with_image'
               : undefined
           }
           display={
