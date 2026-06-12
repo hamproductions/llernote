@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">LLerNote mark</title>
+  <desc id="desc">LLerNote event-list app mark with witnessed-event dots and gradient setlist rows.</desc>
+  <defs>
+    <linearGradient id="lines" x1="158" x2="408" y1="156" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e4007f"/>
+      <stop offset=".52" stop-color="#ff7a00"/>
+      <stop offset="1" stop-color="#00a0e0"/>
+    </linearGradient>
+    <radialGradient id="field" cx="50%" cy="24%" r="82%">
+      <stop offset="0" stop-color="#3c1223"/>
+      <stop offset=".58" stop-color="#211217"/>
+      <stop offset="1" stop-color="#151315"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#field)"/>
+  <rect x="92" y="96" width="328" height="320" rx="58" fill="#181518" stroke="#594653" stroke-width="8"/>
+  <path fill="none" stroke="url(#lines)" stroke-linecap="round" stroke-width="34" d="M210 174h146M210 256h104M210 338h160"/>
+  <circle cx="154" cy="174" r="23" fill="#e4007f"/>
+  <circle cx="154" cy="256" r="23" fill="#ff7a00"/>
+  <circle cx="154" cy="338" r="23" fill="#00a0e0"/>
+</svg>

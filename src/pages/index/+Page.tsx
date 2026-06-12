@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { join } from 'path-browserify';
 import {
   FaArrowRight,
   FaCalendarDays,
   FaChartColumn,
+  FaCloudArrowDown,
   FaMagnifyingGlass,
   FaMusic,
   FaTableCellsLarge
@@ -18,16 +19,25 @@ import { Badge } from '~/components/ui/badge';
 import { Card } from '~/components/ui/card';
 import { Link } from '~/components/ui/link';
 import { EventCard } from '~/components/events/EventCard';
-import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { usePerformanceById, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
+import { usePerformances, useSetlists, useSongs, useVenueById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
-import { computeStats } from '~/utils/stats';
+import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { todayString } from '~/utils/event-filter';
 import type { Performance } from '~/types';
 
 const href = (path: string) => join(import.meta.env.BASE_URL, path);
+const EventDetailDialog = lazy(() =>
+  import('~/components/events/EventDetailDialog').then((module) => ({
+    default: module.EventDetailDialog
+  }))
+);
+const EventernoteImportDialog = lazy(() =>
+  import('~/components/eventernote/EventernoteImportDialog').then((module) => ({
+    default: module.EventernoteImportDialog
+  }))
+);
 
 function QuickLink({
   to,
@@ -68,17 +78,35 @@ function QuickLink({
 export default function Page() {
   const { t } = useTranslation();
   const performances = usePerformances();
-  const performanceById = usePerformanceById();
   const setlists = useSetlists();
   const songs = useSongs();
+  const venueById = useVenueById();
   const { records } = useAttendance();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Performance>();
+  const [eventernoteOpen, setEventernoteOpen] = useState(false);
+  const [eventernoteMounted, setEventernoteMounted] = useState(false);
 
-  const stats = useMemo(
-    () => computeStats(records, performanceById, setlists),
-    [records, performanceById, setlists]
+  const openEventernote = () => {
+    setEventernoteMounted(true);
+    setEventernoteOpen(true);
+  };
+
+  const derivedStats = useDerivedDataWorker(
+    'stats',
+    {
+      records,
+      performances,
+      setlists,
+      year: '',
+      seriesId: '',
+      category: '',
+      multiSeries: false,
+      venueById
+    },
+    [records, performances, setlists, venueById]
   );
+  const stats = derivedStats.result;
 
   const goingIds = useMemo(
     () => new Set(records.filter((r) => r.status === 'interested').map((r) => r.performanceId)),
@@ -101,7 +129,7 @@ export default function Page() {
     return performances.filter((p) => ids.has(p.id) && p.date <= today).slice(0, 3);
   }, [performances, records]);
 
-  const hasData = stats.attendedCount > 0;
+  const hasData = (stats?.attendedCount ?? 0) > 0;
 
   const submitSearch = () => {
     window.location.href = `${href('/events')}?q=${encodeURIComponent(search)}`;
@@ -158,21 +186,35 @@ export default function Page() {
             </Button>
           </HStack>
           {!hasData && (
-            <HStack gap="2" justifyContent="center" flexWrap="wrap">
-              <Text color="fg.muted" fontSize="sm">
-                {t('home.get_started')}
-              </Text>
-              <Button asChild size="sm">
-                <a href={href('/events')}>
-                  {t('home.browse_events')}
-                  <FaArrowRight />
-                </a>
-              </Button>
-            </HStack>
+            <Stack gap="3" alignItems="center">
+              <HStack gap="2" justifyContent="center" flexWrap="wrap">
+                <Text color="fg.muted" fontSize="sm">
+                  {t('home.get_started')}
+                </Text>
+                <Button asChild size="sm">
+                  <a href={href('/events')}>
+                    {t('home.browse_events')}
+                    <FaArrowRight />
+                  </a>
+                </Button>
+              </HStack>
+              <Card.Root w="full" maxW="lg">
+                <Card.Body gap="2" alignItems="center" p="4" textAlign="center">
+                  <Text fontWeight="bold">{t('eventernote.onboarding_title')}</Text>
+                  <Text color="fg.muted" fontSize="sm">
+                    {t('eventernote.onboarding_text')}
+                  </Text>
+                  <Button size="sm" variant="outline" onClick={openEventernote}>
+                    <FaCloudArrowDown />
+                    {t('eventernote.import_from')}
+                  </Button>
+                </Card.Body>
+              </Card.Root>
+            </Stack>
           )}
         </Stack>
 
-        {hasData && (
+        {hasData && stats && (
           <Grid gap="2" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
             {(
               [
@@ -304,11 +346,23 @@ export default function Page() {
           />
         </Grid>
 
-        <EventDetailDialog
-          performance={selected}
-          open={selected !== undefined}
-          onClose={() => setSelected(undefined)}
-        />
+        {selected && (
+          <Suspense fallback={null}>
+            <EventDetailDialog
+              performance={selected}
+              open={selected !== undefined}
+              onClose={() => setSelected(undefined)}
+            />
+          </Suspense>
+        )}
+        {eventernoteMounted && (
+          <Suspense fallback={null}>
+            <EventernoteImportDialog
+              open={eventernoteOpen}
+              onClose={() => setEventernoteOpen(false)}
+            />
+          </Suspense>
+        )}
       </Stack>
     </>
   );

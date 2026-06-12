@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaStar } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
@@ -9,8 +9,8 @@ import { Tabs } from '~/components/ui/tabs';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { AttendanceButtons } from '~/components/events/AttendanceButtons';
-import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { NativeSelect } from '~/components/events/NativeSelect';
+import { VenueText } from '~/components/events/VenueText';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { usePerformance, usePerformances, useSeriesById } from '~/hooks/useData';
@@ -22,13 +22,19 @@ import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
+const MULTI_SERIES_FILTER = '__multi_series__';
+const EventDetailDialog = lazy(() =>
+  import('~/components/events/EventDetailDialog').then((module) => ({
+    default: module.EventDetailDialog
+  }))
+);
 
 function MonthView({
   onSelect,
-  multiSeries
+  seriesFilter
 }: {
   onSelect: (p: Performance) => void;
-  multiSeries: boolean;
+  seriesFilter: string;
 }) {
   const { t, i18n } = useTranslation();
   const performances = usePerformances();
@@ -40,14 +46,17 @@ function MonthView({
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDay, setSelectedDay] = useState<string>();
 
+  const multiSeries = seriesFilter === MULTI_SERIES_FILTER;
+  const seriesId = multiSeries ? '' : seriesFilter;
   const monthPrefix = `${year}-${pad(month + 1)}`;
   const monthEvents = useMemo(
     () =>
       performances
         .filter((p) => p.date.startsWith(monthPrefix))
+        .filter((p) => !seriesId || p.seriesIds.includes(seriesId))
         .filter((p) => !multiSeries || p.seriesIds.length > 1)
         .sort((a, b) => a.date.localeCompare(b.date)),
-    [performances, monthPrefix, multiSeries]
+    [performances, monthPrefix, seriesId, multiSeries]
   );
   const eventsByDay = useMemo(() => {
     const map = new Map<string, Performance[]>();
@@ -264,7 +273,7 @@ function MonthView({
                     {label ? ` ${label}` : ''}
                   </Text>
                   <Text color="fg.muted" fontSize="2xs" lineClamp={1}>
-                    {p.venue}
+                    <VenueText performance={p} compact />
                   </Text>
                 </Stack>
                 <HStack gap="1" flexShrink={0}>
@@ -286,21 +295,24 @@ function MonthView({
 
 function Upcoming({
   onSelect,
-  multiSeries
+  seriesFilter
 }: {
   onSelect: (p: Performance) => void;
-  multiSeries: boolean;
+  seriesFilter: string;
 }) {
   const { t } = useTranslation();
   const performances = usePerformances();
 
+  const multiSeries = seriesFilter === MULTI_SERIES_FILTER;
+  const seriesId = multiSeries ? '' : seriesFilter;
   const upcoming = useMemo(
     () =>
       performances
         .filter((p) => daysFromToday(p.date) >= 0)
+        .filter((p) => !seriesId || p.seriesIds.includes(seriesId))
         .filter((p) => !multiSeries || p.seriesIds.length > 1)
         .sort((a, b) => a.date.localeCompare(b.date)),
-    [performances, multiSeries]
+    [performances, seriesId, multiSeries]
   );
 
   if (upcoming.length === 0) {
@@ -360,7 +372,7 @@ function Upcoming({
                   <SeriesBadge key={id} seriesId={id} />
                 ))}
                 <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-                  {p.venue}
+                  <VenueText performance={p} compact />
                 </Text>
               </HStack>
             </Stack>
@@ -381,19 +393,26 @@ function Upcoming({
 
 function Timeline({
   onSelect,
-  multiSeries
+  seriesFilter
 }: {
   onSelect: (p: Performance) => void;
-  multiSeries: boolean;
+  seriesFilter: string;
 }) {
   const { t } = useTranslation();
   const performances = usePerformances();
   const { records, map } = useAttendance();
 
+  const multiSeries = seriesFilter === MULTI_SERIES_FILTER;
+  const seriesId = multiSeries ? '' : seriesFilter;
   const attended = useMemo(() => {
     const ids = new Set(records.filter((r) => r.status === 'attended').map((r) => r.performanceId));
-    return performances.filter((p) => ids.has(p.id) && (!multiSeries || p.seriesIds.length > 1));
-  }, [performances, records, multiSeries]);
+    return performances.filter(
+      (p) =>
+        ids.has(p.id) &&
+        (!seriesId || p.seriesIds.includes(seriesId)) &&
+        (!multiSeries || p.seriesIds.length > 1)
+    );
+  }, [performances, records, seriesId, multiSeries]);
 
   if (attended.length === 0) {
     return <Text color="fg.muted">{t('timeline.empty')}</Text>;
@@ -457,7 +476,7 @@ function Timeline({
                         <SeriesBadge key={id} seriesId={id} />
                       ))}
                       <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-                        {p.venue}
+                        <VenueText performance={p} compact />
                       </Text>
                       {record?.rating && (
                         <HStack gap="0.5" color="accent.default">
@@ -485,8 +504,9 @@ function Timeline({
 
 export default function Page() {
   const { t } = useTranslation();
+  const series = useSeriesById();
   const [selectedId, setSelectedId] = useState<string>();
-  const [multiSeries, setMultiSeries] = useState(false);
+  const [seriesFilter, setSeriesFilter] = useState('');
   const selected = usePerformance(selectedId);
 
   return (
@@ -495,14 +515,16 @@ export default function Page() {
       <Stack gap="4">
         <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap">
           <SectionHeading size="2xl">{t('calendar.title')}</SectionHeading>
-          <Button
-            size="sm"
-            variant={multiSeries ? 'solid' : 'outline'}
-            onClick={() => setMultiSeries((v) => !v)}
-            borderRadius="full"
-          >
-            {t('events.multi_series')}
-          </Button>
+          <NativeSelect
+            aria-label={t('events.series')}
+            value={seriesFilter}
+            placeholder={`${t('events.series')}: ${t('common.all')}`}
+            options={[
+              { value: MULTI_SERIES_FILTER, label: t('events.multi_series') },
+              ...[...series.values()].map((s) => ({ value: s.id, label: s.name }))
+            ]}
+            onChange={setSeriesFilter}
+          />
         </HStack>
         <Tabs.Root defaultValue="calendar">
           <Tabs.List>
@@ -512,20 +534,24 @@ export default function Page() {
             <Tabs.Indicator />
           </Tabs.List>
           <Tabs.Content value="calendar">
-            <MonthView multiSeries={multiSeries} onSelect={(p) => setSelectedId(p.id)} />
+            <MonthView seriesFilter={seriesFilter} onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="upcoming">
-            <Upcoming multiSeries={multiSeries} onSelect={(p) => setSelectedId(p.id)} />
+            <Upcoming seriesFilter={seriesFilter} onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="timeline">
-            <Timeline multiSeries={multiSeries} onSelect={(p) => setSelectedId(p.id)} />
+            <Timeline seriesFilter={seriesFilter} onSelect={(p) => setSelectedId(p.id)} />
           </Tabs.Content>
         </Tabs.Root>
-        <EventDetailDialog
-          performance={selected}
-          open={selected !== undefined}
-          onClose={() => setSelectedId(undefined)}
-        />
+        {selected && (
+          <Suspense fallback={null}>
+            <EventDetailDialog
+              performance={selected}
+              open={selected !== undefined}
+              onClose={() => setSelectedId(undefined)}
+            />
+          </Suspense>
+        )}
       </Stack>
     </>
   );

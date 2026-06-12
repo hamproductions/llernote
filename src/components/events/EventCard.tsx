@@ -6,6 +6,7 @@ import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
+import { VenueText } from './VenueText';
 import { useAttendance } from '~/hooks/useAttendance';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { clickable } from '~/utils/clickable';
@@ -74,7 +75,7 @@ export function EventCard({
               </HStack>
               <Text fontWeight="semibold">{performance.tourName}</Text>
               <Text color="fg.muted" fontSize="sm" lineClamp={1}>
-                {performance.venue}
+                <VenueText performance={performance} compact />
               </Text>
               {record?.rating && (
                 <HStack gap="0.5" color="accent.default">

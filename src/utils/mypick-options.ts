@@ -31,20 +31,68 @@ const realCharacterIds = (artist?: Artist | null) =>
 export const isGroupArtist = (artist?: Artist | null) =>
   !!artist && GROUP_ARTIST_NAME_KEYS.has(normalizeGroupName(artist.name));
 
-export const buildArtistBuckets = (artists: Artist[]) => ({
-  group: artists.filter(
-    (artist) =>
-      realCharacterIds(artist).length > 1 && artist.seriesIds.length === 1 && isGroupArtist(artist)
-  ),
-  unit: artists.filter(
-    (artist) =>
-      realCharacterIds(artist).length > 1 && artist.seriesIds.length === 1 && !isGroupArtist(artist)
-  ),
-  solo: artists.filter((artist) => realCharacterIds(artist).length === 1),
-  others: artists.filter(
-    (artist) => realCharacterIds(artist).length === 0 || artist.seriesIds.length > 1
-  )
-});
+const memberSetKey = (artist?: Artist | null) => {
+  const members = realCharacterIds(artist);
+  if (!artist || members.length === 0) return '';
+  return `${[...artist.seriesIds].toSorted().join(',')}:${members.toSorted().join('|')}`;
+};
+
+const aliasPriority = (artist: Artist) =>
+  (isGroupArtist(artist) ? 0 : 2) + (artist.name.includes('、') ? 1 : 0);
+
+const dedupeByMembers = (artists: Artist[]) => {
+  const byKey = new Map<string, Artist>();
+  for (const artist of artists) {
+    const key = memberSetKey(artist);
+    const current = byKey.get(key);
+    if (
+      !current ||
+      aliasPriority(artist) < aliasPriority(current) ||
+      (aliasPriority(artist) === aliasPriority(current) && artist.name.length < current.name.length)
+    ) {
+      byKey.set(key, artist);
+    }
+  }
+  return [...byKey.values()];
+};
+
+export const buildArtistBuckets = (artists: Artist[]) => {
+  const idsByMembers = new Map<string, Set<string>>();
+  for (const artist of artists) {
+    const key = memberSetKey(artist);
+    if (!key) continue;
+    const ids = idsByMembers.get(key) ?? new Set<string>();
+    ids.add(artist.id);
+    idsByMembers.set(key, ids);
+  }
+  const aliasIds = new Map<string, Set<string>>();
+  for (const ids of idsByMembers.values()) {
+    for (const id of ids) aliasIds.set(id, ids);
+  }
+  return {
+    group: dedupeByMembers(
+      artists.filter(
+        (artist) =>
+          realCharacterIds(artist).length > 1 &&
+          artist.seriesIds.length === 1 &&
+          isGroupArtist(artist)
+      )
+    ),
+    unit: dedupeByMembers(
+      artists.filter(
+        (artist) =>
+          realCharacterIds(artist).length > 1 &&
+          artist.seriesIds.length === 1 &&
+          !isGroupArtist(artist)
+      )
+    ),
+    solo: dedupeByMembers(artists.filter((artist) => realCharacterIds(artist).length === 1)),
+    others: artists.filter(
+      (artist) => realCharacterIds(artist).length === 0 || artist.seriesIds.length > 1
+    ),
+    aliasIds
+  };
+};
 
 export const artistsForRow = (
   row: MyPickRow,
@@ -52,8 +100,10 @@ export const artistsForRow = (
   buckets: ReturnType<typeof buildArtistBuckets>
 ) => {
   if (row.type === 'artist') {
-    const artist = artistById.get(row.id);
-    return artist ? [artist] : [];
+    const ids = buckets.aliasIds.get(row.id) ?? new Set([row.id]);
+    return [...ids]
+      .map((id) => artistById.get(id))
+      .filter((artist): artist is Artist => !!artist);
   }
   if (row.type === 'category' && row.id === 'group') return buckets.group;
   if (row.type === 'category' && row.id === 'unit') return buckets.unit;
@@ -86,11 +136,15 @@ export const isOtherSong = (ids: string[], artistById: Map<string, Artist>) =>
 export const songMatchesMyPickRow = (
   song: Song,
   row: MyPickRow,
-  artistById: Map<string, Artist>
+  artistById: Map<string, Artist>,
+  aliasIds?: Map<string, Set<string>>
 ) => {
   const ids = songArtistIds(song, artistById);
 
-  if (row.type === 'artist') return ids.length === 1 && ids[0] === row.id;
+  if (row.type === 'artist') {
+    const rowIds = aliasIds?.get(row.id) ?? new Set([row.id]);
+    return ids.length === 1 && rowIds.has(ids[0]);
+  }
   if (row.type === 'category' && row.id === 'group') return isGroupSong(ids, artistById);
   if (row.type === 'category' && row.id === 'unit') return isUnitSong(ids, artistById);
   if (row.type === 'category' && row.id === 'solo') return isSoloSong(ids, artistById);

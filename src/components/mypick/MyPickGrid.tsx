@@ -176,7 +176,15 @@ function CellImage({
   );
 }
 
-function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: string }) {
+function CellContent({
+  column,
+  pickedId,
+  exporting = false
+}: {
+  column: MyPickColumn;
+  pickedId: string;
+  exporting?: boolean;
+}) {
   const { i18n } = useTranslation();
   const characters = useCharacters();
   const songById = useSongById();
@@ -189,7 +197,13 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       <>
         <CellImage src={getPicUrl(character.id, 'character')} top />
         <Box insetX="0" position="absolute" bottom="0" p="2" bgColor="black.a8">
-          <Text color="white" fontSize="2xs" fontWeight="bold" textAlign="center" lineClamp={2}>
+          <Text
+            color="white"
+            fontSize={exporting ? 'xs' : '2xs'}
+            fontWeight="bold"
+            textAlign="center"
+            lineClamp={2}
+          >
             {localizedName(i18n.language, character.fullName, character.englishName)}
           </Text>
         </Box>
@@ -206,7 +220,13 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       <>
         <CellImage src={getPicUrl(song.id, 'thumbnail')} />
         <Box insetX="0" position="absolute" bottom="0" p="2" bgColor="black.a8">
-          <Text color="white" fontSize="2xs" fontWeight="bold" textAlign="center" lineClamp={2}>
+          <Text
+            color="white"
+            fontSize={exporting ? 'xs' : '2xs'}
+            fontWeight="bold"
+            textAlign="center"
+            lineClamp={2}
+          >
             {localizedName(i18n.language, song.name, song.englishName)}
           </Text>
         </Box>
@@ -227,11 +247,27 @@ function CellContent({ column, pickedId }: { column: MyPickColumn; pickedId: str
       textAlign="center"
       bgColor="mypick.tile"
     >
-      <Text color="accent.default" fontSize="xs" fontWeight="bold" lineHeight="1">
-        {performance.date}
-      </Text>
-      <Text color="mypick.muted" fontSize="2xs" fontWeight="semibold" lineClamp={4}>
+      <Text
+        lang="ja"
+        style={{ wordBreak: 'auto-phrase' as 'normal' }}
+        minW="0"
+        maxW="full"
+        color="mypick.text"
+        fontSize={exporting ? 'sm' : 'xs'}
+        fontWeight="bold"
+        lineHeight="1.25"
+        lineClamp={4}
+        overflowWrap="anywhere"
+      >
         {performance.tourName}
+      </Text>
+      <Text
+        color="accent.default"
+        fontSize={exporting ? 'xs' : '2xs'}
+        fontWeight="semibold"
+        lineHeight="1"
+      >
+        {performance.date}
       </Text>
     </Stack>
   );
@@ -244,6 +280,7 @@ export const MyPickGrid = forwardRef<
     rows: MyPickRow[];
     columns: MyPickColumn[];
     editable?: boolean;
+    pickable?: boolean;
     onPickCell?: (row: MyPickRow, column: MyPickColumn) => void;
     onClearCell?: (key: string) => void;
     onRemoveRow?: (row: MyPickRow) => void;
@@ -262,6 +299,7 @@ export const MyPickGrid = forwardRef<
     rows,
     columns,
     editable = false,
+    pickable = false,
     onPickCell,
     onClearCell,
     onRemoveRow,
@@ -279,13 +317,21 @@ export const MyPickGrid = forwardRef<
   const { t } = useTranslation();
   const seriesById = useSeriesById();
   const artistById = useArtistById();
-  const exportColumnWidth = 200;
-  const exportLabelWidth = 192;
-  const exportGap = 24;
-  const labelWidth = columns.length <= 3 ? '14rem' : 'minmax(11rem, 14rem)';
-  const cellWidth = columns.length <= 3 ? '7.25rem' : 'minmax(5.5rem, 7.25rem)';
+  const exportColumnWidth = columns.length <= 3 ? 152 : 124;
+  const exportLabelWidth = columns.length <= 3 ? 204 : 164;
+  const exportGap = columns.length <= 3 ? 14 : 10;
+  const exportPadding = 28;
+  const exportRowPadding = 16;
+  const labelTrack = 'minmax(0, 1.25fr)';
+  const cellTrack = 'minmax(0, 1fr)';
+  const panelMaxWidth = `${12 + columns.length * 10}rem`;
+  const minContentWidth = `${8 + columns.length * 6.5}rem`;
   const exportWidth =
-    exportLabelWidth + columns.length * exportColumnWidth + columns.length * exportGap;
+    exportLabelWidth +
+    columns.length * exportColumnWidth +
+    columns.length * exportGap +
+    exportRowPadding * 2 +
+    exportPadding * 2;
 
   const columnLabel = (col: MyPickColumn) => {
     if (col.type === 'member') return t('mypick.column_character');
@@ -383,38 +429,55 @@ export const MyPickGrid = forwardRef<
 
   const gridColumns = exporting
     ? `${exportLabelWidth}px repeat(${columns.length}, ${exportColumnWidth}px)`
-    : `${labelWidth} repeat(${columns.length}, ${cellWidth})`;
+    : `${labelTrack} repeat(${columns.length}, ${cellTrack})`;
 
   return (
     <Box
       ref={ref}
-      style={{ backdropFilter: exporting ? undefined : 'blur(18px)' }}
+      style={{
+        backdropFilter: exporting ? undefined : 'blur(18px)',
+        width: exporting ? `${exportWidth}px` : undefined,
+        maxWidth: exporting ? undefined : panelMaxWidth
+      }}
       position="relative"
       borderColor="mypick.border"
       borderRadius={{ base: '2xl', md: '3xl' }}
       borderWidth="1px"
-      w={exporting ? `${exportWidth}px` : 'fit-content'}
-      maxW={exporting ? undefined : '100%'}
+      w={exporting ? undefined : 'full'}
       mx="auto"
-      p={exporting ? '8' : { base: '3', md: '4' }}
+      p={exporting ? `${exportPadding}px` : { base: '3', md: '4' }}
       bgColor="mypick.panel"
       boxShadow="0 18px 60px var(--colors-mypick-shadow)"
-      overflowX="auto"
+      overflowX={exporting ? 'visible' : 'auto'}
       overflowY="hidden"
     >
-      <Stack zIndex="1" position="relative" gap={exporting ? '6' : { base: '3.5', md: '6' }}>
+      <Stack
+        style={{ minWidth: exporting ? undefined : minContentWidth }}
+        zIndex="1"
+        position="relative"
+        gap={exporting ? '6' : { base: '3.5', md: '6' }}
+      >
         {exporting && (
-          <Stack gap="1" alignItems="center" textAlign="center">
-            <Text color="mypick.text" fontSize="4xl" fontWeight="bold">
-              MyPick LLerNote
+          <Stack gap="0" alignItems="center" textAlign="center">
+            <Text color="mypick.text" fontSize="2xl" fontWeight="bold" lineHeight="1">
+              MyPick
+            </Text>
+            <Text color="mypick.text" fontSize="3xl" fontWeight="bold" lineHeight="1.15">
+              LLerNote
             </Text>
           </Stack>
         )}
         <Grid
-          style={{ gridTemplateColumns: gridColumns }}
+          style={{
+            gridTemplateColumns: gridColumns,
+            paddingInline: exporting ? `${exportRowPadding}px` : undefined
+          }}
           gap={exporting ? `${exportGap}px` : { base: '2', md: '3' }}
           justifyContent="start"
           alignItems="center"
+          borderColor="transparent"
+          borderWidth={exporting ? undefined : '1px'}
+          px={exporting ? undefined : { base: '1.5', sm: '2', md: '2' }}
         >
           <HStack gap="2" justifyContent="center" alignItems="center" minW="0" minH="10">
             <Text
@@ -445,13 +508,12 @@ export const MyPickGrid = forwardRef<
                   flex="0 1 auto"
                   minW="0"
                   color="mypick.text"
-                  fontSize={exporting ? 'lg' : { base: '2xs', sm: 'xs', md: 'sm' }}
+                  fontSize={exporting ? 'lg' : { base: '3xs', sm: 'xs', md: 'sm' }}
                   fontWeight="bold"
-                  lineHeight="1"
+                  lineHeight="1.1"
                   textAlign="center"
-                  textOverflow="ellipsis"
-                  overflow="hidden"
-                  whiteSpace="nowrap"
+                  lineClamp={2}
+                  whiteSpace="normal"
                 >
                   {columnLabel(col)}
                 </Text>
@@ -506,25 +568,30 @@ export const MyPickGrid = forwardRef<
                 alignItems="center"
                 borderRadius={{ base: 'xl', md: '2xl' }}
                 borderWidth={exporting ? '2px' : '1px'}
-                p={exporting ? '5' : { base: '1.5', sm: '2', md: '2' }}
+                p={exporting ? '4' : { base: '1.5', sm: '2', md: '2' }}
                 transition="all"
               >
                 <Center
                   minW="0"
-                  minH={exporting ? '20' : { base: '12', sm: '14', md: '16' }}
+                  minH={exporting ? `${exportColumnWidth}px` : { base: '12', sm: '14', md: '16' }}
                   px="1"
                 >
                   <HStack gap="2" justifyContent="center" alignItems="center" w="full" minW="0">
                     <Text
                       title={meta.sub}
-                      style={{ color: meta.tone.text }}
+                      lang="ja"
+                      style={{
+                        color: meta.tone.text,
+                        wordBreak: 'auto-phrase' as 'normal'
+                      }}
                       flex="1"
                       minW="0"
-                      fontSize={exporting ? 'xl' : { base: 'xs', md: 'sm' }}
+                      fontSize={exporting ? 'lg' : { base: '2xs', md: 'sm' }}
                       fontWeight="bold"
-                      lineHeight="1.05"
+                      lineHeight="1.12"
                       textAlign="center"
-                      overflowWrap="anywhere"
+                      lineClamp={3}
+                      overflowWrap="break-word"
                       whiteSpace="normal"
                     >
                       {meta.label}
@@ -566,7 +633,7 @@ export const MyPickGrid = forwardRef<
                   return (
                     <Box
                       key={key}
-                      {...(editable && !exporting && !disabled
+                      {...(pickable && !exporting && !disabled
                         ? clickable(
                             () => onPickCell?.(row, col),
                             `${meta.label} ${columnLabel(col)}`
@@ -578,7 +645,7 @@ export const MyPickGrid = forwardRef<
                         height: exporting ? `${exportColumnWidth}px` : undefined
                       }}
                       cursor={
-                        editable && !exporting && !disabled
+                        pickable && !exporting && !disabled
                           ? 'pointer'
                           : disabled
                             ? 'not-allowed'
@@ -596,7 +663,7 @@ export const MyPickGrid = forwardRef<
                       overflow="hidden"
                       borderStyle={pickedId || disabled ? undefined : 'dashed'}
                       _hover={
-                        editable && !exporting && !disabled
+                        pickable && !exporting && !disabled
                           ? {
                               borderColor: 'accent.8',
                               bgColor: 'mypick.accentSoft',
@@ -606,7 +673,7 @@ export const MyPickGrid = forwardRef<
                       }
                     >
                       {pickedId ? (
-                        <CellContent column={col} pickedId={pickedId} />
+                        <CellContent column={col} pickedId={pickedId} exporting={exporting} />
                       ) : (
                         <Center h="full">
                           <Stack
@@ -616,27 +683,30 @@ export const MyPickGrid = forwardRef<
                             p={{ base: '1.5', sm: '3' }}
                             color={disabled ? 'mypick.subtle' : 'mypick.muted'}
                           >
-                            {!disabled && <FaPlus size={exporting ? 28 : 18} />}
+                            {!disabled && (pickable || exporting) && (
+                              <FaPlus size={exporting ? 28 : 18} />
+                            )}
                             <Text
                               fontSize={exporting ? 'xs' : { base: '3xs', md: '2xs' }}
                               fontWeight="semibold"
-                              letterSpacing="0.12em"
+                              letterSpacing="0.08em"
                               lineHeight="1.15"
                               textAlign="center"
                               textTransform="uppercase"
                               wordBreak="keep-all"
-                              whiteSpace="nowrap"
+                              lineClamp={2}
+                              whiteSpace="normal"
                             >
                               {disabled
                                 ? t('mypick.no_options')
-                                : editable
+                                : pickable
                                   ? emptyCellLabel(col)
                                   : t('mypick.no_pick')}
                             </Text>
                           </Stack>
                         </Center>
                       )}
-                      {editable && !exporting && pickedId && (
+                      {pickable && !exporting && pickedId && (
                         <Box
                           onClick={(e) => {
                             e.stopPropagation();

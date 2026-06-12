@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { Box, Center, Grid, HStack, Stack } from 'styled-system/jsx';
@@ -7,25 +7,33 @@ import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { Pagination } from '~/components/ui/pagination';
 import { IconButton } from '~/components/ui/icon-button';
+import { Skeleton } from '~/components/ui/skeleton';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { SongCard } from '~/components/songs/SongCard';
 import { SongTable } from '~/components/songs/SongTable';
-import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
-import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
 import { usePerformances, useSeries, useSetlists, useSongs } from '~/hooks/useData';
-import { tallyAllSongPerformances, tallySongs } from '~/utils/song-tally';
+import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
-import { foldKana } from '~/utils/event-filter';
 import type { Performance, Song } from '~/types';
 
 const PAGE_SIZE = 48;
 
 type HeardFilter = '' | 'heard' | 'unheard';
 type SortKey = 'count' | 'release' | 'name';
+const SongDetailDialog = lazy(() =>
+  import('~/components/songs/SongDetailDialog').then((module) => ({
+    default: module.SongDetailDialog
+  }))
+);
+const EventDetailDialog = lazy(() =>
+  import('~/components/events/EventDetailDialog').then((module) => ({
+    default: module.EventDetailDialog
+  }))
+);
 
 export default function Page() {
   const { t } = useTranslation();
@@ -45,59 +53,25 @@ export default function Page() {
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-songs-view', 'cards');
   const effectiveView = columns === 1 ? 'cards' : view;
 
-  const performanceById = useMemo(
-    () => new Map(performances.map((p) => [p.id, p])),
-    [performances]
+  const derived = useDerivedDataWorker(
+    'songs',
+    { records, performances, setlists, songs, search, seriesId, heardFilter, sort },
+    [records, performances, setlists, songs, search, seriesId, heardFilter, sort]
   );
-
-  const tally = useMemo(
-    () => tallySongs(records, performanceById, setlists),
-    [records, performanceById, setlists]
-  );
+  const tally = useMemo(() => derived.result?.tally ?? [], [derived.result]);
   const tallyById = useMemo(() => new Map(tally.map((e) => [e.songId, e])), [tally]);
   const allPerformanceTally = useMemo(
-    () => tallyAllSongPerformances(performanceById, setlists),
-    [performanceById, setlists]
+    () => derived.result?.allPerformanceTally ?? [],
+    [derived.result]
   );
   const allPerformanceTallyById = useMemo(
     () => new Map(allPerformanceTally.map((e) => [e.songId, e])),
     [allPerformanceTally]
   );
-
-  const filtered = useMemo(() => {
-    const q = foldKana(search.trim());
-    const list = songs.filter((song) => {
-      if (q) {
-        const haystack = foldKana(
-          `${song.name} ${song.phoneticName ?? ''} ${song.englishName ?? ''}`
-        );
-        if (!haystack.includes(q)) return false;
-      }
-      if (seriesId && !song.seriesIds.map(String).includes(seriesId)) return false;
-      const heard = (tallyById.get(song.id)?.count ?? 0) > 0;
-      if (heardFilter === 'heard' && !heard) return false;
-      if (heardFilter === 'unheard' && heard) return false;
-      return true;
-    });
-    const count = (s: Song) => tallyById.get(s.id)?.count ?? 0;
-    if (sort === 'count') {
-      list.sort(
-        (a, b) => count(b) - count(a) || (b.releasedOn ?? '').localeCompare(a.releasedOn ?? '')
-      );
-    } else if (sort === 'release') {
-      list.sort((a, b) => (b.releasedOn ?? '').localeCompare(a.releasedOn ?? ''));
-    } else {
-      list.sort((a, b) => (a.phoneticName ?? a.name).localeCompare(b.phoneticName ?? b.name, 'ja'));
-    }
-    return list;
-  }, [songs, search, seriesId, heardFilter, sort, tallyById]);
-
-  const scopeSongs = useMemo(
-    () => (seriesId ? songs.filter((s) => s.seriesIds.map(String).includes(seriesId)) : songs),
-    [songs, seriesId]
-  );
-  const heardInScope = scopeSongs.filter((s) => (tallyById.get(s.id)?.count ?? 0) > 0).length;
-  const percent = scopeSongs.length ? Math.round((heardInScope / scopeSongs.length) * 100) : 0;
+  const filtered = derived.result?.filtered ?? [];
+  const scopeTotal = derived.result?.scopeTotal ?? songs.length;
+  const heardInScope = derived.result?.heardInScope ?? 0;
+  const percent = derived.result?.percent ?? 0;
 
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const selectedHeardAt = selected ? (tallyById.get(selected.id)?.performances ?? []) : [];
@@ -135,7 +109,7 @@ export default function Page() {
             </HStack>
           </HStack>
           <Text color="fg.muted" fontSize="sm">
-            {t('songs.progress', { heard: heardInScope, total: scopeSongs.length, percent })}
+            {t('songs.progress', { heard: heardInScope, total: scopeTotal, percent })}
           </Text>
         </HStack>
         <Box borderRadius="full" w="full" h="2" bgColor="bg.subtle" overflow="hidden">
@@ -215,8 +189,23 @@ export default function Page() {
         <Text color="fg.muted" fontSize="sm">
           {t('songs.results_count', { count: filtered.length })}
         </Text>
-        {filtered.length === 0 && <Text color="fg.muted">{t('songs.no_results')}</Text>}
-        {effectiveView === 'table' ? (
+        {derived.pending ? (
+          <Grid
+            gap="2"
+            gridTemplateColumns={{
+              base: '1fr',
+              md: 'repeat(2, 1fr)',
+              xl: 'repeat(3, 1fr)',
+              '2xl': 'repeat(4, 1fr)'
+            }}
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <Skeleton key={i} borderRadius="l2" h="18" />
+            ))}
+          </Grid>
+        ) : filtered.length === 0 ? (
+          <Text color="fg.muted">{t('songs.no_results')}</Text>
+        ) : effectiveView === 'table' ? (
           <SongTable
             songs={pageItems}
             heardCount={(id) => tallyById.get(id)?.count ?? 0}
@@ -256,23 +245,31 @@ export default function Page() {
             />
           </Center>
         )}
-        <SongDetailDialog
-          song={selected}
-          heardAt={selectedHeardAt}
-          performedAt={selectedPerformedAt}
-          performanceCount={selectedPerformanceCount}
-          open={selected !== undefined}
-          onClose={() => setSelected(undefined)}
-          onSelectEvent={(p) => {
-            setSelected(undefined);
-            setSelectedEvent(p);
-          }}
-        />
-        <EventDetailDialog
-          performance={selectedEvent}
-          open={selectedEvent !== undefined}
-          onClose={() => setSelectedEvent(undefined)}
-        />
+        {selected && (
+          <Suspense fallback={null}>
+            <SongDetailDialog
+              song={selected}
+              heardAt={selectedHeardAt}
+              performedAt={selectedPerformedAt}
+              performanceCount={selectedPerformanceCount}
+              open={selected !== undefined}
+              onClose={() => setSelected(undefined)}
+              onSelectEvent={(p) => {
+                setSelected(undefined);
+                setSelectedEvent(p);
+              }}
+            />
+          </Suspense>
+        )}
+        {selectedEvent && (
+          <Suspense fallback={null}>
+            <EventDetailDialog
+              performance={selectedEvent}
+              open={selectedEvent !== undefined}
+              onClose={() => setSelectedEvent(undefined)}
+            />
+          </Suspense>
+        )}
       </Stack>
     </>
   );

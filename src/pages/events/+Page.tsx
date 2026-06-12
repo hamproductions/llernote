@@ -1,33 +1,37 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { Center, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Pagination } from '~/components/ui/pagination';
 import { IconButton } from '~/components/ui/icon-button';
+import { Skeleton } from '~/components/ui/skeleton';
 import { TourCard } from '~/components/events/TourCard';
 import { EventTable } from '~/components/events/EventTable';
 import { EventFiltersBar } from '~/components/events/EventFiltersBar';
-import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { useArtistById, usePerformances, useSetlists, useSongById } from '~/hooks/useData';
+import { useArtists, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
 import { useColumnCount } from '~/hooks/useColumnCount';
-import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
-import { EMPTY_FILTERS, filterEvents, type EventFilters } from '~/utils/event-filter';
-import { groupByTour } from '~/utils/tour';
+import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
+import { EMPTY_FILTERS, type EventFilters } from '~/utils/event-filter';
 import type { Performance } from '~/types';
 
 const PAGE_SIZE = 24;
+const EventDetailDialog = lazy(() =>
+  import('~/components/events/EventDetailDialog').then((module) => ({
+    default: module.EventDetailDialog
+  }))
+);
 
 export default function Page() {
   const { t } = useTranslation();
   const performances = usePerformances();
   const setlists = useSetlists();
-  const songById = useSongById();
-  const artistById = useArtistById();
+  const songs = useSongs();
+  const artists = useArtists();
   const { map } = useAttendance();
   const [filters, setFilters] = useState<EventFilters>(EMPTY_FILTERS);
 
@@ -39,18 +43,13 @@ export default function Page() {
   const [page, setPage] = useState(1);
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-events-view', 'cards');
   const columns = useColumnCount();
-
-  const performanceCharacters = useMemo(
-    () => buildPerformanceCharacterMap(setlists, songById, artistById),
-    [setlists, songById, artistById]
+  const derived = useDerivedDataWorker(
+    'events',
+    { performances, filters, attendanceMap: map, setlists, songs, artists },
+    [performances, filters, map, setlists, songs, artists]
   );
-
-  const filtered = useMemo(
-    () => filterEvents(performances, filters, map, performanceCharacters),
-    [performances, filters, map, performanceCharacters]
-  );
-
-  const tours = useMemo(() => groupByTour(filtered), [filtered]);
+  const filtered = derived.result?.filtered ?? [];
+  const tours = derived.result?.tours ?? [];
 
   const effectiveView = columns === 1 ? 'cards' : view;
   const totalCount = effectiveView === 'table' ? filtered.length : tours.length;
@@ -99,8 +98,15 @@ export default function Page() {
             setPage(1);
           }}
         />
-        {totalCount === 0 && <Text color="fg.muted">{t('events.no_results')}</Text>}
-        {effectiveView === 'table' ? (
+        {derived.pending ? (
+          <Stack gap="3">
+            {Array.from({ length: 8 }, (_, i) => (
+              <Skeleton key={i} borderRadius="l2" h="24" />
+            ))}
+          </Stack>
+        ) : totalCount === 0 ? (
+          <Text color="fg.muted">{t('events.no_results')}</Text>
+        ) : effectiveView === 'table' ? (
           <EventTable
             performances={filtered}
             pageSize={PAGE_SIZE}
@@ -138,11 +144,15 @@ export default function Page() {
             />
           </Center>
         )}
-        <EventDetailDialog
-          performance={selected}
-          open={selected !== undefined}
-          onClose={() => setSelected(undefined)}
-        />
+        {selected && (
+          <Suspense fallback={null}>
+            <EventDetailDialog
+              performance={selected}
+              open={selected !== undefined}
+              onClose={() => setSelected(undefined)}
+            />
+          </Suspense>
+        )}
       </Stack>
     </>
   );

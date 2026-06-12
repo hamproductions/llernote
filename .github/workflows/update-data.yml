@@ -67,7 +67,7 @@ jobs:
           bun scripts/wiki-album-art.ts --prune
 
       - name: Build
-        run: PUBLIC_ENV__BASE_URL=/${{ github.event.repository.name }} bun run ci:build
+        run: PUBLIC_ENV__BASE_URL=/${{ github.event.repository.name }} PUBLIC_ENV__EVENTERNOTE_API_URL=${{ vars.EVENTERNOTE_API_URL }} bun run ci:build
 
       - name: Commit and push internal scripts repo updates
         run: |

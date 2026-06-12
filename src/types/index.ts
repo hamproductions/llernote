@@ -60,6 +60,7 @@ export interface Performance {
   tourName: string;
   date: string;
   venue: string;
+  venueId?: string;
   seriesIds: string[];
   status: PerformanceStatus;
   hasSetlist: boolean;
@@ -72,6 +73,47 @@ export interface Performance {
   canceled?: boolean;
   note?: string;
   category: EventCategory;
+}
+
+export interface VenueInfo {
+  id: string;
+  name: string;
+  performanceCount?: number;
+  firstDate?: string;
+  lastDate?: string;
+  seriesIds?: number[];
+  queries?: string[];
+  source?: 'wikidata' | 'osm';
+  sourceId?: string;
+  confidence?: number;
+  reviewRequired?: boolean;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  country?: string;
+  region?: string;
+  locality?: string;
+  website?: string;
+  candidates?: unknown[];
+}
+
+export interface VenueSummary {
+  id: string;
+  name: string;
+  performanceCount: number;
+  attendedCount: number;
+  firstDate: string;
+  lastDate: string;
+  seriesIds: string[];
+  location?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  country?: string;
+  region?: string;
+  locality?: string;
+  website?: string;
+  info?: VenueInfo;
 }
 
 export type EventCategory = 'live' | 'online' | 'tv';

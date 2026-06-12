@@ -18,7 +18,7 @@ interface RawEntry {
     startTime?: string | null;
     note?: string | null;
   };
-  concert?: { name?: string | null } | null;
+  concert?: { name?: string | null; venue?: { id: string; name: string } | null } | null;
   tour?: { tourType?: { name?: string | null } | null } | null;
 }
 
@@ -32,6 +32,7 @@ const extra = Object.fromEntries(
     {
       performanceName: entry.performance.name ?? undefined,
       concertName: entry.concert?.name ?? undefined,
+      venueId: entry.concert?.venue?.id ?? undefined,
       openTime: trimTime(entry.performance.openTime),
       startTime: trimTime(entry.performance.startTime),
       tourType: entry.tour?.tourType?.name ?? undefined,

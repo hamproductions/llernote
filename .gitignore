@@ -40,3 +40,4 @@ coverage*
 .env
 
 dogfood-output
+data/enrichment-cache/

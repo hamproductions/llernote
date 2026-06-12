@@ -7,7 +7,18 @@ import characterInfo from '../../data/character-info.json';
 import artistsInfo from '../../data/artists-info.json';
 import seriesInfo from '../../data/series-info.json';
 import unitsInfo from '../../data/units.json';
-import type { Artist, Character, Performance, Series, Setlist, Song, Unit } from '~/types';
+import venueInfo from '../../data/venue-info.json';
+import eventernoteMap from '../../data/eventernote-map.json';
+import type {
+  Artist,
+  Character,
+  Performance,
+  Series,
+  Setlist,
+  Song,
+  Unit,
+  VenueInfo
+} from '~/types';
 
 const extraById = eventExtra as Record<string, Partial<Performance>>;
 
@@ -42,12 +53,22 @@ const characters = characterInfo as unknown as Character[];
 const artists = artistsInfo as unknown as Artist[];
 const series = seriesInfo as Series[];
 const units = unitsInfo as unknown as Unit[];
+const venues = venueInfo as VenueInfo[];
 
 const sortedPerformances = [...performances].sort((a, b) => b.date.localeCompare(a.date));
 const performanceById = new Map(performances.map((p) => [p.id, p]));
 const songById = new Map(songs.map((s) => [s.id, s]));
 const artistById = new Map(artists.map((a) => [a.id, a]));
 const seriesById = new Map(series.map((s) => [s.id, s]));
+const venueById = new Map(venues.map((v) => [v.id, v]));
+const eventernoteIdByPerformanceId = new Map(
+  Object.entries(eventernoteMap as Record<string, string>)
+);
+const performanceByEventernoteId = new Map(
+  [...eventernoteIdByPerformanceId]
+    .map(([performanceId, eventernoteId]) => [eventernoteId, performanceById.get(performanceId)])
+    .filter((entry): entry is [string, Performance] => entry[1] !== undefined)
+);
 
 export const usePerformances = () => sortedPerformances;
 export const usePerformanceById = () => performanceById;
@@ -64,6 +85,10 @@ export const useArtistById = () => artistById;
 export const useSeries = () => series;
 export const useSeriesById = () => seriesById;
 export const useUnits = () => units;
+export const useVenues = () => venues;
+export const useVenueById = () => venueById;
+export const useEventernoteIdByPerformanceId = () => eventernoteIdByPerformanceId;
+export const usePerformanceByEventernoteId = () => performanceByEventernoteId;
 
 export const useEventYears = () =>
   useMemo(() => {

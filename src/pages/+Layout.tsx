@@ -1,11 +1,12 @@
 import { join } from 'path-browserify';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BiMenu, BiX } from 'react-icons/bi';
 import { Box, Container, HStack, Stack } from 'styled-system/jsx';
 import { ColorModeToggle } from '~/components/layout/ColorModeToggle';
 import { Footer } from '~/components/layout/Footer';
 import { LanguageToggle } from '~/components/layout/LanguageToggle';
+import { SettingsMenu } from '~/components/layout/SettingsMenu';
 import { Drawer } from '~/components/ui/drawer';
 import { Link } from '~/components/ui/link';
 import { Text } from '~/components/ui/text';
@@ -18,16 +19,21 @@ const NAV_ITEMS = [
   { path: '/', key: 'navigation.home', exact: true },
   { path: '/events', key: 'navigation.events' },
   { path: '/calendar', key: 'navigation.calendar' },
+  { path: '/venues', key: 'navigation.venues' },
   { path: '/stats', key: 'navigation.stats' },
   { path: '/songs', key: 'navigation.songs' },
   { path: '/mypick', key: 'navigation.mypick' }
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { urlPathname } = usePageContext();
   const currentPath = join(import.meta.env.BASE_URL, urlPathname);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
 
   function NavLinks() {
     return (
@@ -81,6 +87,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <HStack hideBelow="md" justifySelf="flex-end">
               <LanguageToggle />
               <ColorModeToggle />
+              <SettingsMenu />
             </HStack>
           </HStack>
           {children}
@@ -110,7 +117,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Drawer.Footer>
               <HStack justifyContent="space-between" w="full">
                 <LanguageToggle />
-                <ColorModeToggle />
+                <HStack>
+                  <ColorModeToggle />
+                  <SettingsMenu />
+                </HStack>
               </HStack>
             </Drawer.Footer>
           </Drawer.Content>

@@ -8,6 +8,7 @@ import { IconButton } from '~/components/ui/icon-button';
 import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
+import { VenueText } from './VenueText';
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
 import { eventernoteSearchUrl } from '~/utils/share';
@@ -97,7 +98,7 @@ function LegRow({
           <StatusDot performance={performance} />
         </HStack>
         <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-          {performance.venue}
+          <VenueText performance={performance} compact />
         </Text>
       </Stack>
       <HStack onClick={(e) => e.stopPropagation()} gap="0.5" flexShrink={0}>
@@ -197,7 +198,7 @@ export function TourCard({
           <CardHeader tour={tour} />
           <HStack gap="2" justifyContent="space-between">
             <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-              {first.venue}
+              <VenueText performance={first} compact />
               {first.startTime ? `・${first.startTime}〜` : ''}
             </Text>
             <HStack onClick={(e) => e.stopPropagation()} gap="1" flexShrink={0}>

@@ -184,11 +184,26 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
             </Text>
             <BarList
               items={stats.byVenue.slice(0, 5).map((v) => ({
-                key: v.venue,
+                key: v.venueId ?? v.venue,
                 label: v.venue,
                 count: v.count
               }))}
               max={Math.max(...stats.byVenue.map((v) => v.count))}
+            />
+          </Stack>
+        )}
+        {stats.byCity.length > 0 && (
+          <Stack gap="2">
+            <Text fontSize="sm" fontWeight="semibold">
+              {t('stats.by_city')}
+            </Text>
+            <BarList
+              items={stats.byCity.slice(0, 5).map((v) => ({
+                key: v.city,
+                label: v.city,
+                count: v.count
+              }))}
+              max={Math.max(...stats.byCity.map((v) => v.count))}
             />
           </Stack>
         )}

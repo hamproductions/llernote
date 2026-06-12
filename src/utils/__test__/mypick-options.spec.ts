@@ -48,6 +48,12 @@ const artists: Artist[] = [
     name: '女性シンガー',
     characters: [null as unknown as string],
     seriesIds: [1]
+  },
+  {
+    id: 'unit-alias',
+    name: 'にこ、絵里、希',
+    characters: ['2', '6', '9'],
+    seriesIds: [1]
   }
 ];
 
@@ -113,6 +119,27 @@ describe('mypick options', () => {
     expect(songMatchesMyPickRow(song('multi-song', ['group', 'unit']), row, artistById)).toBe(
       false
     );
+  });
+
+  it('treats same-member same-series artists as aliases of one unit', () => {
+    const buckets = buildArtistBuckets(artists);
+    const row: MyPickRow = { type: 'artist', id: 'unit' };
+    const aliasRow: MyPickRow = { type: 'artist', id: 'unit-alias' };
+
+    expect(buckets.unit.map((artist) => artist.id)).toEqual(['unit']);
+    expect(buckets.aliasIds.get('unit')).toEqual(new Set(['unit', 'unit-alias']));
+    expect(artistsForRow(aliasRow, artistById, buckets).map((artist) => artist.id)).toEqual([
+      'unit',
+      'unit-alias'
+    ]);
+    expect(
+      songMatchesMyPickRow(song('alias-song', ['unit-alias']), row, artistById, buckets.aliasIds)
+    ).toBe(true);
+    expect(
+      songMatchesMyPickRow(song('unit-song', ['unit']), aliasRow, artistById, buckets.aliasIds)
+    ).toBe(true);
+    expect(buckets.group.map((artist) => artist.id)).toContain('aqours');
+    expect(buckets.group.map((artist) => artist.id)).toContain('yohane');
   });
 
   it('keeps group, unit, solo, and others category songs separate', () => {

@@ -16,7 +16,10 @@ const isProduction = process.env.NODE_ENV === 'production';
 export default defineConfig({
   define: {
     'import.meta.env.PUBLIC_ENV__APP_VERSION': JSON.stringify(appVersion),
-    'import.meta.env.PUBLIC_ENV__BUILD_TIMESTAMP': JSON.stringify(buildTimestamp)
+    'import.meta.env.PUBLIC_ENV__BUILD_TIMESTAMP': JSON.stringify(buildTimestamp),
+    'import.meta.env.PUBLIC_ENV__EVENTERNOTE_API_URL': JSON.stringify(
+      process.env.PUBLIC_ENV__EVENTERNOTE_API_URL ?? ''
+    )
   },
   plugins: [
     tsconfigPaths(),
@@ -40,6 +43,16 @@ export default defineConfig({
     sourcemap: isProduction ? 'hidden' : false,
     cssMinify: isProduction,
     minify: isProduction,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('/data/performance-setlists.json')) return 'data-setlists';
+          if (id.includes('/data/')) return 'data-core';
+          if (id.includes('/components/events/EventDetailDialog')) return 'event-detail';
+          if (id.includes('/components/songs/SongDetailDialog')) return 'song-detail';
+        }
+      }
+    },
     commonjsOptions: {
       exclude: ['react/cjs', 'react-dom/cjs']
     }

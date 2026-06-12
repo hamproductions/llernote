@@ -1,6 +1,16 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaDownload, FaMusic, FaPlus, FaRegCalendar, FaUser, FaXmark } from 'react-icons/fa6';
+import {
+  FaDownload,
+  FaLink,
+  FaMusic,
+  FaPen,
+  FaPlus,
+  FaRegCalendar,
+  FaRotateLeft,
+  FaUser,
+  FaXmark
+} from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
@@ -28,7 +38,7 @@ import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { getPicUrl } from '~/utils/assets';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import { localizedName } from '~/utils/names';
-import { decodeMyPick } from '~/utils/mypick-share';
+import { decodeMyPick, encodeMyPick, myPickShareUrl } from '~/utils/mypick-share';
 import { clickable } from '~/utils/clickable';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
 import type { MyPickColumn, MyPickConfig, MyPickRow } from '~/types/attendance';
@@ -38,9 +48,14 @@ import { getMyPickColumnYears } from '~/utils/mypick-years';
 import {
   artistsForRow,
   buildArtistBuckets,
+  isGroupSong,
+  isSoloSong,
+  isUnitSong,
+  songArtistIds,
   songMatchesMyPickRow,
   type MyPickRowCategory
 } from '~/utils/mypick-options';
+import { useToaster } from '~/context/ToasterContext';
 
 type RowCategory = MyPickRowCategory;
 type ColumnKind = 'member' | 'song' | 'event';
@@ -70,6 +85,7 @@ const normalizeConfig = (config: MyPickConfig): MyPickConfig => ({
 
 export default function Page() {
   const { t, i18n } = useTranslation();
+  const { toast } = useToaster();
   const { myPick } = useMyPick();
   const series = useSeries();
   const artists = useArtists();
@@ -91,7 +107,9 @@ export default function Page() {
   const [columnKind, setColumnKind] = useState<ColumnKind>('song');
   const [columnYear, setColumnYear] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  const exportGridRef = useRef<HTMLDivElement>(null);
 
   const [shared, setShared] = useState<ReturnType<typeof decodeMyPick>>(null);
 
@@ -117,6 +135,9 @@ export default function Page() {
   const hasValues = Object.values(myPick?.cells ?? {}).some((value) => value != null);
   const columnsChanged =
     config.columns.map(columnKey).join('|') !== DEFAULT_CONFIG.columns.map(columnKey).join('|');
+  const rowsChanged =
+    config.rows.map(rowKey).join('|') !== DEFAULT_CONFIG.rows.map(rowKey).join('|');
+  const configChanged = rowsChanged || columnsChanged;
   const artistBuckets = useMemo(() => buildArtistBuckets(artists), [artists]);
 
   const rowArtistsFor = (row: MyPickRow) => {
@@ -169,22 +190,32 @@ export default function Page() {
         .filter((s) => {
           if (year && !(s.releasedOn ?? '').startsWith(year)) return false;
           if (rowArtistIds.size > 0 || row.type === 'category' || row.type === 'series') {
-            return songMatchesMyPickRow(s, row, artistById);
+            return songMatchesMyPickRow(s, row, artistById, artistBuckets.aliasIds);
           }
           return false;
         })
-        .map((s) => ({
-          id: s.id,
-          label: localizedName(i18n.language, s.name, s.englishName),
-          sub: s.releasedOn,
-          englishName: s.englishName,
-          phoneticName: s.phoneticName,
-          searchText: s.artists
-            ?.map((artist) => artistById.get(artist.id)?.name)
-            .filter(Boolean)
-            .join(' '),
-          image: hasSongThumb(s.id) ? getPicUrl(s.id, 'thumbnail') : undefined
-        }));
+        .map((s) => {
+          const ids = songArtistIds(s, artistById);
+          return {
+            id: s.id,
+            label: localizedName(i18n.language, s.name, s.englishName),
+            sub: s.releasedOn,
+            englishName: s.englishName,
+            phoneticName: s.phoneticName,
+            searchText: s.artists
+              ?.map((artist) => artistById.get(artist.id)?.name)
+              .filter(Boolean)
+              .join(' '),
+            image: hasSongThumb(s.id) ? getPicUrl(s.id, 'thumbnail') : undefined,
+            category: isGroupSong(ids, artistById)
+              ? 'group'
+              : isUnitSong(ids, artistById)
+                ? 'unit'
+                : isSoloSong(ids, artistById)
+                  ? 'solo'
+                  : 'others'
+          };
+        });
     }
     return performances
       .filter((p) => {
@@ -278,17 +309,27 @@ export default function Page() {
     setAddingColumn(false);
   };
   const downloadImage = async () => {
-    if (!gridRef.current || exporting) return;
+    if (exporting) return;
     setExporting(true);
     await new Promise((resolve) => setTimeout(resolve, 80));
+    if (!exportGridRef.current) {
+      setExporting(false);
+      return;
+    }
     try {
       await downloadElementAsImage(
-        gridRef.current,
+        exportGridRef.current,
         `mypick-${new Date().toISOString().slice(0, 10)}.png`
       );
     } finally {
       setExporting(false);
     }
+  };
+  const shareUrl = async () => {
+    if (!myPick) return;
+    const url = myPickShareUrl(encodeMyPick(myPick, config.rows, config.columns));
+    await navigator.clipboard.writeText(url);
+    toast({ title: t('share.copied'), type: 'success' });
   };
   const rowBuckets = useMemo(
     () => ({
@@ -394,7 +435,7 @@ export default function Page() {
             </Text>
           </Stack>
           <HStack gap="3" flexWrap="wrap">
-            {!shared && (
+            {!shared && editing && (
               <Button
                 size="sm"
                 variant="outline"
@@ -408,7 +449,7 @@ export default function Page() {
                 {t('mypick.add_row')}
               </Button>
             )}
-            {!shared && (
+            {!shared && editing && (
               <Button
                 size="sm"
                 variant="outline"
@@ -422,7 +463,7 @@ export default function Page() {
                 {t('mypick.add_column')}
               </Button>
             )}
-            {!shared && (
+            {!shared && editing && (
               <Button
                 size="sm"
                 variant="outline"
@@ -435,7 +476,7 @@ export default function Page() {
                 {t('mypick.reset_values')}
               </Button>
             )}
-            {!shared && (
+            {!shared && editing && (
               <Button
                 size="sm"
                 variant="outline"
@@ -446,6 +487,39 @@ export default function Page() {
                 bgColor="mypick.actionMuted"
               >
                 {t('mypick.reset_columns')}
+              </Button>
+            )}
+            {!shared && editing && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!configChanged}
+                onClick={() => {
+                  setMyPick({ cells: {}, config: DEFAULT_CONFIG });
+                  setEditing(false);
+                }}
+                gap="2"
+                borderColor="mypick.actionBorder"
+                color={configChanged ? 'mypick.text' : 'mypick.subtle'}
+                bgColor="mypick.actionMuted"
+              >
+                <FaRotateLeft size={12} />
+                {t('mypick.reset_preset')}
+              </Button>
+            )}
+            {!shared && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!myPick}
+                onClick={shareUrl}
+                gap="2"
+                borderColor="mypick.actionBorder"
+                color={myPick ? 'mypick.text' : 'mypick.subtle'}
+                bgColor="mypick.actionMuted"
+              >
+                <FaLink size={12} />
+                {t('mypick.share_url')}
               </Button>
             )}
             <Button
@@ -461,6 +535,20 @@ export default function Page() {
               <FaDownload size={12} />
               {t('mypick.download_image')}
             </Button>
+            {!shared && (
+              <Button
+                size="sm"
+                variant={editing ? 'subtle' : 'outline'}
+                onClick={() => setEditing((value) => !value)}
+                gap="2"
+                borderColor="mypick.actionBorder"
+                color={editing ? 'accent.default' : 'mypick.text'}
+                bgColor={editing ? 'mypick.action' : 'mypick.actionMuted'}
+              >
+                <FaPen size={12} />
+                {editing ? t('mypick.done_editing') : t('mypick.edit_grid')}
+              </Button>
+            )}
           </HStack>
         </HStack>
 
@@ -656,7 +744,8 @@ export default function Page() {
           ref={gridRef}
           myPick={shared ? shared.myPick : myPick}
           rows={config.rows}
-          editable={!shared}
+          editable={!shared && editing}
+          pickable={!shared}
           onPickCell={(row, column) => setPicking({ row, column })}
           onClearCell={(key) => setMyPickCell(key, null)}
           onRemoveRow={(row) =>
@@ -676,9 +765,29 @@ export default function Page() {
           onAddRow={() => setAddingRow(true)}
           onAddColumn={() => setAddingColumn(true)}
           isCellDisabled={(row, column) => getPickItems(row, column).length === 0}
-          exporting={exporting}
           columns={config.columns}
         />
+
+        {exporting && (
+          <Box
+            position="fixed"
+            top="0"
+            left="-10000px"
+            w="fit-content"
+            h="fit-content"
+            overflow="visible"
+            pointerEvents="none"
+          >
+            <MyPickGrid
+              ref={exportGridRef}
+              myPick={shared ? shared.myPick : myPick}
+              rows={config.rows}
+              exporting
+              isCellDisabled={(row, column) => getPickItems(row, column).length === 0}
+              columns={config.columns}
+            />
+          </Box>
+        )}
 
         <PickDialog
           title={pickTitle}
@@ -698,6 +807,17 @@ export default function Page() {
             (picking?.column.type === 'slot' && picking.column.slot === 'song')
               ? 'tiles'
               : 'auto'
+          }
+          categories={
+            (picking?.column.type === 'year' && picking.column.slot === 'song') ||
+            (picking?.column.type === 'slot' && picking.column.slot === 'song')
+              ? [
+                  { key: 'group', label: t('mypick.row_group') },
+                  { key: 'unit', label: t('mypick.row_unit') },
+                  { key: 'solo', label: t('mypick.row_solo') },
+                  { key: 'others', label: t('mypick.row_others') }
+                ]
+              : undefined
           }
         />
 

@@ -1,5 +1,6 @@
 import type { AttendanceRecord } from '~/types/attendance';
-import type { Performance, Setlist } from '~/types';
+import type { Performance, Setlist, VenueInfo } from '~/types';
+import { hasUsableVenueInfo, venueKey } from './venues';
 
 export interface StatsSummary {
   attendedCount: number;
@@ -9,9 +10,13 @@ export interface StatsSummary {
   venuesVisited: number;
   firstEvent?: Performance;
   latestEvent?: Performance;
+  attendanceEligibleCount: number;
+  attendanceRate: number;
+  attendanceBySeries: { seriesId: string; total: number; attended: number; rate: number }[];
   byYear: { year: string; count: number }[];
   bySeries: { seriesId: string; count: number }[];
-  byVenue: { venue: string; count: number }[];
+  byVenue: { venue: string; venueId?: string; count: number }[];
+  byCity: { city: string; count: number }[];
   byWatchType: { watchType: string; count: number }[];
   byCategory: { category: string; count: number }[];
   byMonth: Map<string, number>;
@@ -28,7 +33,8 @@ export const computeStats = (
   records: AttendanceRecord[],
   performanceById: Map<string, Performance>,
   setlists: Record<string, Setlist>,
-  performances: Performance[] = [...performanceById.values()]
+  performances: Performance[] = [...performanceById.values()],
+  venueById: Map<string, VenueInfo> = new Map()
 ): StatsSummary => {
   const today = (() => {
     const now = new Date();
@@ -48,10 +54,15 @@ export const computeStats = (
 
   const byYear = new Map<string, number>();
   const bySeries = new Map<string, number>();
-  const byVenue = new Map<string, number>();
+  const byVenue = new Map<string, { venue: string; venueId?: string; count: number }>();
+  const byCity = new Map<string, number>();
   const byWatchType = new Map<string, number>();
   const byCategory = new Map<string, number>();
   const byMonth = new Map<string, number>();
+  const attendanceBySeries = new Map<
+    string,
+    { seriesId: string; total: number; attended: number }
+  >();
   const byMonthEvents = new Map<
     string,
     { month: string; total: number; attended: number; going: number }
@@ -66,7 +77,19 @@ export const computeStats = (
     if (record?.status === 'attended') entry.attended += 1;
     if (record?.status === 'interested' && performance.date > today) entry.going += 1;
     byMonthEvents.set(month, entry);
+    if (performance.date <= today) {
+      for (const seriesId of performance.seriesIds) {
+        const seriesEntry = attendanceBySeries.get(seriesId) ?? { seriesId, total: 0, attended: 0 };
+        seriesEntry.total += 1;
+        if (record?.status === 'attended') seriesEntry.attended += 1;
+        attendanceBySeries.set(seriesId, seriesEntry);
+      }
+    }
   }
+
+  const attendanceEligibleCount = performances.filter(
+    (performance) => performance.date <= today
+  ).length;
 
   for (const { record, performance } of attended) {
     const year = performance.date.slice(0, 4);
@@ -75,7 +98,18 @@ export const computeStats = (
       bySeries.set(seriesId, (bySeries.get(seriesId) ?? 0) + 1);
     }
     if (performance.venue) {
-      byVenue.set(performance.venue, (byVenue.get(performance.venue) ?? 0) + 1);
+      const key = venueKey(performance);
+      const venue = byVenue.get(key);
+      byVenue.set(key, {
+        venue: venue?.venue ?? performance.venue,
+        venueId: performance.venueId,
+        count: (venue?.count ?? 0) + 1
+      });
+      const venueInfo = performance.venueId ? venueById.get(performance.venueId) : undefined;
+      const city = hasUsableVenueInfo(venueInfo)
+        ? (venueInfo?.region ?? venueInfo?.locality)
+        : undefined;
+      if (city) byCity.set(city, (byCity.get(city) ?? 0) + 1);
     }
     const watchType = record.watchType ?? 'live';
     byWatchType.set(watchType, (byWatchType.get(watchType) ?? 0) + 1);
@@ -99,15 +133,29 @@ export const computeStats = (
     venuesVisited: byVenue.size,
     firstEvent: attended[0]?.performance,
     latestEvent: attended[attended.length - 1]?.performance,
+    attendanceEligibleCount,
+    attendanceRate:
+      attendanceEligibleCount > 0
+        ? Math.round((attended.length / attendanceEligibleCount) * 100)
+        : 0,
+    attendanceBySeries: [...attendanceBySeries.values()]
+      .map((entry) => ({
+        ...entry,
+        rate: entry.total > 0 ? Math.round((entry.attended / entry.total) * 100) : 0
+      }))
+      .sort((a, b) => b.rate - a.rate || b.attended - a.attended || b.total - a.total),
     byYear: [...byYear.entries()]
       .map(([year, count]) => ({ year, count }))
       .sort((a, b) => a.year.localeCompare(b.year)),
     bySeries: [...bySeries.entries()]
       .map(([seriesId, count]) => ({ seriesId, count }))
       .sort((a, b) => b.count - a.count),
-    byVenue: [...byVenue.entries()]
-      .map(([venue, count]) => ({ venue, count }))
-      .sort((a, b) => b.count - a.count),
+    byVenue: [...byVenue.values()].sort(
+      (a, b) => b.count - a.count || a.venue.localeCompare(b.venue)
+    ),
+    byCity: [...byCity.entries()]
+      .map(([city, count]) => ({ city, count }))
+      .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city)),
     byWatchType: [...byWatchType.entries()]
       .map(([watchType, count]) => ({ watchType, count }))
       .sort((a, b) => b.count - a.count),

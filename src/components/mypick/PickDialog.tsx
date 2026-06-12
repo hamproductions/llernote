@@ -16,6 +16,7 @@ export interface PickItem {
   englishName?: string;
   phoneticName?: string;
   searchText?: string;
+  category?: string;
   disabled?: boolean;
 }
 
@@ -28,17 +29,18 @@ function TileImage({ src }: { src?: string }) {
 
   return (
     <Box
-      style={{ aspectRatio: '1 / 1' }}
+      position="relative"
       flexShrink={0}
       borderColor="border.subtle"
       borderRadius="l2"
       borderWidth="1px"
       w="full"
+      pb="100%"
       bgColor="bg.default"
       overflow="hidden"
     >
       {failed || !src ? (
-        <Center w="full" h="full" color="fg.subtle">
+        <Center inset="0" position="absolute" color="fg.subtle">
           <FaMusic />
         </Center>
       ) : (
@@ -46,7 +48,14 @@ function TileImage({ src }: { src?: string }) {
           src={src}
           alt=""
           loading="lazy"
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          decoding="async"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            objectFit: 'cover',
+            width: '100%',
+            height: '100%'
+          }}
           onError={() => setFailed(true)}
         />
       )}
@@ -146,6 +155,7 @@ export function PickDialog({
   max,
   open,
   display = 'auto',
+  categories,
   onClose,
   onChange
 }: {
@@ -155,22 +165,42 @@ export function PickDialog({
   max: number;
   open: boolean;
   display?: 'auto' | 'tiles' | 'rows';
+  categories?: { key: string; label: string }[];
   onClose: () => void;
   onChange: (ids: string[]) => void;
 }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState('');
   const hasImages = items.some((item) => item.image);
   const showTiles = display === 'tiles' || (display === 'auto' && hasImages);
 
   useEffect(() => {
-    if (open) setSearch('');
+    if (open) {
+      setSearch('');
+      setActiveCategory('');
+    }
   }, [open]);
 
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      if (!item.category) continue;
+      counts.set(item.category, (counts.get(item.category) ?? 0) + 1);
+    }
+    return counts;
+  }, [items]);
+  const visibleCategories = (categories ?? []).filter(
+    (category) => (categoryCounts.get(category.key) ?? 0) > 0
+  );
+
   const filtered = useMemo(() => {
+    const scoped = activeCategory
+      ? items.filter((item) => item.category === activeCategory)
+      : items;
     const q = search.trim();
-    if (!q) return items.slice(0, 120);
-    return items
+    if (!q) return scoped.slice(0, 360);
+    return scoped
       .map((item) => {
         const searchable: SearchableItem = {
           id: item.id,
@@ -183,8 +213,8 @@ export function PickDialog({
       .filter(({ searchable }) => fuzzySearch(searchable, q))
       .toSorted((a, b) => getSearchScore(b.searchable, q) - getSearchScore(a.searchable, q))
       .map(({ item }) => item)
-      .slice(0, 120);
-  }, [items, search]);
+      .slice(0, 360);
+  }, [items, search, activeCategory]);
 
   const toggle = (id: string) => {
     if (selectedIds.includes(id)) {
@@ -210,7 +240,7 @@ export function PickDialog({
           color="mypick.text"
           bgColor="mypick.panelSolid"
         >
-          <Stack flex="1" gap="3" p={{ base: '4', md: '5' }} overflow="hidden">
+          <Stack flex="1" gap="3" minH="0" p={{ base: '4', md: '5' }} overflow="hidden">
             <HStack justifyContent="space-between" pr="8">
               <Dialog.Title>
                 <Text fontSize="xl" fontWeight="bold">
@@ -237,7 +267,37 @@ export function PickDialog({
               fontSize="md"
               bgColor="mypick.tile"
             />
-            <Box flex="1" overflowY="auto">
+            {visibleCategories.length > 0 && (
+              <HStack gap="1.5" flexWrap="wrap">
+                {[{ key: '', label: t('common.all') }, ...visibleCategories].map((category) => {
+                  const selected = activeCategory === category.key;
+                  const count = category.key
+                    ? (categoryCounts.get(category.key) ?? 0)
+                    : items.length;
+                  return (
+                    <Box
+                      key={category.key}
+                      as="button"
+                      onClick={() => setActiveCategory(category.key)}
+                      cursor="pointer"
+                      borderColor={selected ? 'mypick.borderStrong' : 'mypick.border'}
+                      borderRadius="full"
+                      borderWidth="1px"
+                      py="1"
+                      px="3"
+                      color={selected ? 'accent.default' : 'mypick.muted'}
+                      fontSize="xs"
+                      fontWeight="bold"
+                      bgColor={selected ? 'mypick.action' : 'mypick.tile'}
+                      _hover={{ borderColor: 'mypick.borderStrong', color: 'accent.default' }}
+                    >
+                      {category.label} {count}
+                    </Box>
+                  );
+                })}
+              </HStack>
+            )}
+            <Box flex="1" minH="0" overflowY="auto">
               {filtered.length === 0 && (
                 <Text py="8" color="mypick.muted" fontSize="sm" textAlign="center">
                   {t('common.no_results')}

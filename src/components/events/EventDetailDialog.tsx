@@ -12,6 +12,7 @@ import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
+import { VenueText } from './VenueText';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
 import {
@@ -208,11 +209,14 @@ export function EventDetailDialog({
                   {[performance.concertName, performance.performanceName].filter(Boolean).join(' ')}
                 </Text>
               )}
-              <Text color="fg.muted" fontSize="sm">
-                {performance.venue}
-                {performance.openTime ? `・${t('events.doors')} ${performance.openTime}` : ''}
-                {performance.startTime ? `・${t('events.start')} ${performance.startTime}` : ''}
-              </Text>
+              <Stack gap="0.5" color="fg.muted" fontSize="sm">
+                <VenueText performance={performance} />
+                <Text>
+                  {performance.openTime ? `${t('events.doors')} ${performance.openTime}` : ''}
+                  {performance.openTime && performance.startTime ? '・' : ''}
+                  {performance.startTime ? `${t('events.start')} ${performance.startTime}` : ''}
+                </Text>
+              </Stack>
               {performance.note && (
                 <Text color="fg.subtle" fontSize="xs">
                   {performance.note}

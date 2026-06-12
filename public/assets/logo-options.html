@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLerNote logo directions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Outfit:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        background: #151315;
+        color: #fff7fb;
+        font-family: Outfit, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at 50% -18%, rgba(228, 0, 127, 0.22), transparent 48%),
+          radial-gradient(ellipse at 88% 16%, rgba(0, 160, 224, 0.1), transparent 34%),
+          linear-gradient(180deg, #211217 0%, #151315 48%, #171517 100%);
+      }
+
+      main {
+        display: grid;
+        gap: 24px;
+        padding: 28px;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: end;
+        border-bottom: 1px solid #3a3138;
+        padding-bottom: 22px;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        font-family: "Zen Maru Gothic", Outfit, sans-serif;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      p {
+        margin: 8px 0 0;
+        color: #cbbec8;
+        line-height: 1.5;
+      }
+
+      .source {
+        color: #9f929e;
+        font-size: 13px;
+        max-width: 520px;
+        text-align: right;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        display: grid;
+        grid-template-rows: auto 180px auto;
+        gap: 22px;
+        min-height: 410px;
+        border: 1px solid #3a3138;
+        border-radius: 14px;
+        background:
+          linear-gradient(180deg, rgba(36, 22, 33, 0.8), rgba(22, 20, 22, 0.92)),
+          #151315;
+        box-shadow: 0 22px 46px rgba(0, 0, 0, 0.32);
+        padding: 24px;
+      }
+
+      .stage {
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid #302930;
+        border-radius: 12px;
+        background:
+          radial-gradient(ellipse at 50% 18%, rgba(228, 0, 127, 0.15), transparent 55%),
+          linear-gradient(180deg, #1b181c, #121112);
+      }
+
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .tag {
+        border: 1px solid #594653;
+        border-radius: 999px;
+        color: #cbbec8;
+        font-size: 12px;
+        padding: 5px 10px;
+        white-space: nowrap;
+      }
+
+      svg {
+        display: block;
+      }
+
+      .fav {
+        width: 76px;
+        height: 76px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>LLerNote Logo Directions</h1>
+          <p>Pick a direction, then I’ll refine only that lane until it stops sucking.</p>
+        </div>
+        <div class="source">
+          Source palette: app hero gradient #e4007f / #ff7a00 / #00a0e0 and venue darks #170e11 / #211217 / #3c1223.
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <div>
+            <h2>01. Native Wordmark</h2>
+            <p>The current app identity, cleaned up. No fake mark. Favicon is a cropped LN glyph.</p>
+          </div>
+          <div class="stage">
+            <svg width="560" height="134" viewBox="0 0 560 134" aria-label="Native Wordmark">
+              <defs>
+                <linearGradient id="w1" x1="52" x2="510" y1="42" y2="96" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".44" stop-color="#ff7a00" />
+                  <stop offset=".66" stop-color="#a98f63" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <text x="50" y="91" fill="url(#w1)" font-family="Zen Maru Gothic, Outfit, sans-serif" font-size="80" font-weight="900" letter-spacing="1.5">LLerNote</text>
+            </svg>
+          </div>
+          <div class="meta">
+            <span class="tag">least invasive</span>
+            <svg class="fav" viewBox="0 0 64 64" aria-label="Native Wordmark favicon">
+              <defs>
+                <linearGradient id="f1" x1="11" x2="53" y1="12" y2="50" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".5" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <rect width="64" height="64" rx="14" fill="#151315" />
+              <text x="8" y="43" fill="url(#f1)" font-family="Zen Maru Gothic, Outfit, sans-serif" font-size="34" font-weight="900">LN</text>
+            </svg>
+          </div>
+        </section>
+
+        <section class="card">
+          <div>
+            <h2>02. Event List</h2>
+            <p>Turns the actual product surface into a mark: attended rows, date dots, setlist lines.</p>
+          </div>
+          <div class="stage">
+            <svg width="560" height="134" viewBox="0 0 560 134" aria-label="Event List">
+              <defs>
+                <linearGradient id="w2" x1="164" x2="514" y1="44" y2="92" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".48" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <g transform="translate(42 24)">
+                <rect width="92" height="86" rx="16" fill="#211217" stroke="#594653" />
+                <path d="M31 24h41M31 43h31M31 62h46" stroke="url(#w2)" stroke-width="7" stroke-linecap="round" />
+                <circle cx="20" cy="24" r="5" fill="#e4007f" />
+                <circle cx="20" cy="43" r="5" fill="#ff7a00" />
+                <circle cx="20" cy="62" r="5" fill="#00a0e0" />
+              </g>
+              <text x="162" y="88" fill="url(#w2)" font-family="Zen Maru Gothic, Outfit, sans-serif" font-size="66" font-weight="900" letter-spacing="1">LLerNote</text>
+            </svg>
+          </div>
+          <div class="meta">
+            <span class="tag">most product-specific</span>
+            <svg class="fav" viewBox="0 0 64 64" aria-label="Event List favicon">
+              <defs>
+                <linearGradient id="f2" x1="17" x2="50" y1="17" y2="47" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".52" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <rect width="64" height="64" rx="14" fill="#151315" />
+              <path d="M25 20h25M25 32h17M25 44h24" stroke="url(#f2)" stroke-width="5" stroke-linecap="round" />
+              <circle cx="15" cy="20" r="4" fill="#e4007f" />
+              <circle cx="15" cy="32" r="4" fill="#ff7a00" />
+              <circle cx="15" cy="44" r="4" fill="#00a0e0" />
+            </svg>
+          </div>
+        </section>
+
+        <section class="card">
+          <div>
+            <h2>03. Stage Rail</h2>
+            <p>Uses the timeline/calendar feeling: vertical live-history rail with the wordmark anchored to it.</p>
+          </div>
+          <div class="stage">
+            <svg width="560" height="134" viewBox="0 0 560 134" aria-label="Stage Rail">
+              <defs>
+                <linearGradient id="w3" x1="132" x2="512" y1="44" y2="92" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".48" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <path d="M74 26v82" stroke="#e4007f" stroke-width="8" stroke-linecap="round" />
+              <path d="M74 78v30" stroke="#ff7a00" stroke-width="8" stroke-linecap="round" />
+              <circle cx="74" cy="34" r="8" fill="#e4007f" />
+              <circle cx="74" cy="67" r="8" fill="#ff7a00" />
+              <circle cx="74" cy="100" r="8" fill="#00a0e0" />
+              <text x="126" y="88" fill="url(#w3)" font-family="Zen Maru Gothic, Outfit, sans-serif" font-size="68" font-weight="900" letter-spacing="1.1">LLerNote</text>
+            </svg>
+          </div>
+          <div class="meta">
+            <span class="tag">cleanest symbol</span>
+            <svg class="fav" viewBox="0 0 64 64" aria-label="Stage Rail favicon">
+              <rect width="64" height="64" rx="14" fill="#151315" />
+              <path d="M30 13v38" stroke="#e4007f" stroke-width="6" stroke-linecap="round" />
+              <path d="M30 37v14" stroke="#ff7a00" stroke-width="6" stroke-linecap="round" />
+              <circle cx="30" cy="18" r="5" fill="#e4007f" />
+              <circle cx="30" cy="32" r="5" fill="#ff7a00" />
+              <circle cx="30" cy="46" r="5" fill="#00a0e0" />
+            </svg>
+          </div>
+        </section>
+
+        <section class="card">
+          <div>
+            <h2>04. Penlight Slash</h2>
+            <p>A more logo-y direction: venue beams and the gradient wordmark without literal lists/cards.</p>
+          </div>
+          <div class="stage">
+            <svg width="560" height="134" viewBox="0 0 560 134" aria-label="Penlight Slash">
+              <defs>
+                <linearGradient id="w4" x1="154" x2="512" y1="44" y2="92" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".48" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+                <linearGradient id="s4" x1="48" x2="120" y1="98" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".52" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <path d="M54 104 116 28" stroke="url(#s4)" stroke-width="15" stroke-linecap="round" />
+              <path d="M86 104 132 48" stroke="url(#s4)" stroke-width="9" stroke-linecap="round" opacity=".72" />
+              <text x="154" y="88" fill="url(#w4)" font-family="Zen Maru Gothic, Outfit, sans-serif" font-size="68" font-weight="900" letter-spacing="1.1">LLerNote</text>
+            </svg>
+          </div>
+          <div class="meta">
+            <span class="tag">most emblematic</span>
+            <svg class="fav" viewBox="0 0 64 64" aria-label="Penlight Slash favicon">
+              <defs>
+                <linearGradient id="f4" x1="19" x2="46" y1="50" y2="14" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".52" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <rect width="64" height="64" rx="14" fill="#151315" />
+              <path d="M20 50 46 14" stroke="url(#f4)" stroke-width="10" stroke-linecap="round" />
+              <path d="M35 50 49 30" stroke="url(#f4)" stroke-width="5" stroke-linecap="round" opacity=".74" />
+            </svg>
+          </div>
+        </section>
+
+        <section class="card">
+          <div>
+            <h2>05. MyPick Grid</h2>
+            <p>Based on the most distinctive page: a small selection grid plus the rounded gradient type.</p>
+          </div>
+          <div class="stage">
+            <svg width="560" height="134" viewBox="0 0 560 134" aria-label="MyPick Grid">
+              <defs>
+                <linearGradient id="w5" x1="144" x2="512" y1="44" y2="92" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".48" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <g transform="translate(44 28)" fill="none" stroke-width="5">
+                <rect width="76" height="76" rx="16" stroke="#594653" fill="#211217" />
+                <rect x="16" y="16" width="17" height="17" rx="5" stroke="#e4007f" />
+                <rect x="43" y="16" width="17" height="17" rx="5" stroke="#ff7a00" />
+                <rect x="16" y="43" width="17" height="17" rx="5" stroke="#00a0e0" />
+                <path d="M44 51h16" stroke="#fff7fb" stroke-linecap="round" opacity=".8" />
+                <path d="M52 43v16" stroke="#fff7fb" stroke-linecap="round" opacity=".8" />
+              </g>
+              <text x="144" y="88" fill="url(#w5)" font-family="Zen Maru Gothic, Outfit, sans-serif" font-size="68" font-weight="900" letter-spacing="1.1">LLerNote</text>
+            </svg>
+          </div>
+          <div class="meta">
+            <span class="tag">more playful</span>
+            <svg class="fav" viewBox="0 0 64 64" aria-label="MyPick Grid favicon">
+              <rect width="64" height="64" rx="14" fill="#151315" />
+              <rect x="15" y="15" width="13" height="13" rx="4" fill="none" stroke="#e4007f" stroke-width="4" />
+              <rect x="36" y="15" width="13" height="13" rx="4" fill="none" stroke="#ff7a00" stroke-width="4" />
+              <rect x="15" y="36" width="13" height="13" rx="4" fill="none" stroke="#00a0e0" stroke-width="4" />
+              <path d="M39 43h9M43.5 38.5v9" stroke="#fff7fb" stroke-linecap="round" stroke-width="4" />
+            </svg>
+          </div>
+        </section>
+
+        <section class="card">
+          <div>
+            <h2>06. Stat Heat</h2>
+            <p>Owns the “I tracked this” side: heatmap/history visual with a less obvious favicon.</p>
+          </div>
+          <div class="stage">
+            <svg width="560" height="134" viewBox="0 0 560 134" aria-label="Stat Heat">
+              <defs>
+                <linearGradient id="w6" x1="156" x2="512" y1="44" y2="92" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#e4007f" />
+                  <stop offset=".48" stop-color="#ff7a00" />
+                  <stop offset="1" stop-color="#00a0e0" />
+                </linearGradient>
+              </defs>
+              <g transform="translate(44 34)">
+                <rect x="0" y="0" width="14" height="14" rx="4" fill="#3c1223" />
+                <rect x="20" y="0" width="14" height="14" rx="4" fill="#e4007f" />
+                <rect x="40" y="0" width="14" height="14" rx="4" fill="#620f36" />
+                <rect x="60" y="0" width="14" height="14" rx="4" fill="#00a0e0" />
+                <rect x="0" y="20" width="14" height="14" rx="4" fill="#ff7a00" />
+                <rect x="20" y="20" width="14" height="14" rx="4" fill="#3c1223" />
+                <rect x="40" y="20" width="14" height="14" rx="4" fill="#e4007f" />
+                <rect x="60" y="20" width="14" height="14" rx="4" fill="#211217" stroke="#594653" />
+                <rect x="0" y="40" width="14" height="14" rx="4" fill="#211217" stroke="#594653" />
+                <rect x="20" y="40" width="14" height="14" rx="4" fill="#00a0e0" />
+                <rect x="40" y="40" width="14" height="14" rx="4" fill="#ff7a00" />
+                <rect x="60" y="40" width="14" height="14" rx="4" fill="#3c1223" />
+              </g>
+              <text x="156" y="88" fill="url(#w6)" font-family="Zen Maru Gothic, Outfit, sans-serif" font-size="68" font-weight="900" letter-spacing="1.1">LLerNote</text>
+            </svg>
+          </div>
+          <div class="meta">
+            <span class="tag">tracker-first</span>
+            <svg class="fav" viewBox="0 0 64 64" aria-label="Stat Heat favicon">
+              <rect width="64" height="64" rx="14" fill="#151315" />
+              <rect x="15" y="15" width="9" height="9" rx="3" fill="#3c1223" />
+              <rect x="28" y="15" width="9" height="9" rx="3" fill="#e4007f" />
+              <rect x="41" y="15" width="9" height="9" rx="3" fill="#ff7a00" />
+              <rect x="15" y="28" width="9" height="9" rx="3" fill="#00a0e0" />
+              <rect x="28" y="28" width="9" height="9" rx="3" fill="#620f36" />
+              <rect x="41" y="28" width="9" height="9" rx="3" fill="#211217" stroke="#594653" />
+              <rect x="15" y="41" width="9" height="9" rx="3" fill="#ff7a00" />
+              <rect x="28" y="41" width="9" height="9" rx="3" fill="#00a0e0" />
+              <rect x="41" y="41" width="9" height="9" rx="3" fill="#e4007f" />
+            </svg>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

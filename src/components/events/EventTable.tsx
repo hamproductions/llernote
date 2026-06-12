@@ -7,6 +7,7 @@ import { IconButton } from '~/components/ui/icon-button';
 import { Text } from '~/components/ui/text';
 import { SeriesBadge } from './SeriesBadge';
 import { AttendanceButtons } from './AttendanceButtons';
+import { VenueText } from './VenueText';
 import { legLabel } from './TourCard';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { eventernoteSearchUrl } from '~/utils/share';
@@ -91,7 +92,7 @@ export function EventTable({
               </Table.Cell>
               <Table.Cell hideBelow="md" maxW="72">
                 <Text color="fg.muted" fontSize="sm" lineClamp={2}>
-                  {p.venue}
+                  <VenueText performance={p} compact />
                 </Text>
               </Table.Cell>
               <Table.Cell hideBelow="xl">

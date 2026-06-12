@@ -1,19 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FaChevronDown,
-  FaChevronUp,
-  FaCopy,
-  FaDownload,
-  FaFileExport,
-  FaFileImport
-} from 'react-icons/fa6';
-import { saveAs } from 'file-saver';
+import { FaChevronDown, FaChevronUp, FaCopy, FaDownload } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
+import { Skeleton } from '~/components/ui/skeleton';
 import { StatsCard } from '~/components/stats/StatsCard';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { Metadata } from '~/components/layout/Metadata';
@@ -24,14 +17,15 @@ import {
   useSeries,
   useSeriesById,
   useSetlists,
-  usePerformances
+  usePerformances,
+  useVenueById
 } from '~/hooks/useData';
-import { computeStats } from '~/utils/stats';
+import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { getSeriesShortName } from '~/utils/series-short';
 import { copyTextToClipboard, downloadElementAsImage, formatEventShareText } from '~/utils/share';
-import { exportBackup, importBackup } from '~/utils/attendance/storage';
 import { useToaster } from '~/context/ToasterContext';
-import type { EventCategory } from '~/types';
+
+const MULTI_SERIES_FILTER = '__multi_series__';
 
 function StatTile({ label, value }: { label: string; value: string | number }) {
   return (
@@ -133,13 +127,13 @@ function SeriesPie({
 }) {
   const { t } = useTranslation();
   const total = items.reduce((sum, item) => sum + item.count, 0);
-  let offset = 25;
-  const slices = items.map((item) => {
+  const slices = items.reduce<
+    { key: string; label: string; count: number; color?: string; value: number; offset: number }[]
+  >((acc, item) => {
     const value = total > 0 ? (item.count / total) * 100 : 0;
-    const slice = { ...item, value, offset };
-    offset += value;
-    return slice;
-  });
+    const offset = acc.length === 0 ? 25 : acc[acc.length - 1]!.offset + acc[acc.length - 1]!.value;
+    return [...acc, { ...item, value, offset }];
+  }, []);
 
   return (
     <Grid gap="4" alignItems="center" gridTemplateColumns={{ base: '1fr', md: 'auto 1fr' }}>
@@ -217,49 +211,164 @@ function MonthEventChart({
     attendanceRate: number;
   }[];
 }) {
-  const visible = items.slice(-18);
-  const max = Math.max(1, ...items.map((item) => item.total));
+  const visible = items;
+  const max = Math.max(1, ...visible.map((item) => item.attended));
+  const chartWidth = 960;
+  const chartHeight = 240;
+  const padding = { top: 32, right: 28, bottom: 46, left: 44 };
+  const plotWidth = chartWidth - padding.left - padding.right;
+  const plotHeight = chartHeight - padding.top - padding.bottom;
+  const step = visible.length > 1 ? plotWidth / (visible.length - 1) : 0;
+  const ticks = [...new Set([0, Math.ceil(max / 2), max])];
+  const points = visible.map((item, index) => ({
+    item,
+    x: padding.left + index * step,
+    y: padding.top + plotHeight - (item.attended / max) * plotHeight
+  }));
+  const line = points.map((point) => `${point.x},${point.y}`).join(' ');
+  const markerModulo = Math.max(1, Math.ceil(visible.length / 10));
 
   return (
-    <Stack gap="3">
-      <HStack gap="2" alignItems="flex-end" minH="44" pb="1" overflowX="auto">
-        {visible.map((item) => (
-          <Stack key={item.month} flex="1" gap="1" alignItems="center" minW="8">
-            <Box
-              title={`${item.month}: ${item.total}`}
-              borderRadius="full"
-              w="full"
-              minW="6"
-              h={`${Math.max(10, Math.round((item.total / max) * 160))}px`}
-              bgColor="accent.a8"
-            />
-            <Text color="fg.muted" fontSize="2xs" fontVariantNumeric="tabular-nums">
-              {item.month.slice(5)}
-            </Text>
-          </Stack>
-        ))}
-      </HStack>
-      <Grid gap="2" gridTemplateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}>
-        {visible.slice(-3).map((item) => (
-          <Stack key={item.month} gap="0" borderColor="border.subtle" borderWidth="1px" p="3">
-            <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
-              {item.month}
-            </Text>
-            <HStack gap="3" alignItems="baseline">
-              <Text textStyle="display" color="accent.default" fontSize="2xl" lineHeight="1">
-                {item.total}
+    <Box w="full" py="1">
+      <svg
+        role="img"
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        style={{
+          width: '100%',
+          height: `${chartHeight}px`,
+          display: 'block',
+          fontFamily: 'inherit'
+        }}
+      >
+        {ticks.map((tick) => {
+          const y = padding.top + plotHeight - (tick / max) * plotHeight;
+          return (
+            <g key={tick}>
+              <line
+                x1={padding.left}
+                x2={chartWidth - padding.right}
+                y1={y}
+                y2={y}
+                stroke="var(--colors-border-subtle)"
+                strokeWidth="1"
+              />
+              <text
+                x={padding.left - 10}
+                y={y + 4}
+                fill="var(--colors-fg-muted)"
+                fontSize="12"
+                fontWeight="600"
+                textAnchor="end"
+              >
+                {tick}
+              </text>
+            </g>
+          );
+        })}
+        <polyline
+          points={line}
+          fill="none"
+          stroke="var(--colors-accent-default)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {points.map(({ item, x, y }, index) => {
+          const showLabel =
+            index === 0 || index === points.length - 1 || item.attended === max;
+          const showMonth =
+            index === 0 || index === points.length - 1 || index % markerModulo === 0;
+          return (
+            <g key={item.month}>
+              <title>{`${item.month}: ${item.attended}`}</title>
+              <circle cx={x} cy={y} r="5" fill="var(--colors-accent-default)" />
+              {showLabel && (
+                <text
+                  x={x}
+                  y={Math.max(padding.top + 14, y - 12)}
+                  fill="var(--colors-fg-default)"
+                  fontSize="14"
+                  fontWeight="800"
+                  textAnchor="middle"
+                >
+                  {item.attended}
+                </text>
+              )}
+              {showMonth && (
+                <text
+                  x={x}
+                  y={chartHeight - 24}
+                  fill="var(--colors-fg-default)"
+                  fontSize="13"
+                  fontWeight="700"
+                  textAnchor="middle"
+                >
+                  {item.month.slice(2).replace('-', '/')}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    </Box>
+  );
+}
+
+function AttendanceCoverageChart({
+  rate,
+  eligible,
+  attended,
+  items,
+  seriesById
+}: {
+  rate: number;
+  eligible: number;
+  attended: number;
+  items: {
+    seriesId: string;
+    total: number;
+    attended: number;
+    rate: number;
+  }[];
+  seriesById: Map<string, { name: string; color: string }>;
+}) {
+  return (
+    <Grid gap="5" alignItems="center" gridTemplateColumns={{ base: '1fr', md: '14rem 1fr' }}>
+      <Stack gap="1" alignItems="center" borderRadius="l3" p="5" bgColor="accent.a2">
+        <Text color="accent.default" fontSize="4xl" fontWeight="bold" lineHeight="1">
+          {rate}%
+        </Text>
+        <Text color="fg.muted" fontSize="sm" fontVariantNumeric="tabular-nums">
+          {attended} / {eligible}
+        </Text>
+      </Stack>
+      <Stack gap="3">
+        {items.slice(0, 8).map((item) => {
+          const series = seriesById.get(item.seriesId);
+          const color = series?.color ?? 'var(--colors-accent-default)';
+          return (
+            <HStack key={item.seriesId} gap="3">
+              <Text minW="32" maxW="32" fontSize="sm" lineClamp={1}>
+                {getSeriesShortName(item.seriesId, series?.name ?? item.seriesId)}
               </Text>
-              <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
-                {item.attendanceRate}%
-              </Text>
-              <Text color="amber.11" fontSize="xs" fontVariantNumeric="tabular-nums">
-                +{item.going}
+              <Box flex="1" borderRadius="full" h="2.5" bgColor="bg.subtle" overflow="hidden">
+                <Box
+                  style={{
+                    width: `${item.rate}%`,
+                    background: color
+                  }}
+                  borderRadius="full"
+                  h="full"
+                />
+              </Box>
+              <Text minW="20" fontSize="sm" fontVariantNumeric="tabular-nums" textAlign="right">
+                {item.rate}% {item.attended}/{item.total}
               </Text>
             </HStack>
-          </Stack>
-        ))}
-      </Grid>
-    </Stack>
+          );
+        })}
+      </Stack>
+    </Grid>
   );
 }
 
@@ -297,62 +406,38 @@ export default function Page() {
   const { records } = useAttendance();
   const performances = usePerformances();
   const setlists = useSetlists();
+  const venueById = useVenueById();
   const series = useSeries();
   const seriesById = useSeriesById();
   const years = useEventYears();
   const cardRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState('');
-  const [seriesId, setSeriesId] = useState('');
+  const [seriesFilter, setSeriesFilter] = useState('');
   const [category, setCategory] = useState('');
-  const [multiSeries, setMultiSeries] = useState(false);
+  const multiSeries = seriesFilter === MULTI_SERIES_FILTER;
+  const seriesId = multiSeries ? '' : seriesFilter;
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
     [performances]
   );
 
-  const filteredRecords = useMemo(
-    () =>
-      records.filter((r) => {
-        const p = performanceById.get(r.performanceId);
-        if (!p) return false;
-        if (year && !p.date.startsWith(year)) return false;
-        if (seriesId && !p.seriesIds.includes(seriesId)) return false;
-        if (multiSeries && p.seriesIds.length < 2) return false;
-        if (category && p.category !== (category as EventCategory)) return false;
-        return true;
-      }),
-    [records, performanceById, year, seriesId, category, multiSeries]
+  const derived = useDerivedDataWorker(
+    'stats',
+    { records, performances, setlists, year, seriesId, category, multiSeries, venueById },
+    [records, performances, setlists, year, seriesId, category, multiSeries, venueById]
   );
+  const stats = derived.result;
 
-  const filteredPerformances = useMemo(
-    () =>
-      performances.filter((p) => {
-        if (year && !p.date.startsWith(year)) return false;
-        if (seriesId && !p.seriesIds.includes(seriesId)) return false;
-        if (multiSeries && p.seriesIds.length < 2) return false;
-        if (category && p.category !== (category as EventCategory)) return false;
-        return true;
-      }),
-    [performances, year, seriesId, category, multiSeries]
-  );
+  const attendedMonthEvents = useMemo(() => {
+    const months = stats?.byMonthEvents ?? [];
+    const active = (m: (typeof months)[number]) => m.attended > 0 || m.going > 0;
+    const first = months.findIndex(active);
+    if (first < 0) return [];
+    return months.slice(first, months.findLastIndex(active) + 1);
+  }, [stats]);
 
-  const stats = useMemo(
-    () => computeStats(filteredRecords, performanceById, setlists, filteredPerformances),
-    [filteredRecords, performanceById, setlists, filteredPerformances]
-  );
-
-  const handleImport = async (file: File) => {
-    try {
-      importBackup(JSON.parse(await file.text()));
-      toast({ title: t('settings.import_success'), type: 'success' });
-    } catch {
-      toast({ title: t('settings.import_error'), type: 'error' });
-    }
-  };
-
-  const empty = stats.attendedCount === 0 && stats.interestedCount === 0;
+  const empty = !stats || (stats.attendedCount === 0 && stats.interestedCount === 0);
 
   return (
     <>
@@ -378,10 +463,17 @@ export default function Page() {
                 size="sm"
                 variant="outline"
                 onClick={async () => {
-                  const attended = filteredRecords
+                  const attended = records
                     .filter((r) => r.status === 'attended')
                     .map((r) => performanceById.get(r.performanceId))
                     .filter((p) => p !== undefined)
+                    .filter((p) => {
+                      if (year && !p.date.startsWith(year)) return false;
+                      if (seriesId && !p.seriesIds.includes(seriesId)) return false;
+                      if (multiSeries && p.seriesIds.length < 2) return false;
+                      if (category && p.category !== category) return false;
+                      return true;
+                    })
                     .sort((a, b) => a.date.localeCompare(b.date))
                     .map((p) => formatEventShareText(p));
                   try {
@@ -411,10 +503,13 @@ export default function Page() {
           />
           <NativeSelect
             aria-label={t('events.series')}
-            value={seriesId}
+            value={seriesFilter}
             placeholder={`${t('events.series')}: ${t('common.all')}`}
-            options={series.map((s) => ({ value: s.id, label: s.name }))}
-            onChange={setSeriesId}
+            options={[
+              { value: MULTI_SERIES_FILTER, label: t('events.multi_series') },
+              ...series.map((s) => ({ value: s.id, label: s.name }))
+            ]}
+            onChange={setSeriesFilter}
           />
           <NativeSelect
             aria-label={t('events.category')}
@@ -427,19 +522,17 @@ export default function Page() {
             ]}
             onChange={setCategory}
           />
-          <Button
-            size="sm"
-            variant={multiSeries ? 'solid' : 'outline'}
-            onClick={() => setMultiSeries((v) => !v)}
-            borderRadius="full"
-          >
-            {t('events.multi_series')}
-          </Button>
         </HStack>
 
-        {empty ? (
+        {derived.pending ? (
+          <Grid gap="3" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
+            {Array.from({ length: 5 }, (_, i) => (
+              <Skeleton key={i} borderRadius="l3" h="24" />
+            ))}
+          </Grid>
+        ) : empty ? (
           <Text color="fg.muted">{t('stats.empty')}</Text>
-        ) : (
+        ) : stats ? (
           <>
             <Grid gap="3" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
               <StatTile label={t('stats.total_attended')} value={stats.attendedCount} />
@@ -504,20 +597,43 @@ export default function Page() {
                   />
                 </ChartCard>
               )}
-              {stats.byMonthEvents.length > 0 && (
+              {attendedMonthEvents.length > 0 && (
                 <ChartCard title={t('stats.events_by_month')} span>
-                  <MonthEventChart items={stats.byMonthEvents} />
+                  <MonthEventChart items={attendedMonthEvents} />
+                </ChartCard>
+              )}
+              {stats.attendanceEligibleCount > 0 && (
+                <ChartCard title={t('stats.attendance')} span>
+                  <AttendanceCoverageChart
+                    rate={stats.attendanceRate}
+                    eligible={stats.attendanceEligibleCount}
+                    attended={stats.attendedCount}
+                    items={stats.attendanceBySeries}
+                    seriesById={seriesById}
+                  />
                 </ChartCard>
               )}
               {stats.byVenue.length > 0 && (
                 <ChartCard title={t('stats.by_venue')}>
                   <BarList
                     items={stats.byVenue.slice(0, 6).map((v) => ({
-                      key: v.venue,
+                      key: v.venueId ?? v.venue,
                       label: v.venue,
                       count: v.count
                     }))}
                     max={Math.max(...stats.byVenue.map((v) => v.count))}
+                  />
+                </ChartCard>
+              )}
+              {stats.byCity.length > 0 && (
+                <ChartCard title={t('stats.by_city')}>
+                  <BarList
+                    items={stats.byCity.slice(0, 6).map((v) => ({
+                      key: v.city,
+                      label: v.city,
+                      count: v.count
+                    }))}
+                    max={Math.max(...stats.byCity.map((v) => v.count))}
                   />
                 </ChartCard>
               )}
@@ -539,43 +655,7 @@ export default function Page() {
               <StatsCard ref={cardRef} stats={stats} />
             </Box>
           </>
-        )}
-
-        <Stack gap="2" borderColor="border.subtle" borderTopWidth="1px" mt="2" pt="5">
-          <Heading as="h2" textStyle="display" fontSize="md">
-            {t('settings.data_management')}
-          </Heading>
-          <Wrap gap="2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const blob = new Blob([JSON.stringify(exportBackup(), null, 2)], {
-                  type: 'application/json'
-                });
-                saveAs(blob, `llernote-backup-${new Date().toISOString().slice(0, 10)}.json`);
-              }}
-            >
-              <FaFileExport />
-              {t('settings.export_data')}
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <FaFileImport />
-              {t('settings.import_data')}
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleImport(file);
-                e.target.value = '';
-              }}
-            />
-          </Wrap>
-        </Stack>
+        ) : null}
       </Stack>
     </>
   );

@@ -14,6 +14,7 @@
     "lint:fix": "oxlint src --fix && eslint src --fix --concurrency=auto",
     "fix": "bun lint:fix",
     "fetch:album-art": "bun scripts/wiki-album-art.ts",
+    "enrich:venues": "bun scripts/enrich-venues.ts",
     "preview": "vite preview",
     "prepare": "panda codegen",
     "test": "vitest",
