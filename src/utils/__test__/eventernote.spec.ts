@@ -192,4 +192,46 @@ describe('matchEventernoteEvents with id map', () => {
     expect(match!.best?.id).toBe('99');
     expect(match!.candidates[0]!.score).toBe(1);
   });
+
+  it('matches multiple Eventernote rows on one day to distinct performances instead of reusing one best', () => {
+    const day = '2025-06-21';
+    const matinee = performance(
+      'matinee',
+      '蓮ノ空女学院スクールアイドルクラブ 4th Live',
+      day,
+      'Kアリーナ横浜',
+      'Day.1 昼公演'
+    );
+    const evening = performance(
+      'evening',
+      '蓮ノ空女学院スクールアイドルクラブ 4th Live',
+      day,
+      'Kアリーナ横浜',
+      'Day.1 夜公演'
+    );
+    const [first, second] = matchEventernoteEvents(
+      [
+        {
+          ...event(
+            '蓮ノ空女学院スクールアイドルクラブ 4th Live Day.1 昼公演',
+            day,
+            'Kアリーナ横浜'
+          ),
+          href: '/events/20001'
+        },
+        {
+          ...event(
+            '蓮ノ空女学院スクールアイドルクラブ 4th Live Day.1 夜公演',
+            day,
+            'Kアリーナ横浜'
+          ),
+          href: '/events/20002'
+        }
+      ],
+      [matinee, evening]
+    );
+
+    expect(first!.best?.id).toBe('matinee');
+    expect(second!.best?.id).toBe('evening');
+  });
 });

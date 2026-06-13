@@ -18,6 +18,7 @@ import { useAttendance } from '~/hooks/useAttendance';
 import {
   useArtistById,
   usePerformanceById,
+  usePerformances,
   useSetlist,
   useSetlists,
   useSongById
@@ -32,6 +33,7 @@ import {
   xShareUrl
 } from '~/utils/share';
 import { hasSongThumb } from '~/utils/song-thumbs';
+import { buildSetlistInsights, type SongSetlistInsight } from '~/utils/setlist-insights';
 import type { Performance, SetlistItem } from '~/types';
 import type { WatchType } from '~/types/attendance';
 
@@ -39,12 +41,14 @@ function SetlistItemRow({
   item,
   index,
   showArtists,
-  witnessInfo
+  witnessInfo,
+  setlistInsight
 }: {
   item: SetlistItem;
   index: number;
   showArtists: boolean;
   witnessInfo?: { count: number; isFirst: boolean };
+  setlistInsight?: SongSetlistInsight;
 }) {
   const { t, i18n } = useTranslation();
   const songById = useSongById();
@@ -83,9 +87,21 @@ function SetlistItemRow({
       <Text fontSize="sm">
         {song ? localizedName(i18n.language, song.name, song.englishName) : item.customSongName}
       </Text>
+      {setlistInsight?.isDebut && (
+        <Badge size="sm" variant="solid" flexShrink={0}>
+          {t('events.song_debut')}
+        </Badge>
+      )}
       {witnessInfo?.isFirst && (
         <Badge size="sm" variant="solid" flexShrink={0}>
           {t('events.first_witness')}
+        </Badge>
+      )}
+      {setlistInsight?.daysSincePreviousPerformance !== undefined && (
+        <Badge size="sm" variant="outline" flexShrink={0}>
+          {t('events.song_days_since_previous', {
+            count: setlistInsight.daysSincePreviousPerformance
+          })}
         </Badge>
       )}
       {witnessInfo && witnessInfo.count > 1 && (
@@ -116,10 +132,11 @@ export function EventDetailDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToaster();
   const { get, records, updateAttendance } = useAttendance();
   const setlists = useSetlists();
+  const performances = usePerformances();
   const performanceById = usePerformanceById();
   const setlist = useSetlist(performance?.id);
   const songById = useSongById();
@@ -183,6 +200,18 @@ export function EventDetailDialog({
       : setlist
         ? [{ name: '', startIndex: 0, endIndex: setlist.items.length - 1, type: 'main' }]
         : [];
+  const setlistInsights = setlist
+    ? buildSetlistInsights(performance, performances, setlists)
+    : undefined;
+  const formatDaysSincePrevious = (count: number | undefined) =>
+    count === undefined ? undefined : t('events.days_since_previous', { count });
+  const formatSongNames = (songIds: string[]) =>
+    songIds
+      .map((songId) => {
+        const song = songById.get(songId);
+        return song ? localizedName(i18n.language, song.name, song.englishName) : songId;
+      })
+      .join(' / ');
 
   return (
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
@@ -358,6 +387,37 @@ export function EventDetailDialog({
               </HStack>
               {setlist ? (
                 <Stack gap="3">
+                  {setlistInsights?.previousPerformance && (
+                    <Stack
+                      gap="1"
+                      borderColor="border.subtle"
+                      borderRadius="l2"
+                      borderWidth="1px"
+                      p="2"
+                    >
+                      <Text color="fg.muted" fontSize="xs">
+                        {t('events.previous_performance')}:{' '}
+                        {setlistInsights.previousPerformance.date} ·{' '}
+                        {formatDaysSincePrevious(setlistInsights.daysSincePreviousPerformance)}
+                      </Text>
+                      {setlistInsights.addedSongIds.length > 0 && (
+                        <Text color="fg.muted" fontSize="xs" lineClamp={2}>
+                          {t('events.setlist_added', {
+                            count: setlistInsights.addedSongIds.length
+                          })}
+                          : {formatSongNames(setlistInsights.addedSongIds)}
+                        </Text>
+                      )}
+                      {setlistInsights.removedSongIds.length > 0 && (
+                        <Text color="fg.muted" fontSize="xs" lineClamp={2}>
+                          {t('events.setlist_removed', {
+                            count: setlistInsights.removedSongIds.length
+                          })}
+                          : {formatSongNames(setlistInsights.removedSongIds)}
+                        </Text>
+                      )}
+                    </Stack>
+                  )}
                   {sections.map((section) => (
                     <Box key={`${section.name}-${section.startIndex}`}>
                       {section.name && (
@@ -384,6 +444,11 @@ export function EventDetailDialog({
                                   isFirst:
                                     witnessBySong.get(item.songId)?.firstDate === performance.date
                                 }
+                              : undefined
+                          }
+                          setlistInsight={
+                            item.type === 'song' && item.songId
+                              ? setlistInsights?.songInsights.get(item.songId)
                               : undefined
                           }
                         />
