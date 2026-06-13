@@ -15,6 +15,18 @@ export interface SetlistInsights {
   songInsights: Map<string, SongSetlistInsight>;
 }
 
+export interface SetlistDiff {
+  sharedSongIds: string[];
+  addedSongIds: string[];
+  removedSongIds: string[];
+  rows: SetlistDiffRow[];
+}
+
+export interface SetlistDiffRow {
+  type: 'same' | 'added' | 'removed';
+  songId: string;
+}
+
 const songIdsForSetlist = (setlist: Setlist | undefined) => {
   const ids: string[] = [];
   const seen = new Set<string>();
@@ -33,6 +45,60 @@ const daysBetween = (fromDate: string, toDate: string) => {
   return Math.round((to - from) / 86_400_000);
 };
 
+export const compareSetlists = (
+  fromSetlist: Setlist | undefined,
+  toSetlist: Setlist | undefined
+): SetlistDiff => {
+  const fromSongIds = songIdsForSetlist(fromSetlist);
+  const toSongIds = songIdsForSetlist(toSetlist);
+  const fromSongIdSet = new Set(fromSongIds);
+  const toSongIdSet = new Set(toSongIds);
+  const dp = Array.from({ length: fromSongIds.length + 1 }, () =>
+    Array<number>(toSongIds.length + 1).fill(0)
+  );
+
+  for (let fromIndex = fromSongIds.length - 1; fromIndex >= 0; fromIndex -= 1) {
+    for (let toIndex = toSongIds.length - 1; toIndex >= 0; toIndex -= 1) {
+      dp[fromIndex]![toIndex] =
+        fromSongIds[fromIndex] === toSongIds[toIndex]
+          ? dp[fromIndex + 1]![toIndex + 1]! + 1
+          : Math.max(dp[fromIndex + 1]![toIndex]!, dp[fromIndex]![toIndex + 1]!);
+    }
+  }
+
+  const rows: SetlistDiffRow[] = [];
+  let fromIndex = 0;
+  let toIndex = 0;
+  while (fromIndex < fromSongIds.length && toIndex < toSongIds.length) {
+    if (fromSongIds[fromIndex] === toSongIds[toIndex]) {
+      rows.push({ type: 'same', songId: fromSongIds[fromIndex]! });
+      fromIndex += 1;
+      toIndex += 1;
+    } else if (dp[fromIndex + 1]![toIndex]! >= dp[fromIndex]![toIndex + 1]!) {
+      rows.push({ type: 'removed', songId: fromSongIds[fromIndex]! });
+      fromIndex += 1;
+    } else {
+      rows.push({ type: 'added', songId: toSongIds[toIndex]! });
+      toIndex += 1;
+    }
+  }
+  while (fromIndex < fromSongIds.length) {
+    rows.push({ type: 'removed', songId: fromSongIds[fromIndex]! });
+    fromIndex += 1;
+  }
+  while (toIndex < toSongIds.length) {
+    rows.push({ type: 'added', songId: toSongIds[toIndex]! });
+    toIndex += 1;
+  }
+
+  return {
+    sharedSongIds: toSongIds.filter((songId) => fromSongIdSet.has(songId)),
+    addedSongIds: toSongIds.filter((songId) => !fromSongIdSet.has(songId)),
+    removedSongIds: fromSongIds.filter((songId) => !toSongIdSet.has(songId)),
+    rows
+  };
+};
+
 const datedPerformancesWithSetlists = (
   performances: Performance[],
   setlists: Record<string, Setlist>
@@ -48,7 +114,6 @@ export const buildSetlistInsights = (
 ): SetlistInsights => {
   const currentSetlist = setlists[performance.id];
   const currentSongIds = songIdsForSetlist(currentSetlist);
-  const currentSongIdSet = new Set(currentSongIds);
   const ordered = datedPerformancesWithSetlists(performances, setlists);
   const previousPerformances = ordered.filter(
     (candidate) =>
@@ -57,12 +122,10 @@ export const buildSetlistInsights = (
         (candidate.date === performance.date && candidate.id.localeCompare(performance.id) < 0))
   );
   const previousPerformance = previousPerformances.at(-1);
-  const previousSongIds = songIdsForSetlist(
-    previousPerformance ? setlists[previousPerformance.id] : undefined
+  const diff = compareSetlists(
+    previousPerformance ? setlists[previousPerformance.id] : undefined,
+    currentSetlist
   );
-  const previousSongIdSet = new Set(previousSongIds);
-  const addedSongIds = currentSongIds.filter((songId) => !previousSongIdSet.has(songId));
-  const removedSongIds = previousSongIds.filter((songId) => !currentSongIdSet.has(songId));
   const songInsights = new Map<string, SongSetlistInsight>();
 
   for (const songId of currentSongIds) {
@@ -83,8 +146,8 @@ export const buildSetlistInsights = (
     daysSincePreviousPerformance: previousPerformance
       ? daysBetween(previousPerformance.date, performance.date)
       : undefined,
-    addedSongIds,
-    removedSongIds,
+    addedSongIds: diff.addedSongIds,
+    removedSongIds: diff.removedSongIds,
     songInsights
   };
 };

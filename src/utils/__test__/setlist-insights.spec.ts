@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildSetlistInsights,
+  compareSetlists,
   getSongDebutPerformance,
   getSongFirstWitnessPerformance
 } from '../setlist-insights';
@@ -40,6 +41,25 @@ const attended = (performanceId: string): AttendanceRecord => ({
 });
 
 describe('buildSetlistInsights', () => {
+  it('diffs any two arbitrary setlists independent of date order', () => {
+    const setlists = {
+      older: setlist('older', ['song-a', 'song-b', 'song-c']),
+      newer: setlist('newer', ['song-c', 'song-d'])
+    };
+
+    const diff = compareSetlists(setlists.older, setlists.newer);
+
+    expect(diff.sharedSongIds).toEqual(['song-c']);
+    expect(diff.addedSongIds).toEqual(['song-d']);
+    expect(diff.removedSongIds).toEqual(['song-a', 'song-b']);
+    expect(diff.rows).toEqual([
+      { type: 'removed', songId: 'song-a' },
+      { type: 'removed', songId: 'song-b' },
+      { type: 'same', songId: 'song-c' },
+      { type: 'added', songId: 'song-d' }
+    ]);
+  });
+
   it('diffs against the previous dated setlist and reports days since the previous performance', () => {
     const performances = [
       perf('p1', '2024-01-01'),
