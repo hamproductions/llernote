@@ -14,11 +14,18 @@ import { SongFiltersBar } from '~/components/songs/SongFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useArtists, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
+import {
+  useArtists,
+  usePerformanceById,
+  usePerformances,
+  useSetlists,
+  useSongs
+} from '~/hooks/useData';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
 import { EMPTY_SONG_FILTERS, type SongFilters } from '~/utils/song-filter';
+import { getSongDebutPerformance, getSongFirstWitnessPerformance } from '~/utils/setlist-insights';
 import type { Performance, Song } from '~/types';
 
 const PAGE_SIZE = 48;
@@ -40,6 +47,7 @@ export default function Page() {
   const songs = useSongs();
   const artists = useArtists();
   const performances = usePerformances();
+  const performanceById = usePerformanceById();
   const setlists = useSetlists();
   const [filters, setFilters] = useState<SongFilters>(EMPTY_SONG_FILTERS);
   const [page, setPage] = useState(1);
@@ -97,6 +105,12 @@ export default function Page() {
   const selectedPerformedAt = selected
     ? (allPerformanceTallyById.get(selected.id)?.performances ?? [])
     : [];
+  const selectedDebutPerformance = selected
+    ? getSongDebutPerformance(selected.id, performanceById, setlists)
+    : undefined;
+  const selectedFirstWitnessPerformance = selected
+    ? getSongFirstWitnessPerformance(selected.id, records, performanceById, setlists)
+    : undefined;
   const selectedPerformanceCount = selected
     ? (allPerformanceTallyById.get(selected.id)?.count ?? 0)
     : 0;
@@ -248,6 +262,8 @@ export default function Page() {
               song={selected}
               heardAt={selectedHeardAt}
               performedAt={selectedPerformedAt}
+              debutPerformance={selectedDebutPerformance}
+              firstWitnessPerformance={selectedFirstWitnessPerformance}
               performanceCount={selectedPerformanceCount}
               open={selected !== undefined}
               onClose={() => setSelected(undefined)}

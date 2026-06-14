@@ -116,7 +116,8 @@ export const matchEventernoteEvents = (
     if (list) list.push(performance);
     else byDate.set(performance.date, [performance]);
   }
-  return events.map((event) => {
+
+  const matches = events.map((event) => {
     const date = extractDate(event.date);
     const eventId = eventernoteEventId(event.href);
     const exact = eventId ? performanceByEventernoteId?.get(eventId) : undefined;
@@ -127,7 +128,7 @@ export const matchEventernoteEvents = (
         candidates: [{ performance: exact, score: 1 }],
         best: exact,
         exact: true
-      };
+      } satisfies EventMatch;
     }
     const candidates = (date ? (byDate.get(date) ?? []) : [])
       .map((performance) => ({
@@ -144,8 +145,67 @@ export const matchEventernoteEvents = (
       (candidates.length === 1 || candidates[0]!.score - candidates[1]!.score >= 0.1)
         ? candidates[0]!.performance
         : undefined;
-    return { event, date, candidates, best };
+    return { event, date, candidates, best } satisfies EventMatch;
   });
+
+  const exactPerformanceIds = new Set(
+    matches.filter((match) => match.exact && match.best).map((match) => match.best!.id)
+  );
+  const byMatchDate = new Map<string, EventMatch[]>();
+  for (const match of matches) {
+    if (!match.date || match.exact || match.candidates.length === 0) continue;
+    const list = byMatchDate.get(match.date);
+    if (list) list.push(match);
+    else byMatchDate.set(match.date, [match]);
+  }
+
+  for (const sameDateMatches of byMatchDate.values()) {
+    const provisionalBestIds = sameDateMatches
+      .map((match) => match.best?.id)
+      .filter((id): id is string => Boolean(id));
+    const hasCandidateExactConflict = sameDateMatches.some((match) =>
+      match.candidates.some((candidate) => exactPerformanceIds.has(candidate.performance.id))
+    );
+    const hasDuplicateOrExactConflict =
+      hasCandidateExactConflict ||
+      provisionalBestIds.some(
+        (id, index) => exactPerformanceIds.has(id) || provisionalBestIds.indexOf(id) !== index
+      );
+    if (sameDateMatches.length < 2 && !hasDuplicateOrExactConflict) continue;
+    for (const match of sameDateMatches) {
+      match.best = undefined;
+    }
+    const usedPerformanceIds = new Set(exactPerformanceIds);
+    const assignedMatchHrefs = new Set<string>();
+    const edges = sameDateMatches
+      .flatMap((match) =>
+        match.candidates.map((candidate) => ({
+          match,
+          performance: candidate.performance,
+          score: candidate.score
+        }))
+      )
+      .filter(
+        (edge) =>
+          edge.score >= (hasDuplicateOrExactConflict ? 0.2 : 0.45) &&
+          !usedPerformanceIds.has(edge.performance.id)
+      )
+      .sort((a, b) => b.score - a.score);
+
+    for (const edge of edges) {
+      if (
+        assignedMatchHrefs.has(edge.match.event.href) ||
+        usedPerformanceIds.has(edge.performance.id)
+      ) {
+        continue;
+      }
+      edge.match.best = edge.performance;
+      assignedMatchHrefs.add(edge.match.event.href);
+      usedPerformanceIds.add(edge.performance.id);
+    }
+  }
+
+  return matches;
 };
 
 export interface PerformanceEventMatch {
