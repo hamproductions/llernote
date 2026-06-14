@@ -1,7 +1,16 @@
 import { join } from 'path-browserify';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BiMenu, BiX } from 'react-icons/bi';
+import { BiX } from 'react-icons/bi';
+import {
+  FaCalendarDays,
+  FaChartSimple,
+  FaEllipsis,
+  FaHouse,
+  FaMapLocationDot,
+  FaMusic,
+  FaTicket
+} from 'react-icons/fa6';
 import { Box, Container, HStack, Stack } from 'styled-system/jsx';
 import { ColorModeToggle } from '~/components/layout/ColorModeToggle';
 import { Footer } from '~/components/layout/Footer';
@@ -16,20 +25,28 @@ import { getAssetUrl } from '~/utils/assets';
 import { usePageContext } from 'vike-react/usePageContext';
 
 const NAV_ITEMS = [
-  { path: '/', key: 'navigation.home', exact: true },
-  { path: '/events', key: 'navigation.events' },
-  { path: '/calendar', key: 'navigation.calendar' },
-  { path: '/venues', key: 'navigation.venues' },
-  { path: '/stats', key: 'navigation.stats' },
-  { path: '/songs', key: 'navigation.songs' },
-  { path: '/mypick', key: 'navigation.mypick' }
+  { path: '/', key: 'navigation.home', exact: true, icon: FaHouse },
+  { path: '/events', key: 'navigation.events', icon: FaTicket },
+  { path: '/calendar', key: 'navigation.calendar', icon: FaCalendarDays },
+  { path: '/venues', key: 'navigation.venues', icon: FaMapLocationDot },
+  { path: '/stats', key: 'navigation.stats', icon: FaChartSimple },
+  { path: '/songs', key: 'navigation.songs', icon: FaMusic },
+  { path: '/mypick', key: 'navigation.mypick', icon: FaChartSimple }
 ];
+
+const MOBILE_PRIMARY_NAV_ITEMS = NAV_ITEMS.filter(({ path }) =>
+  ['/', '/events', '/calendar', '/songs'].includes(path)
+);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
   const { urlPathname } = usePageContext();
   const currentPath = join(import.meta.env.BASE_URL, urlPathname);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const isActivePath = (path: string, exact?: boolean) => {
+    const href = join(import.meta.env.BASE_URL, path);
+    return exact ? currentPath === href : currentPath.startsWith(href);
+  };
 
   useEffect(() => {
     document.documentElement.lang = i18n.language;
@@ -40,7 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <>
         {NAV_ITEMS.map(({ path, key, exact }) => {
           const href = join(import.meta.env.BASE_URL, path);
-          const isActive = exact ? currentPath === href : currentPath.startsWith(href);
+          const isActive = isActivePath(path, exact);
           return (
             <Link
               key={path}
@@ -57,9 +74,106 @@ export function Layout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  function MobileBottomNav() {
+    return (
+      <Box
+        hideFrom="md"
+        zIndex="40"
+        position="fixed"
+        left="3"
+        right="3"
+        bottom="3"
+        pb="env(safe-area-inset-bottom)"
+        pointerEvents="none"
+      >
+        <HStack
+          gap="1"
+          justifyContent="space-between"
+          borderColor="border.subtle"
+          borderRadius="full"
+          borderWidth="1px"
+          py="1.5"
+          px="2"
+          bgColor="bg.default/95"
+          boxShadow="lg"
+          backdropFilter="blur(18px)"
+          pointerEvents="auto"
+        >
+          {MOBILE_PRIMARY_NAV_ITEMS.map(({ path, key, exact, icon: Icon }) => {
+            const href = join(import.meta.env.BASE_URL, path);
+            const isActive = isActivePath(path, exact);
+            return (
+              <Link
+                key={path}
+                href={href}
+                aria-current={isActive ? 'page' : undefined}
+                data-active={isActive ? true : undefined}
+                display="flex"
+                flex="1"
+                gap="0.5"
+                flexDirection="column"
+                justifyContent="center"
+                alignItems="center"
+                borderRadius="full"
+                minW="0"
+                minH="12"
+                color={isActive ? 'accent.text' : 'fg.muted'}
+                textDecoration="none"
+                fontSize="2xs"
+                fontWeight={isActive ? 'semibold' : 'medium'}
+                bgColor={isActive ? 'accent.subtle' : 'transparent'}
+                _hover={{
+                  bgColor: isActive ? 'accent.subtle' : 'bg.subtle',
+                  textDecoration: 'none'
+                }}
+              >
+                <Icon size={17} />
+                <Text as="span" maxW="full" truncate>
+                  {t(key)}
+                </Text>
+              </Link>
+            );
+          })}
+          <Button
+            aria-label={t('common.open_menu')}
+            aria-expanded={isDrawerOpen}
+            variant="ghost"
+            onClick={() => setIsDrawerOpen(true)}
+            display="flex"
+            flex="1"
+            gap="0.5"
+            flexDirection="column"
+            justifyContent="center"
+            alignItems="center"
+            borderRadius="full"
+            minW="0"
+            minH="12"
+            color={isDrawerOpen ? 'accent.text' : 'fg.muted'}
+            fontSize="2xs"
+            fontWeight={isDrawerOpen ? 'semibold' : 'medium'}
+            bgColor={isDrawerOpen ? 'accent.subtle' : 'transparent'}
+          >
+            <FaEllipsis size={17} />
+            <Text as="span" maxW="full" truncate>
+              {t('common.menu', { defaultValue: 'Menu' })}
+            </Text>
+          </Button>
+        </HStack>
+      </Box>
+    );
+  }
+
   return (
     <Stack position="relative" w="full" minH="100vh" bgColor="bg.default">
-      <Container zIndex="1" position="relative" flex={1} w="full" py={4} px={4}>
+      <Container
+        zIndex="1"
+        position="relative"
+        flex={1}
+        w="full"
+        px={4}
+        pt={4}
+        pb={{ base: '24', md: '4' }}
+      >
         <Stack>
           <HStack justifyContent="space-between" alignItems="center" w="full">
             <HStack gap="4" alignItems="center">
@@ -73,17 +187,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </HStack>
             </HStack>
 
-            <Box hideFrom="md">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDrawerOpen(true)}
-                aria-label={t('common.open_menu')}
-              >
-                <BiMenu size={24} />
-              </Button>
-            </Box>
-
             <HStack hideBelow="md" justifySelf="flex-end">
               <LanguageToggle />
               <ColorModeToggle />
@@ -94,6 +197,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </Stack>
       </Container>
       <Footer />
+      <MobileBottomNav />
 
       <Drawer.Root open={isDrawerOpen} onOpenChange={(e) => setIsDrawerOpen(e.open)}>
         <Drawer.Backdrop />
