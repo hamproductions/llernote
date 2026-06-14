@@ -173,3 +173,24 @@ export const getSongFirstWitnessPerformance = (
     .filter((performance): performance is Performance => performance !== undefined)
     .filter((performance) => songIdsForSetlist(setlists[performance.id]).includes(songId))
     .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))[0];
+
+export const isPerformanceAtOrBefore = (candidate: Performance, current: Performance) =>
+  candidate.date < current.date || (candidate.date === current.date && candidate.id <= current.id);
+
+export const getSongWitnessCountAtPerformance = (
+  songId: string,
+  performance: Performance,
+  records: AttendanceRecord[],
+  performanceById: Map<string, Performance>,
+  setlists: Record<string, Setlist>
+) =>
+  records
+    .filter((record) => record.status === 'attended' && !record.deleted)
+    .map((record) => performanceById.get(record.performanceId))
+    .filter((candidate): candidate is Performance => candidate !== undefined)
+    .filter((candidate) => isPerformanceAtOrBefore(candidate, performance))
+    .reduce(
+      (count, candidate) =>
+        count + songIdsForSetlist(setlists[candidate.id]).filter((id) => id === songId).length,
+      0
+    );

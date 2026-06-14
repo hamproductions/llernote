@@ -37,6 +37,7 @@ import { hasSongThumb } from '~/utils/song-thumbs';
 import {
   buildSetlistInsights,
   compareSetlists,
+  isPerformanceAtOrBefore,
   type SongSetlistInsight
 } from '~/utils/setlist-insights';
 import type { Performance, SetlistItem } from '~/types';
@@ -315,6 +316,7 @@ export function EventDetailDialog({
       const perf = performanceById.get(r.performanceId);
       const sl = setlists[r.performanceId];
       if (!perf || !sl) continue;
+      if (!isPerformanceAtOrBefore(perf, performance)) continue;
       for (const it of sl.items) {
         if (it.type !== 'song' || !it.songId) continue;
         const prev = map.get(it.songId);

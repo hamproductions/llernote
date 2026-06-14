@@ -3,7 +3,8 @@ import {
   buildSetlistInsights,
   compareSetlists,
   getSongDebutPerformance,
-  getSongFirstWitnessPerformance
+  getSongFirstWitnessPerformance,
+  getSongWitnessCountAtPerformance
 } from '../setlist-insights';
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist } from '~/types';
@@ -130,5 +131,31 @@ describe('song first-seen helpers', () => {
         setlists
       )?.id
     ).toBe('first-seen');
+  });
+
+  it('counts song watches only up to the event being viewed', () => {
+    const performances = [
+      perf('first', '2024-01-01'),
+      perf('current', '2024-02-01'),
+      perf('future', '2024-03-01')
+    ];
+    const performanceById = new Map(
+      performances.map((performance) => [performance.id, performance])
+    );
+    const setlists = {
+      first: setlist('first', ['repeat-song']),
+      current: setlist('current', ['repeat-song']),
+      future: setlist('future', ['repeat-song'])
+    };
+
+    expect(
+      getSongWitnessCountAtPerformance(
+        'repeat-song',
+        performances[1]!,
+        [attended('first'), attended('current'), attended('future')],
+        performanceById,
+        setlists
+      )
+    ).toBe(2);
   });
 });
