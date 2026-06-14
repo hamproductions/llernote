@@ -22,6 +22,8 @@ export function SongDetailDialog({
   song,
   heardAt,
   performedAt,
+  debutPerformance,
+  firstWitnessPerformance,
   performanceCount,
   open,
   onClose,
@@ -30,6 +32,8 @@ export function SongDetailDialog({
   song?: Song;
   heardAt: Performance[];
   performedAt: Performance[];
+  debutPerformance?: Performance;
+  firstWitnessPerformance?: Performance;
   performanceCount: number;
   open: boolean;
   onClose: () => void;
@@ -117,6 +121,70 @@ export function SongDetailDialog({
                 />
               </Box>
             )}
+
+            <Stack gap="2">
+              <HStack gap="2" alignItems="baseline">
+                <Text fontWeight="semibold">{t('songs.song_history')}</Text>
+              </HStack>
+              <Stack gap="1">
+                {debutPerformance && (
+                  <HStack
+                    {...(onSelectEvent ? clickable(() => onSelectEvent(debutPerformance)) : {})}
+                    cursor={onSelectEvent ? 'pointer' : undefined}
+                    gap="2"
+                    alignItems="baseline"
+                    borderRadius="l1"
+                    py="1"
+                    px="1.5"
+                    _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
+                  >
+                    <Badge size="sm" variant="solid" flexShrink={0}>
+                      {t('songs.debut_performance')}
+                    </Badge>
+                    <Text
+                      flexShrink={0}
+                      color="fg.muted"
+                      fontSize="xs"
+                      fontVariantNumeric="tabular-nums"
+                    >
+                      {debutPerformance.date}
+                    </Text>
+                    <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={1}>
+                      {debutPerformance.tourName}
+                    </Text>
+                  </HStack>
+                )}
+                {firstWitnessPerformance && (
+                  <HStack
+                    {...(onSelectEvent
+                      ? clickable(() => onSelectEvent(firstWitnessPerformance))
+                      : {})}
+                    cursor={onSelectEvent ? 'pointer' : undefined}
+                    gap="2"
+                    alignItems="baseline"
+                    borderRadius="l1"
+                    py="1"
+                    px="1.5"
+                    _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
+                  >
+                    <Badge size="sm" variant="outline" flexShrink={0}>
+                      {t('songs.first_witness_performance')}
+                    </Badge>
+                    <Text
+                      flexShrink={0}
+                      color="fg.muted"
+                      fontSize="xs"
+                      fontVariantNumeric="tabular-nums"
+                    >
+                      {firstWitnessPerformance.date}
+                    </Text>
+                    <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={1}>
+                      {firstWitnessPerformance.tourName}
+                    </Text>
+                  </HStack>
+                )}
+              </Stack>
+            </Stack>
 
             <Stack gap="2">
               <HStack gap="2" alignItems="baseline">

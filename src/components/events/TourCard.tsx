@@ -59,8 +59,6 @@ function LegRow({
 
   return (
     <HStack
-      {...clickable(() => onSelect(performance))}
-      cursor="pointer"
       gap="2"
       justifyContent="space-between"
       borderLeftWidth="3px"
@@ -75,8 +73,14 @@ function LegRow({
       pl="2.5"
       _hover={{ bgColor: 'bg.subtle' }}
     >
-      <Stack flex="1" gap="0" minW="0">
-        <HStack gap="1.5">
+      <Stack
+        {...clickable(() => onSelect(performance))}
+        cursor="pointer"
+        flex="1"
+        gap="0.5"
+        minW="0"
+      >
+        <HStack gap="1.5" alignItems="flex-start">
           <Text
             flexShrink={0}
             color="fg.muted"
@@ -86,23 +90,27 @@ function LegRow({
           >
             {performance.date.slice(5).replace('-', '/')}
           </Text>
-          {label && (
-            <Text fontSize="xs" fontWeight="medium">
-              {label}
-            </Text>
-          )}
-          {performance.startTime && (
-            <Text flexShrink={0} color="fg.subtle" fontSize="xs">
-              {performance.startTime}〜
-            </Text>
-          )}
-          <StatusDot performance={performance} />
+          <Stack gap="0" minW="0">
+            {label && (
+              <Text fontSize="xs" fontWeight="medium" lineClamp={1}>
+                {label}
+              </Text>
+            )}
+            <HStack gap="1" flexWrap="wrap">
+              {performance.startTime && (
+                <Text flexShrink={0} color="fg.subtle" fontSize="xs">
+                  {performance.startTime}〜
+                </Text>
+              )}
+              <StatusDot performance={performance} />
+            </HStack>
+          </Stack>
         </HStack>
         <Text color="fg.muted" fontSize="xs" lineClamp={1}>
           <VenueText performance={performance} compact />
         </Text>
       </Stack>
-      <HStack onClick={(e) => e.stopPropagation()} gap="0.5" flexShrink={0}>
+      <HStack gap="0.5" flexShrink={0} alignSelf="flex-start">
         <AttendanceButtons
           performanceId={performance.id}
           future={isFutureEvent(performance)}
