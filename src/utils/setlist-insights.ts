@@ -45,6 +45,20 @@ const daysBetween = (fromDate: string, toDate: string) => {
   return Math.round((to - from) / 86_400_000);
 };
 
+const performanceTimeSortKey = (performance: Performance) => {
+  const explicitTime = performance.startTime ?? performance.openTime;
+  if (explicitTime) return explicitTime;
+  const label = [performance.performanceName, performance.concertName].filter(Boolean).join(' ');
+  if (/夜|evening|night/i.test(label)) return '18:00';
+  if (/昼|matinee/i.test(label)) return '12:00';
+  return '';
+};
+
+export const comparePerformancesChronologically = (a: Performance, b: Performance) =>
+  a.date.localeCompare(b.date) ||
+  performanceTimeSortKey(a).localeCompare(performanceTimeSortKey(b)) ||
+  a.id.localeCompare(b.id);
+
 export const compareSetlists = (
   fromSetlist: Setlist | undefined,
   toSetlist: Setlist | undefined
@@ -105,7 +119,7 @@ const datedPerformancesWithSetlists = (
 ) =>
   performances
     .filter((performance) => setlists[performance.id])
-    .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    .sort(comparePerformancesChronologically);
 
 export const buildSetlistInsights = (
   performance: Performance,
@@ -118,8 +132,7 @@ export const buildSetlistInsights = (
   const previousPerformances = ordered.filter(
     (candidate) =>
       candidate.id !== performance.id &&
-      (candidate.date < performance.date ||
-        (candidate.date === performance.date && candidate.id.localeCompare(performance.id) < 0))
+      comparePerformancesChronologically(candidate, performance) < 0
   );
   const previousPerformance = previousPerformances.at(-1);
   const diff = compareSetlists(
@@ -159,7 +172,7 @@ export const getSongDebutPerformance = (
 ) =>
   [...performanceById.values()]
     .filter((performance) => songIdsForSetlist(setlists[performance.id]).includes(songId))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))[0];
+    .sort(comparePerformancesChronologically)[0];
 
 export const getSongFirstWitnessPerformance = (
   songId: string,
@@ -172,10 +185,10 @@ export const getSongFirstWitnessPerformance = (
     .map((record) => performanceById.get(record.performanceId))
     .filter((performance): performance is Performance => performance !== undefined)
     .filter((performance) => songIdsForSetlist(setlists[performance.id]).includes(songId))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))[0];
+    .sort(comparePerformancesChronologically)[0];
 
 export const isPerformanceAtOrBefore = (candidate: Performance, current: Performance) =>
-  candidate.date < current.date || (candidate.date === current.date && candidate.id <= current.id);
+  comparePerformancesChronologically(candidate, current) <= 0;
 
 export const getSongWitnessCountAtPerformance = (
   songId: string,

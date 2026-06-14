@@ -9,7 +9,7 @@ import {
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist } from '~/types';
 
-const perf = (id: string, date: string, name = `Event ${id}`): Performance => ({
+const perf = (id: string, date: string, name = `Event ${id}`, startTime?: string): Performance => ({
   id,
   tourName: name,
   date,
@@ -17,7 +17,8 @@ const perf = (id: string, date: string, name = `Event ${id}`): Performance => ({
   seriesIds: ['2'],
   status: 'completed',
   hasSetlist: true,
-  category: 'live'
+  category: 'live',
+  startTime
 });
 
 const setlist = (performanceId: string, songIds: string[]): Setlist => ({
@@ -106,6 +107,37 @@ describe('buildSetlistInsights', () => {
       daysSincePreviousPerformance: undefined
     });
   });
+
+  it('orders same-day setlists by start time instead of id', () => {
+    const performances = [
+      perf('z-matinee', '2024-01-01', 'Matinee', '13:00'),
+      perf('a-evening', '2024-01-01', 'Evening', '18:00')
+    ];
+    const setlists = {
+      'z-matinee': setlist('z-matinee', ['song-a']),
+      'a-evening': setlist('a-evening', ['song-a', 'song-b'])
+    };
+
+    const insights = buildSetlistInsights(performances[1]!, performances, setlists);
+
+    expect(insights.previousPerformance?.id).toBe('z-matinee');
+    expect(insights.songInsights.get('song-a')?.isDebut).toBe(false);
+    expect(insights.songInsights.get('song-b')?.isDebut).toBe(true);
+  });
+
+  it('does not treat Day.1 text as daytime when ordering same-day labels', () => {
+    const performances = [perf('z-matinee', '2024-01-01'), perf('a-evening', '2024-01-01')];
+    performances[0]!.performanceName = 'Day.1 昼公演';
+    performances[1]!.performanceName = 'Day.1 夜公演';
+    const setlists = {
+      'z-matinee': setlist('z-matinee', ['song-a']),
+      'a-evening': setlist('a-evening', ['song-a', 'song-b'])
+    };
+
+    const insights = buildSetlistInsights(performances[1]!, performances, setlists);
+
+    expect(insights.previousPerformance?.id).toBe('z-matinee');
+  });
 });
 
 describe('song first-seen helpers', () => {
@@ -157,5 +189,33 @@ describe('song first-seen helpers', () => {
         setlists
       )
     ).toBe(2);
+  });
+
+  it('uses same-day start time for first witness and as-of counts', () => {
+    const performances = [
+      perf('z-matinee', '2024-02-01', 'Matinee', '13:00'),
+      perf('a-evening', '2024-02-01', 'Evening', '18:00')
+    ];
+    const performanceById = new Map(
+      performances.map((performance) => [performance.id, performance])
+    );
+    const setlists = {
+      'z-matinee': setlist('z-matinee', ['same-day-song']),
+      'a-evening': setlist('a-evening', ['same-day-song'])
+    };
+    const records = [attended('z-matinee'), attended('a-evening')];
+
+    expect(
+      getSongFirstWitnessPerformance('same-day-song', records, performanceById, setlists)?.id
+    ).toBe('z-matinee');
+    expect(
+      getSongWitnessCountAtPerformance(
+        'same-day-song',
+        performances[0]!,
+        records,
+        performanceById,
+        setlists
+      )
+    ).toBe(1);
   });
 });

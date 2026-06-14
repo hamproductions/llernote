@@ -234,4 +234,89 @@ describe('matchEventernoteEvents with id map', () => {
     expect(first!.best?.id).toBe('matinee');
     expect(second!.best?.id).toBe('evening');
   });
+
+  it('resolves duplicate provisional bests on one day to distinct performances', () => {
+    const day = '2025-06-21';
+    const matinee = performance(
+      'matinee',
+      '蓮ノ空女学院スクールアイドルクラブ 4th Live',
+      day,
+      'Kアリーナ横浜',
+      'Day.1 昼公演'
+    );
+    const evening = performance(
+      'evening',
+      '蓮ノ空女学院スクールアイドルクラブ 4th Live',
+      day,
+      'Kアリーナ横浜',
+      'Day.1 夜公演'
+    );
+    const [first, second] = matchEventernoteEvents(
+      [
+        {
+          ...event(
+            '蓮ノ空女学院スクールアイドルクラブ 4th Live Day.1 昼公演',
+            day,
+            'Kアリーナ横浜'
+          ),
+          href: '/events/30001'
+        },
+        {
+          ...event(
+            '蓮ノ空女学院スクールアイドルクラブ 4th Live Day.1 昼公演',
+            day,
+            'Kアリーナ横浜'
+          ),
+          href: '/events/30002'
+        }
+      ],
+      [matinee, evening]
+    );
+
+    expect(first!.best?.id).toBe('matinee');
+    expect(second!.best?.id).toBe('evening');
+  });
+
+  it('does not let a fuzzy singleton reuse an exact same-day performance', () => {
+    const day = '2025-06-21';
+    const matinee = performance(
+      'matinee',
+      '蓮ノ空女学院スクールアイドルクラブ 4th Live',
+      day,
+      'Kアリーナ横浜',
+      'Day.1 昼公演'
+    );
+    const evening = performance(
+      'evening',
+      '蓮ノ空女学院スクールアイドルクラブ 4th Live',
+      day,
+      'Kアリーナ横浜',
+      'Day.1 夜公演'
+    );
+    const [exact, fuzzy] = matchEventernoteEvents(
+      [
+        {
+          ...event(
+            '蓮ノ空女学院スクールアイドルクラブ 4th Live Day.1 昼公演',
+            day,
+            'Kアリーナ横浜'
+          ),
+          href: '/events/40001'
+        },
+        {
+          ...event(
+            '蓮ノ空女学院スクールアイドルクラブ 4th Live Day.1 昼公演',
+            day,
+            'Kアリーナ横浜'
+          ),
+          href: '/events/40002'
+        }
+      ],
+      [matinee, evening],
+      new Map([['40001', matinee]])
+    );
+
+    expect(exact!.best?.id).toBe('matinee');
+    expect(fuzzy!.best?.id).toBe('evening');
+  });
 });

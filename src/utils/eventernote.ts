@@ -148,19 +148,34 @@ export const matchEventernoteEvents = (
     return { event, date, candidates, best } satisfies EventMatch;
   });
 
-  const usedPerformanceIds = new Set(
-    matches.filter((match) => match.best).map((match) => match.best!.id)
+  const exactPerformanceIds = new Set(
+    matches.filter((match) => match.exact && match.best).map((match) => match.best!.id)
   );
   const byMatchDate = new Map<string, EventMatch[]>();
   for (const match of matches) {
-    if (!match.date || match.best || match.candidates.length === 0) continue;
+    if (!match.date || match.exact || match.candidates.length === 0) continue;
     const list = byMatchDate.get(match.date);
     if (list) list.push(match);
     else byMatchDate.set(match.date, [match]);
   }
 
   for (const sameDateMatches of byMatchDate.values()) {
-    if (sameDateMatches.length < 2) continue;
+    const provisionalBestIds = sameDateMatches
+      .map((match) => match.best?.id)
+      .filter((id): id is string => Boolean(id));
+    const hasCandidateExactConflict = sameDateMatches.some((match) =>
+      match.candidates.some((candidate) => exactPerformanceIds.has(candidate.performance.id))
+    );
+    const hasDuplicateOrExactConflict =
+      hasCandidateExactConflict ||
+      provisionalBestIds.some(
+        (id, index) => exactPerformanceIds.has(id) || provisionalBestIds.indexOf(id) !== index
+      );
+    if (sameDateMatches.length < 2 && !hasDuplicateOrExactConflict) continue;
+    for (const match of sameDateMatches) {
+      match.best = undefined;
+    }
+    const usedPerformanceIds = new Set(exactPerformanceIds);
     const assignedMatchHrefs = new Set<string>();
     const edges = sameDateMatches
       .flatMap((match) =>
@@ -170,7 +185,11 @@ export const matchEventernoteEvents = (
           score: candidate.score
         }))
       )
-      .filter((edge) => edge.score >= 0.45 && !usedPerformanceIds.has(edge.performance.id))
+      .filter(
+        (edge) =>
+          edge.score >= (hasDuplicateOrExactConflict ? 0.2 : 0.45) &&
+          !usedPerformanceIds.has(edge.performance.id)
+      )
       .sort((a, b) => b.score - a.score);
 
     for (const edge of edges) {

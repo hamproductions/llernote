@@ -310,20 +310,25 @@ export function EventDetailDialog({
   }
   const witnessBySong = (() => {
     if (record?.status !== 'attended' || !setlist) return null;
-    const map = new Map<string, { count: number; firstDate: string }>();
+    const map = new Map<string, { count: number; firstPerformanceId: string }>();
     for (const r of records) {
       if (r.status !== 'attended') continue;
       const perf = performanceById.get(r.performanceId);
       const sl = setlists[r.performanceId];
       if (!perf || !sl) continue;
       if (!isPerformanceAtOrBefore(perf, performance)) continue;
-      for (const it of sl.items) {
-        if (it.type !== 'song' || !it.songId) continue;
-        const prev = map.get(it.songId);
-        if (!prev) map.set(it.songId, { count: 1, firstDate: perf.date });
+      const songIdsInPerformance = new Set(
+        sl.items.filter((it) => it.type === 'song' && it.songId).map((it) => it.songId!)
+      );
+      for (const songId of songIdsInPerformance) {
+        const prev = map.get(songId);
+        if (!prev) map.set(songId, { count: 1, firstPerformanceId: perf.id });
         else {
           prev.count += 1;
-          if (perf.date < prev.firstDate) prev.firstDate = perf.date;
+          const firstPerformance = performanceById.get(prev.firstPerformanceId);
+          if (!firstPerformance || isPerformanceAtOrBefore(perf, firstPerformance)) {
+            prev.firstPerformanceId = perf.id;
+          }
         }
       }
     }
@@ -613,8 +618,8 @@ export function EventDetailDialog({
                                   ? {
                                       count: witnessBySong.get(item.songId)?.count ?? 0,
                                       isFirst:
-                                        witnessBySong.get(item.songId)?.firstDate ===
-                                        performance.date
+                                        witnessBySong.get(item.songId)?.firstPerformanceId ===
+                                        performance.id
                                     }
                                   : undefined
                               }
