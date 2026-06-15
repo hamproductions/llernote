@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { FaArrowUpRightFromSquare, FaCheck, FaListUl, FaRegStar } from 'react-icons/fa6';
+import { FaArrowUpRightFromSquare, FaListUl } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
-import { Badge } from '~/components/ui/badge';
 import { IconButton } from '~/components/ui/icon-button';
 import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
@@ -24,26 +23,6 @@ export const legLabel = (performance: Performance) => {
     .filter((part): part is string => !!part && part !== dateLike)
     .join(' ');
 };
-
-function StatusDot({ performance }: { performance: Performance }) {
-  const { get } = useAttendance();
-  const record = get(performance.id);
-  if (record?.status === 'attended') {
-    return (
-      <Badge size="sm" variant="solid">
-        <FaCheck />
-      </Badge>
-    );
-  }
-  if (record?.status === 'interested') {
-    return (
-      <Badge size="sm" variant="solid" colorPalette="amber">
-        <FaRegStar />
-      </Badge>
-    );
-  }
-  return null;
-}
 
 function LegRow({
   performance,
@@ -96,14 +75,11 @@ function LegRow({
                 {label}
               </Text>
             )}
-            <HStack gap="1" flexWrap="wrap">
-              {performance.startTime && (
-                <Text flexShrink={0} color="fg.subtle" fontSize="xs">
-                  {performance.startTime}〜
-                </Text>
-              )}
-              <StatusDot performance={performance} />
-            </HStack>
+            {performance.startTime && (
+              <Text flexShrink={0} color="fg.subtle" fontSize="xs">
+                {performance.startTime}〜
+              </Text>
+            )}
           </Stack>
         </HStack>
         <Text color="fg.muted" fontSize="xs" lineClamp={1}>
@@ -214,7 +190,6 @@ export function TourCard({
               {first.startTime ? `・${first.startTime}〜` : ''}
             </Text>
             <HStack onClick={(e) => e.stopPropagation()} gap="1" flexShrink={0}>
-              <StatusDot performance={first} />
               <AttendanceButtons performanceId={first.id} future={isFutureEvent(first)} />
             </HStack>
           </HStack>
