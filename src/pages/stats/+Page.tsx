@@ -531,7 +531,7 @@ export default function Page() {
           )}
         </HStack>
 
-        {derived.pending ? (
+        {derived.loading ? (
           <Grid gap="3" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
             {Array.from({ length: 5 }, (_, i) => (
               <Skeleton key={i} borderRadius="l3" h="24" />

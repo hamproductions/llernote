@@ -52,5 +52,9 @@ export const useDerivedDataWorker = <T extends RequestType>(
     []
   );
 
-  return { result: result as ResponseFor<T> | undefined, pending };
+  return {
+    result: result as ResponseFor<T> | undefined,
+    pending,
+    loading: pending && result === undefined
+  };
 };

@@ -194,7 +194,7 @@ export default function Page() {
             </HStack>
           )}
         </HStack>
-        {derived.pending ? (
+        {derived.loading ? (
           <Grid
             gap="2"
             gridTemplateColumns={{

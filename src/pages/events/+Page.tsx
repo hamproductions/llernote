@@ -98,7 +98,7 @@ export default function Page() {
             setPage(1);
           }}
         />
-        {derived.pending ? (
+        {derived.loading ? (
           <Stack gap="3">
             {Array.from({ length: 8 }, (_, i) => (
               <Skeleton key={i} borderRadius="l2" h="24" />
