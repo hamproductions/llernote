@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FaDownload,
+  FaLayerGroup,
   FaLink,
   FaMusic,
   FaPen,
@@ -17,6 +18,7 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
 import { EXPORT_BG, MyPickGrid } from '~/components/mypick/MyPickGrid';
+import { MyPickSlotsDialog } from '~/components/mypick/MyPickSlotsDialog';
 import { Metadata } from '~/components/layout/Metadata';
 import { Dialog } from '~/components/ui/dialog';
 import { Field } from '~/components/ui/field';
@@ -111,6 +113,7 @@ export default function Page() {
   const [columnYear, setColumnYear] = useState('');
   const [exporting, setExporting] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [slotsOpen, setSlotsOpen] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const exportGridRef = useRef<HTMLDivElement>(null);
 
@@ -594,6 +597,20 @@ export default function Page() {
             {!shared && (
               <Button
                 size="sm"
+                variant="outline"
+                onClick={() => setSlotsOpen(true)}
+                gap="2"
+                borderColor="mypick.actionBorder"
+                color="mypick.text"
+                bgColor="mypick.actionMuted"
+              >
+                <FaLayerGroup size={12} />
+                {t('mypick.slots.button')}
+              </Button>
+            )}
+            {!shared && (
+              <Button
+                size="sm"
                 variant={editing ? 'subtle' : 'outline'}
                 onClick={() => setEditing((value) => !value)}
                 gap="2"
@@ -895,6 +912,15 @@ export default function Page() {
               ? 'tiles'
               : 'auto'
           }
+        />
+
+        <MyPickSlotsDialog
+          open={slotsOpen}
+          onOpenChange={setSlotsOpen}
+          current={{ config: myPick?.config, cells: myPick?.cells ?? {} }}
+          onLoad={(snapshot) => {
+            setMyPick({ config: snapshot.config ?? DEFAULT_CONFIG, cells: snapshot.cells });
+          }}
         />
 
         <Dialog.Root

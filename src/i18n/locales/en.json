@@ -219,7 +219,26 @@
     "share_x": "Share to X",
     "share_text": "My LoveLive! MyPick #LLerNote",
     "export_subtitle": "LoveLive! Series Favorite Selection",
-    "with_image": "With visual"
+    "with_image": "With visual",
+    "slots": {
+      "button": "Slots",
+      "title": "Saved picks",
+      "description": "Save the current grid as a slot and switch between your picks anytime.",
+      "name_placeholder": "Name this pick…",
+      "save_new": "Save",
+      "empty": "No saved picks yet. Save your current grid above.",
+      "active": "Active",
+      "load": "Load",
+      "overwrite": "Overwrite with current grid",
+      "rename": "Rename",
+      "delete": "Delete",
+      "delete_confirm": "Delete this saved pick?",
+      "summary": "{{count}} picks · {{date}}",
+      "saved": "Pick saved",
+      "loaded": "Loaded \"{{name}}\"",
+      "overwritten": "Slot updated",
+      "deleted": "Slot deleted"
+    }
   },
   "songs": {
     "title": "Songs",
