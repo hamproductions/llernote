@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaStar, FaXmark, FaXTwitter, FaCopy, FaArrowUpRightFromSquare } from 'react-icons/fa6';
+import {
+  FaArrowUpRightFromSquare,
+  FaCircleInfo,
+  FaCopy,
+  FaStar,
+  FaXTwitter,
+  FaXmark
+} from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
@@ -14,6 +21,7 @@ import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
+import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
 import {
@@ -37,6 +45,8 @@ import { hasSongThumb } from '~/utils/song-thumbs';
 import {
   buildSetlistInsights,
   compareSetlists,
+  getSongDebutPerformance,
+  getSongFirstWitnessPerformance,
   isPerformanceAtOrBefore,
   type SongSetlistInsight
 } from '~/utils/setlist-insights';
@@ -169,18 +179,20 @@ function SetlistPerformancePicker({
   );
 }
 
-function SetlistItemRow({
+export function SetlistItemRow({
   item,
   index,
   showArtists,
   witnessInfo,
-  setlistInsight
+  setlistInsight,
+  onSelectSong
 }: {
   item: SetlistItem;
   index: number;
   showArtists: boolean;
   witnessInfo?: { count: number; isFirst: boolean };
   setlistInsight?: SongSetlistInsight;
+  onSelectSong?: (songId: string) => void;
 }) {
   const { t, i18n } = useTranslation();
   const songById = useSongById();
@@ -196,6 +208,9 @@ function SetlistItemRow({
     );
   }
   const song = item.songId ? songById.get(item.songId) : undefined;
+  const songLabel = song
+    ? localizedName(i18n.language, song.name, song.englishName)
+    : (item.customSongName ?? '');
   const artistNames = [
     ...new Set(
       (song?.artists ?? [])
@@ -219,7 +234,7 @@ function SetlistItemRow({
       {song && hasSongThumb(song.id) && <SongThumb songId={song.id} />}
       <Stack flex="1" gap="0.5" minW="0">
         <Text fontSize="sm" lineClamp={1}>
-          {song ? localizedName(i18n.language, song.name, song.englishName) : item.customSongName}
+          {songLabel}
         </Text>
         <Wrap gap="1" color="fg.subtle" fontSize="2xs">
           {setlistInsight?.isDebut && (
@@ -248,6 +263,18 @@ function SetlistItemRow({
           {item.remarks && <Text lineClamp={1}>{item.remarks}</Text>}
         </Wrap>
       </Stack>
+      {song && onSelectSong && (
+        <IconButton
+          aria-label={`${t('events.view_detail')}: ${songLabel}`}
+          title={t('events.view_detail')}
+          variant="ghost"
+          size="xs"
+          onClick={() => onSelectSong(song.id)}
+          flexShrink={0}
+        >
+          <FaCircleInfo />
+        </IconButton>
+      )}
     </HStack>
   );
 }
@@ -275,12 +302,14 @@ export function EventDetailDialog({
   const [diffFromPerformanceId, setDiffFromPerformanceId] = useState('');
   const [diffToPerformanceId, setDiffToPerformanceId] = useState('');
   const [diffOpen, setDiffOpen] = useState(false);
+  const [selectedSongId, setSelectedSongId] = useState<string>();
 
   useEffect(() => {
     setMemo(record?.memo ?? '');
     setDiffFromPerformanceId('');
     setDiffToPerformanceId('');
     setDiffOpen(false);
+    setSelectedSongId(undefined);
   }, [record?.memo, performance?.id]);
 
   if (!performance) return null;
@@ -402,12 +431,35 @@ export function EventDetailDialog({
     );
     return selected ? `${selected.date} ${selected.title}` : t('events.setlist_diff_to');
   })();
+  const selectedSong = selectedSongId ? songById.get(selectedSongId) : undefined;
+  const selectedSongHeardAt = selectedSong
+    ? records
+        .filter((r) => r.status === 'attended')
+        .map((r) => performanceById.get(r.performanceId))
+        .filter((p): p is Performance => Boolean(p))
+        .filter((p) =>
+          Boolean(
+            setlists[p.id]?.items.some(
+              (item) => item.type === 'song' && item.songId === selectedSong.id
+            )
+          )
+        )
+    : [];
+  const selectedSongPerformedAt = selectedSong
+    ? performances.filter((p) =>
+        Boolean(
+          setlists[p.id]?.items.some(
+            (item) => item.type === 'song' && item.songId === selectedSong.id
+          )
+        )
+      )
+    : [];
 
   return (
     <>
       <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
+        <Dialog.Backdrop zIndex="60" />
+        <Dialog.Positioner zIndex="61">
           <Dialog.Content w="full" maxW="2xl" maxH="85vh" mx="4" overflowY="auto">
             <Stack gap="4" p={{ base: '4', md: '6' }}>
               <Stack gap="1" borderColor="border.subtle" borderBottomWidth="1px" pr="8" pb="3">
@@ -628,6 +680,7 @@ export function EventDetailDialog({
                                   ? setlistInsights?.songInsights.get(item.songId)
                                   : undefined
                               }
+                              onSelectSong={setSelectedSongId}
                             />
                           ))}
                       </Box>
@@ -649,9 +702,28 @@ export function EventDetailDialog({
         </Dialog.Positioner>
       </Dialog.Root>
 
+      {selectedSong && (
+        <SongDetailDialog
+          song={selectedSong}
+          heardAt={selectedSongHeardAt}
+          performedAt={selectedSongPerformedAt}
+          debutPerformance={getSongDebutPerformance(selectedSong.id, performanceById, setlists)}
+          firstWitnessPerformance={getSongFirstWitnessPerformance(
+            selectedSong.id,
+            records,
+            performanceById,
+            setlists
+          )}
+          performanceCount={selectedSongPerformedAt.length}
+          open={selectedSong !== undefined}
+          layer={90}
+          onClose={() => setSelectedSongId(undefined)}
+        />
+      )}
+
       <Dialog.Root open={diffOpen} onOpenChange={(e) => setDiffOpen(e.open)}>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
+        <Dialog.Backdrop zIndex="70" />
+        <Dialog.Positioner zIndex="71">
           <Dialog.Content w="full" maxW="3xl" maxH="85vh" mx="4" overflowY="auto">
             <Stack gap="4" p={{ base: '4', md: '6' }}>
               <Stack gap="1" pr="8">

@@ -1,7 +1,16 @@
-import { join } from 'path-browserify';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BiMenu, BiX } from 'react-icons/bi';
+import { BiX } from 'react-icons/bi';
+import {
+  FaCalendarDays,
+  FaChartSimple,
+  FaEllipsis,
+  FaHouse,
+  FaMapLocationDot,
+  FaMusic,
+  FaStar,
+  FaTicket
+} from 'react-icons/fa6';
 import { Box, Container, HStack, Stack } from 'styled-system/jsx';
 import { ColorModeToggle } from '~/components/layout/ColorModeToggle';
 import { Footer } from '~/components/layout/Footer';
@@ -13,42 +22,105 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/styled/button';
 import { IconButton } from '~/components/ui/styled/icon-button';
 import { getAssetUrl } from '~/utils/assets';
+import { isActiveRoute, toAppUrl } from '~/utils/url';
 import { usePageContext } from 'vike-react/usePageContext';
 
-const NAV_ITEMS = [
-  { path: '/', key: 'navigation.home', exact: true },
-  { path: '/events', key: 'navigation.events' },
-  { path: '/calendar', key: 'navigation.calendar' },
-  { path: '/venues', key: 'navigation.venues' },
-  { path: '/stats', key: 'navigation.stats' },
-  { path: '/songs', key: 'navigation.songs' },
-  { path: '/mypick', key: 'navigation.mypick' }
+interface NavItem {
+  path: string;
+  key: string;
+  icon: React.ComponentType<{ size?: number }>;
+  exact?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { path: '/', key: 'navigation.home', exact: true, icon: FaHouse },
+  { path: '/events', key: 'navigation.events', icon: FaTicket },
+  { path: '/calendar', key: 'navigation.calendar', icon: FaCalendarDays },
+  { path: '/venues', key: 'navigation.venues', icon: FaMapLocationDot },
+  { path: '/stats', key: 'navigation.stats', icon: FaChartSimple },
+  { path: '/songs', key: 'navigation.songs', icon: FaMusic },
+  { path: '/mypick', key: 'navigation.mypick', icon: FaStar }
 ];
+
+const MOBILE_PRIMARY_PATHS = ['/', '/events', '/calendar', '/songs'];
+const MOBILE_PRIMARY_NAV_ITEMS = NAV_ITEMS.filter(({ path }) =>
+  MOBILE_PRIMARY_PATHS.includes(path)
+);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
   const { urlPathname } = usePageContext();
-  const currentPath = join(import.meta.env.BASE_URL, urlPathname);
+  const currentPath = toAppUrl(urlPathname);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  function NavLinks() {
+  function HeaderNav() {
     return (
       <>
-        {NAV_ITEMS.map(({ path, key, exact }) => {
-          const href = join(import.meta.env.BASE_URL, path);
-          const isActive = exact ? currentPath === href : currentPath.startsWith(href);
+        {NAV_ITEMS.map(({ path, key, exact, icon: Icon }) => {
+          const isActive = isActiveRoute(path, currentPath, exact);
           return (
             <Link
               key={path}
-              href={href}
+              href={toAppUrl(path)}
+              aria-label={t(key)}
+              aria-current={isActive ? 'page' : undefined}
+              data-active={isActive ? true : undefined}
+              display="flex"
+              gap="1.5"
+              alignItems="center"
+              borderRadius="md"
+              py="1.5"
+              px={{ base: '2', lg: '2.5' }}
+              color={isActive ? 'accent.text' : 'fg.muted'}
+              textDecoration="none"
+              fontSize="sm"
+              fontWeight={isActive ? 'semibold' : 'medium'}
+              bgColor={isActive ? 'accent.subtle' : 'transparent'}
+              whiteSpace="nowrap"
+              _hover={{ bgColor: isActive ? 'accent.subtle' : 'bg.subtle', textDecoration: 'none' }}
+            >
+              <Icon size={15} />
+              <Text as="span" hideBelow="lg">
+                {t(key)}
+              </Text>
+            </Link>
+          );
+        })}
+      </>
+    );
+  }
+
+  function DrawerNav() {
+    return (
+      <>
+        {NAV_ITEMS.map(({ path, key, exact, icon: Icon }) => {
+          const isActive = isActiveRoute(path, currentPath, exact);
+          return (
+            <Link
+              key={path}
+              href={toAppUrl(path)}
+              aria-current={isActive ? 'page' : undefined}
               data-active={isActive ? true : undefined}
               onClick={() => setIsDrawerOpen(false)}
-              _active={{ fontWeight: 'bold' }}
+              display="flex"
+              gap="3"
+              alignItems="center"
+              borderRadius="md"
+              w="full"
+              py="2.5"
+              px="3"
+              color={isActive ? 'accent.text' : 'fg.default'}
+              textDecoration="none"
+              fontSize="md"
+              fontWeight={isActive ? 'semibold' : 'medium'}
+              bgColor={isActive ? 'accent.subtle' : 'transparent'}
+              _hover={{ bgColor: isActive ? 'accent.subtle' : 'bg.subtle', textDecoration: 'none' }}
             >
+              <Icon size={18} />
               {t(key)}
             </Link>
           );
@@ -57,32 +129,96 @@ export function Layout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  function MobileBottomNav() {
+    return (
+      <Stack
+        hideFrom="md"
+        zIndex="overlay"
+        position="fixed"
+        left="0"
+        right="0"
+        bottom="0"
+        justifyContent="center"
+        borderColor="border.default"
+        borderTopWidth="1px"
+        w="full"
+        px="4"
+        pt="2"
+        pb="calc(env(safe-area-inset-bottom) + 0.5rem)"
+        bgColor="bg.default"
+      >
+        <HStack justifyContent="space-evenly" w="full">
+          {MOBILE_PRIMARY_NAV_ITEMS.map(({ path, key, exact, icon: Icon }) => {
+            const isActive = isActiveRoute(path, currentPath, exact);
+            return (
+              <Link
+                key={path}
+                href={toAppUrl(path)}
+                aria-label={t(key)}
+                aria-current={isActive ? 'page' : undefined}
+                data-active={isActive ? true : undefined}
+                display="flex"
+                flex="1"
+                justifyContent="center"
+                alignItems="center"
+                rounded="md"
+                py="2"
+                color={isActive ? 'accent.default' : 'fg.muted'}
+                bgColor={isActive ? 'bg.emphasized' : 'transparent'}
+                _hover={{ bgColor: 'bg.emphasized', textDecoration: 'none' }}
+              >
+                <Icon size={20} />
+              </Link>
+            );
+          })}
+          <Button
+            aria-label={t('common.open_menu')}
+            aria-expanded={isDrawerOpen}
+            variant="ghost"
+            onClick={() => setIsDrawerOpen(true)}
+            display="flex"
+            flex="1"
+            justifyContent="center"
+            alignItems="center"
+            rounded="md"
+            w="full"
+            minW="0"
+            h="auto"
+            py="2"
+            color={isDrawerOpen ? 'accent.default' : 'fg.muted'}
+            bgColor={isDrawerOpen ? 'bg.emphasized' : 'transparent'}
+            _hover={{ bgColor: 'bg.emphasized' }}
+          >
+            <FaEllipsis size={20} />
+          </Button>
+        </HStack>
+      </Stack>
+    );
+  }
+
   return (
     <Stack position="relative" w="full" minH="100vh" bgColor="bg.default">
-      <Container zIndex="1" position="relative" flex={1} w="full" py={4} px={4}>
+      <Container
+        zIndex="1"
+        position="relative"
+        flex={1}
+        w="full"
+        px={4}
+        pt={4}
+        pb={{ base: '24', md: '4' }}
+      >
         <Stack>
           <HStack justifyContent="space-between" alignItems="center" w="full">
             <HStack gap="4" alignItems="center">
-              <Link href={join(import.meta.env.BASE_URL, '/')} _hover={{ textDecoration: 'none' }}>
+              <Link href={toAppUrl('/')} _hover={{ textDecoration: 'none' }}>
                 <Text color="accent.default" fontSize="lg" fontWeight="bold">
                   LLerNote
                 </Text>
               </Link>
-              <HStack hideBelow="md">
-                <NavLinks />
+              <HStack hideBelow="md" gap="0.5">
+                <HeaderNav />
               </HStack>
             </HStack>
-
-            <Box hideFrom="md">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDrawerOpen(true)}
-                aria-label={t('common.open_menu')}
-              >
-                <BiMenu size={24} />
-              </Button>
-            </Box>
 
             <HStack hideBelow="md" justifySelf="flex-end">
               <LanguageToggle />
@@ -94,6 +230,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </Stack>
       </Container>
       <Footer />
+      <MobileBottomNav />
 
       <Drawer.Root open={isDrawerOpen} onOpenChange={(e) => setIsDrawerOpen(e.open)}>
         <Drawer.Backdrop />
@@ -110,8 +247,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </HStack>
             </Drawer.Header>
             <Drawer.Body>
-              <Stack gap={4}>
-                <NavLinks />
+              <Stack gap={1}>
+                <DrawerNav />
               </Stack>
             </Drawer.Body>
             <Drawer.Footer>

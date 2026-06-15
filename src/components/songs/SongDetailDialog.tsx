@@ -26,6 +26,7 @@ export function SongDetailDialog({
   firstWitnessPerformance,
   performanceCount,
   open,
+  layer = 50,
   onClose,
   onSelectEvent
 }: {
@@ -36,6 +37,7 @@ export function SongDetailDialog({
   firstWitnessPerformance?: Performance;
   performanceCount: number;
   open: boolean;
+  layer?: number;
   onClose: () => void;
   onSelectEvent?: (performance: Performance) => void;
 }) {
@@ -62,8 +64,8 @@ export function SongDetailDialog({
 
   return (
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
-      <Dialog.Backdrop />
-      <Dialog.Positioner>
+      <Dialog.Backdrop zIndex={layer} />
+      <Dialog.Positioner zIndex={layer + 1}>
         <Dialog.Content w="full" maxW="lg" maxH="85vh" mx="4" overflowY="auto">
           <Stack gap="4" p={{ base: '4', md: '6' }}>
             <HStack
