@@ -129,16 +129,25 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
           <StatNumber label={t('stats.venues_visited')} value={stats.venuesVisited} />
           <StatNumber label={t('stats.total_interested')} value={stats.interestedCount} />
         </Grid>
-        {stats.firstEvent && (
-          <Stack gap="1">
-            <Text color="fg.muted" fontSize="xs">
-              {t('stats.first_event')}
-            </Text>
-            <Text fontSize="sm" fontWeight="medium">
-              {stats.firstEvent.date} {stats.firstEvent.tourName}
-            </Text>
-          </Stack>
-        )}
+        {(
+          [
+            ['stats.first_event', stats.firstEvent],
+            ['stats.latest_event', stats.latestEvent]
+          ] as const
+        )
+          .filter(([, event], index) =>
+            index === 1 ? event && event.id !== stats.firstEvent?.id : event
+          )
+          .map(([labelKey, event]) => (
+            <Stack key={labelKey} gap="1">
+              <Text color="fg.muted" fontSize="xs">
+                {t(labelKey)}
+              </Text>
+              <Text fontSize="sm" fontWeight="medium">
+                {event!.date} {event!.tourName}
+              </Text>
+            </Stack>
+          ))}
         {stats.byYear.length > 0 && (
           <Stack gap="2">
             <Text fontSize="sm" fontWeight="semibold">
@@ -207,7 +216,7 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
             />
           </Stack>
         )}
-        {stats.byCategory.length > 0 && (
+        {stats.byCategory.length > 1 && (
           <Stack gap="2">
             <Text fontSize="sm" fontWeight="semibold">
               {t('events.category')}
@@ -222,7 +231,7 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
             />
           </Stack>
         )}
-        {stats.byWatchType.length > 0 && (
+        {stats.byWatchType.length > 1 && (
           <Stack gap="2">
             <Text fontSize="sm" fontWeight="semibold">
               {t('stats.by_type')}
