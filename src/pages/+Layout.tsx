@@ -131,60 +131,43 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   function MobileBottomNav() {
     return (
-      <Box
+      <Stack
         hideFrom="md"
-        zIndex="40"
+        zIndex="overlay"
         position="fixed"
-        left="3"
-        right="3"
-        bottom="3"
-        pb="env(safe-area-inset-bottom)"
-        pointerEvents="none"
+        left="0"
+        right="0"
+        bottom="0"
+        justifyContent="center"
+        borderColor="border.default"
+        borderTopWidth="1px"
+        w="full"
+        px="4"
+        pt="2"
+        pb="calc(env(safe-area-inset-bottom) + 0.5rem)"
+        bgColor="bg.default"
       >
-        <HStack
-          gap="1"
-          justifyContent="space-between"
-          borderColor="border.subtle"
-          borderRadius="full"
-          borderWidth="1px"
-          py="1.5"
-          px="2"
-          bgColor="bg.default/95"
-          boxShadow="lg"
-          backdropFilter="blur(18px)"
-          pointerEvents="auto"
-        >
+        <HStack justifyContent="space-evenly" w="full">
           {MOBILE_PRIMARY_NAV_ITEMS.map(({ path, key, exact, icon: Icon }) => {
             const isActive = isActiveRoute(path, currentPath, exact);
             return (
               <Link
                 key={path}
                 href={toAppUrl(path)}
+                aria-label={t(key)}
                 aria-current={isActive ? 'page' : undefined}
                 data-active={isActive ? true : undefined}
                 display="flex"
                 flex="1"
-                gap="0.5"
-                flexDirection="column"
                 justifyContent="center"
                 alignItems="center"
-                borderRadius="full"
-                minW="0"
-                minH="12"
-                color={isActive ? 'accent.text' : 'fg.muted'}
-                textDecoration="none"
-                fontSize="2xs"
-                fontWeight={isActive ? 'semibold' : 'medium'}
-                bgColor={isActive ? 'accent.subtle' : 'transparent'}
-                _hover={{
-                  bgColor: isActive ? 'accent.subtle' : 'bg.subtle',
-                  textDecoration: 'none'
-                }}
+                rounded="md"
+                py="2"
+                color={isActive ? 'accent.default' : 'fg.muted'}
+                bgColor={isActive ? 'bg.emphasized' : 'transparent'}
+                _hover={{ bgColor: 'bg.emphasized', textDecoration: 'none' }}
               >
-                <Icon size={17} />
-                <Text as="span" maxW="full" truncate>
-                  {t(key)}
-                </Text>
+                <Icon size={20} />
               </Link>
             );
           })}
@@ -195,25 +178,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
             onClick={() => setIsDrawerOpen(true)}
             display="flex"
             flex="1"
-            gap="0.5"
-            flexDirection="column"
             justifyContent="center"
             alignItems="center"
-            borderRadius="full"
+            rounded="md"
+            w="full"
             minW="0"
-            minH="12"
-            color={isDrawerOpen ? 'accent.text' : 'fg.muted'}
-            fontSize="2xs"
-            fontWeight={isDrawerOpen ? 'semibold' : 'medium'}
-            bgColor={isDrawerOpen ? 'accent.subtle' : 'transparent'}
+            h="auto"
+            py="2"
+            color={isDrawerOpen ? 'accent.default' : 'fg.muted'}
+            bgColor={isDrawerOpen ? 'bg.emphasized' : 'transparent'}
+            _hover={{ bgColor: 'bg.emphasized' }}
           >
-            <FaEllipsis size={17} />
-            <Text as="span" maxW="full" truncate>
-              {t('common.menu', { defaultValue: 'Menu' })}
-            </Text>
+            <FaEllipsis size={20} />
           </Button>
         </HStack>
-      </Box>
+      </Stack>
     );
   }
 
