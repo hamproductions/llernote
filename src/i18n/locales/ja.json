@@ -218,7 +218,26 @@
     "share_x": "Xでシェア",
     "share_text": "私のラブライブ！MyPick #LLerNote",
     "export_subtitle": "ラブライブ！シリーズ お気に入りセレクション",
-    "with_image": "ビジュアルあり"
+    "with_image": "ビジュアルあり",
+    "slots": {
+      "button": "スロット",
+      "title": "保存したMyPick",
+      "description": "今のグリッドをスロットに保存して、いつでも切り替えられます。",
+      "name_placeholder": "名前を付ける…",
+      "save_new": "保存",
+      "empty": "保存したMyPickはまだありません。上で現在のグリッドを保存できます。",
+      "active": "使用中",
+      "load": "読み込む",
+      "overwrite": "現在のグリッドで上書き",
+      "rename": "名前を変更",
+      "delete": "削除",
+      "delete_confirm": "この保存を削除しますか？",
+      "summary": "{{count}}件 · {{date}}",
+      "saved": "保存しました",
+      "loaded": "「{{name}}」を読み込みました",
+      "overwritten": "スロットを更新しました",
+      "deleted": "スロットを削除しました"
+    }
   },
   "songs": {
     "title": "楽曲",

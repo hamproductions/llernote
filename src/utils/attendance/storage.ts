@@ -4,11 +4,13 @@ import type {
   AttendanceStatus,
   BackupData,
   MyPick,
-  MyPickConfig
+  MyPickConfig,
+  MyPickSaveSlot,
+  MyPickSaveSlots
 } from '~/types/attendance';
 import { columnKey, rowKey } from '~/types/attendance';
 
-const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 2;
 
 type Listener = () => void;
 
@@ -151,6 +153,78 @@ export const setMyPickCell = (key: string, id: string | null) => {
   setMyPick({ cells });
 };
 
+const EMPTY_SLOTS: MyPickSaveSlots = { slots: [], activeId: null };
+
+export const myPickSlotsStore = new SyncedStore<MyPickSaveSlots>(
+  'llernote-mypick-slots',
+  EMPTY_SLOTS
+);
+
+export type MyPickSnapshot = Pick<MyPickSaveSlot, 'config' | 'cells'>;
+
+const newSlotId = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `slot-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+export const saveMyPickSlot = (name: string, snapshot: MyPickSnapshot): MyPickSaveSlot => {
+  const prev = myPickSlotsStore.get();
+  const now = new Date().toISOString();
+  const slot: MyPickSaveSlot = {
+    id: newSlotId(),
+    name: name.trim() || 'MyPick',
+    config: snapshot.config,
+    cells: { ...snapshot.cells },
+    createdAt: now,
+    updatedAt: now
+  };
+  myPickSlotsStore.set({ slots: [...prev.slots, slot], activeId: slot.id });
+  return slot;
+};
+
+export const renameMyPickSlot = (id: string, name: string) => {
+  const prev = myPickSlotsStore.get();
+  myPickSlotsStore.set({
+    ...prev,
+    slots: prev.slots.map((slot) =>
+      slot.id === id
+        ? { ...slot, name: name.trim() || slot.name, updatedAt: new Date().toISOString() }
+        : slot
+    )
+  });
+};
+
+export const overwriteMyPickSlot = (id: string, snapshot: MyPickSnapshot) => {
+  const prev = myPickSlotsStore.get();
+  myPickSlotsStore.set({
+    ...prev,
+    activeId: id,
+    slots: prev.slots.map((slot) =>
+      slot.id === id
+        ? {
+            ...slot,
+            config: snapshot.config,
+            cells: { ...snapshot.cells },
+            updatedAt: new Date().toISOString()
+          }
+        : slot
+    )
+  });
+};
+
+export const deleteMyPickSlot = (id: string) => {
+  const prev = myPickSlotsStore.get();
+  myPickSlotsStore.set({
+    activeId: prev.activeId === id ? null : prev.activeId,
+    slots: prev.slots.filter((slot) => slot.id !== id)
+  });
+};
+
+export const setActiveMyPickSlot = (id: string | null) => {
+  const prev = myPickSlotsStore.get();
+  myPickSlotsStore.set({ ...prev, activeId: id });
+};
+
 const VALID_STATUS = new Set<AttendanceStatus>(['attended', 'interested']);
 
 const isValidRecord = (record: unknown): record is AttendanceRecord => {
@@ -168,7 +242,8 @@ export const exportBackup = (): BackupData => ({
   version: BACKUP_VERSION,
   exportedAt: new Date().toISOString(),
   attendance: attendanceStore.get(),
-  myPick: myPickStore.get()
+  myPick: myPickStore.get(),
+  myPickSlots: myPickSlotsStore.get()
 });
 
 export const importBackup = (data: BackupData) => {
@@ -211,5 +286,22 @@ export const importBackup = (data: BackupData) => {
         cells: { ...older.cells, ...newer.cells }
       });
     }
+  }
+
+  const incomingSlots = data.myPickSlots;
+  if (incomingSlots && typeof incomingSlots === 'object' && Array.isArray(incomingSlots.slots)) {
+    const current = myPickSlotsStore.get();
+    const byId = new Map(current.slots.map((slot) => [slot.id, slot]));
+    for (const slot of incomingSlots.slots) {
+      if (typeof slot?.id !== 'string' || typeof slot.cells !== 'object' || slot.cells === null) {
+        continue;
+      }
+      const existing = byId.get(slot.id);
+      if (!existing || slot.updatedAt > existing.updatedAt) byId.set(slot.id, slot);
+    }
+    myPickSlotsStore.set({
+      slots: [...byId.values()],
+      activeId: current.activeId ?? incomingSlots.activeId ?? null
+    });
   }
 };

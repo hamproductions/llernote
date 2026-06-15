@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   attendanceStore,
+  deleteMyPickSlot,
   exportBackup,
   getActiveRecords,
   importBackup,
+  myPickSlotsStore,
+  overwriteMyPickSlot,
   removeAttendance,
+  renameMyPickSlot,
+  saveMyPickSlot,
+  setActiveMyPickSlot,
   setAttendance,
   updateAttendance
 } from '../storage';
@@ -98,5 +104,89 @@ describe('attendance storage', () => {
 
   it('rejects invalid backup data', () => {
     expect(() => importBackup(JSON.parse('"garbage"'))).toThrow();
+  });
+});
+
+describe('mypick save slots', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    myPickSlotsStore.set({ slots: [], activeId: null });
+  });
+
+  it('saves a slot and marks it active', () => {
+    const slot = saveMyPickSlot('All time', { cells: { a: '1' } });
+    const state = myPickSlotsStore.get();
+    expect(state.slots).toHaveLength(1);
+    expect(state.slots[0]).toMatchObject({ name: 'All time', cells: { a: '1' } });
+    expect(state.activeId).toBe(slot.id);
+  });
+
+  it('falls back to a default name when blank', () => {
+    const slot = saveMyPickSlot('   ', { cells: {} });
+    expect(slot.name).toBe('MyPick');
+  });
+
+  it('renames a slot', () => {
+    const slot = saveMyPickSlot('old', { cells: {} });
+    renameMyPickSlot(slot.id, '2025');
+    expect(myPickSlotsStore.get().slots[0]?.name).toBe('2025');
+  });
+
+  it('overwrites a slot with a new snapshot and activates it', () => {
+    const a = saveMyPickSlot('a', { cells: { x: '1' } });
+    saveMyPickSlot('b', { cells: {} });
+    overwriteMyPickSlot(a.id, { cells: { x: '2', y: '3' } });
+    const state = myPickSlotsStore.get();
+    expect(state.slots.find((s) => s.id === a.id)?.cells).toEqual({ x: '2', y: '3' });
+    expect(state.activeId).toBe(a.id);
+  });
+
+  it('deletes a slot and clears active when it was active', () => {
+    const slot = saveMyPickSlot('a', { cells: {} });
+    deleteMyPickSlot(slot.id);
+    const state = myPickSlotsStore.get();
+    expect(state.slots).toHaveLength(0);
+    expect(state.activeId).toBeNull();
+  });
+
+  it('snapshots are decoupled from later edits', () => {
+    const cells: Record<string, string | null> = { a: '1' };
+    saveMyPickSlot('snap', { cells });
+    cells.a = 'mutated';
+    expect(myPickSlotsStore.get().slots[0]?.cells.a).toBe('1');
+  });
+
+  it('round-trips slots through backup export/import', () => {
+    saveMyPickSlot('keep', { cells: { a: '1' } });
+    const backup = exportBackup();
+    expect(backup.version).toBe(2);
+    myPickSlotsStore.set({ slots: [], activeId: null });
+    importBackup(backup);
+    expect(myPickSlotsStore.get().slots).toHaveLength(1);
+    expect(myPickSlotsStore.get().slots[0]?.name).toBe('keep');
+  });
+
+  it('import keeps the newer slot by updatedAt', () => {
+    const slot = saveMyPickSlot('local', { cells: {} });
+    setActiveMyPickSlot(slot.id);
+    importBackup({
+      version: 2,
+      exportedAt: '',
+      attendance: {},
+      myPickSlots: {
+        activeId: null,
+        slots: [
+          {
+            id: slot.id,
+            name: 'stale',
+            cells: {},
+            createdAt: '2000-01-01T00:00:00.000Z',
+            updatedAt: '2000-01-01T00:00:00.000Z'
+          }
+        ]
+      }
+    });
+    expect(myPickSlotsStore.get().slots).toHaveLength(1);
+    expect(myPickSlotsStore.get().slots[0]?.name).toBe('local');
   });
 });

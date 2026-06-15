@@ -37,6 +37,20 @@ export interface MyPick {
   updatedAt: string;
 }
 
+export interface MyPickSaveSlot {
+  id: string;
+  name: string;
+  config?: MyPickConfig;
+  cells: Record<string, string | null>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MyPickSaveSlots {
+  slots: MyPickSaveSlot[];
+  activeId: string | null;
+}
+
 export const rowKey = (row: MyPickRow) => `${row.type}:${row.id}`;
 export const columnKey = (col: MyPickColumn) =>
   col.type === 'year'
@@ -51,4 +65,5 @@ export interface BackupData {
   exportedAt: string;
   attendance: Record<string, AttendanceRecord>;
   myPick?: MyPick | null;
+  myPickSlots?: MyPickSaveSlots | null;
 }
