@@ -232,11 +232,12 @@
       "rename": "名前を変更",
       "delete": "削除",
       "delete_confirm": "この保存を削除しますか？",
-      "summary": "{{count}}件 · {{date}}",
       "saved": "保存しました",
       "loaded": "「{{name}}」を読み込みました",
       "overwritten": "スロットを更新しました",
-      "deleted": "スロットを削除しました"
+      "deleted": "スロットを削除しました",
+      "summary_one": "{{count}}件 · {{date}}",
+      "summary_other": "{{count}}件 · {{date}}"
     }
   },
   "songs": {

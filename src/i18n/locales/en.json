@@ -233,11 +233,12 @@
       "rename": "Rename",
       "delete": "Delete",
       "delete_confirm": "Delete this saved pick?",
-      "summary": "{{count}} picks · {{date}}",
       "saved": "Pick saved",
       "loaded": "Loaded \"{{name}}\"",
       "overwritten": "Slot updated",
-      "deleted": "Slot deleted"
+      "deleted": "Slot deleted",
+      "summary_one": "{{count}} pick · {{date}}",
+      "summary_other": "{{count}} picks · {{date}}"
     }
   },
   "songs": {
