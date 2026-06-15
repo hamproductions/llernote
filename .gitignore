@@ -41,3 +41,4 @@ coverage*
 
 dogfood-output
 data/enrichment-cache/
+puremon-tracker/

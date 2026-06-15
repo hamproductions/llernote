@@ -40,7 +40,7 @@ describe('SetlistItemRow', () => {
     );
 
     await userEvent.click(
-      screen.getByRole('button', { name: /(?:view details|common\.view_detail)/i })
+      screen.getByRole('button', { name: /(?:view details|events\.view_detail)/i })
     );
 
     expect(onSelectSong).toHaveBeenCalledWith('song-1');

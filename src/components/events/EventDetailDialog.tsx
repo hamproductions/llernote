@@ -265,8 +265,8 @@ export function SetlistItemRow({
       </Stack>
       {song && onSelectSong && (
         <IconButton
-          aria-label={`${t('common.view_detail')}: ${songLabel}`}
-          title={t('common.view_detail')}
+          aria-label={`${t('events.view_detail')}: ${songLabel}`}
+          title={t('events.view_detail')}
           variant="ghost"
           size="xs"
           onClick={() => onSelectSong(song.id)}
