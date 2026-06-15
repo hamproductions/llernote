@@ -251,7 +251,9 @@
     "sort_direction": "Sort direction",
     "song_history": "Song history",
     "debut_performance": "初披露",
-    "first_witness_performance": "First time you saw it"
+    "first_witness_performance": "First time you saw it",
+    "latest_performance": "Latest performance",
+    "last_witness_performance": "Last time you saw it"
   },
   "share": {
     "share": "Share",

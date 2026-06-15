@@ -249,7 +249,9 @@
     "sort_direction": "並び順",
     "song_history": "楽曲履歴",
     "debut_performance": "初披露",
-    "first_witness_performance": "初めて見た公演"
+    "first_witness_performance": "初めて見た公演",
+    "latest_performance": "最新披露",
+    "last_witness_performance": "最後に見た公演"
   },
   "share": {
     "share": "シェア",

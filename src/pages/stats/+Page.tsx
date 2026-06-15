@@ -549,10 +549,40 @@ export default function Page() {
               <StatTile label={t('stats.total_interested')} value={stats.interestedCount} />
             </Grid>
 
-            {stats.firstEvent && (
-              <Text color="fg.muted" fontSize="sm">
-                {t('stats.first_event')}: {stats.firstEvent.date} {stats.firstEvent.tourName}
-              </Text>
+            {(stats.firstEvent || stats.latestEvent) && (
+              <Wrap gap="2">
+                {(
+                  [
+                    ['stats.first_event', stats.firstEvent],
+                    ['stats.latest_event', stats.latestEvent]
+                  ] as const
+                )
+                  .filter(([, event], index) =>
+                    index === 1 ? event && event.id !== stats.firstEvent?.id : event
+                  )
+                  .map(([labelKey, event]) => (
+                    <HStack
+                      key={labelKey}
+                      gap="2"
+                      alignItems="baseline"
+                      borderColor="border.subtle"
+                      borderRadius="l2"
+                      borderWidth="1px"
+                      py="1.5"
+                      px="3"
+                    >
+                      <Text color="fg.muted" fontSize="xs">
+                        {t(labelKey)}
+                      </Text>
+                      <Text fontSize="sm" fontVariantNumeric="tabular-nums">
+                        {event!.date}
+                      </Text>
+                      <Text maxW="80" color="accent.text" fontSize="sm" lineClamp={1}>
+                        {event!.tourName}
+                      </Text>
+                    </HStack>
+                  ))}
+              </Wrap>
             )}
 
             <Grid
@@ -560,12 +590,12 @@ export default function Page() {
               alignItems="start"
               gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }}
             >
-              {stats.byYear.length > 0 && (
+              {!year && stats.byYear.length > 1 && (
                 <ChartCard title={t('stats.heatmap')} span>
                   <MonthHeatmap byMonth={stats.byMonth} years={stats.byYear.map((y) => y.year)} />
                 </ChartCard>
               )}
-              {stats.byYear.length > 0 && (
+              {!year && stats.byYear.length > 1 && (
                 <ChartCard title={t('stats.by_year')}>
                   <BarList
                     items={stats.byYear.map((y) => ({
@@ -577,7 +607,7 @@ export default function Page() {
                   />
                 </ChartCard>
               )}
-              {stats.bySeries.length > 0 && (
+              {!seriesId && stats.bySeries.length > 1 && (
                 <ChartCard title={t('stats.by_series')}>
                   <SeriesPie
                     items={stats.bySeries.map((s) => ({
@@ -644,7 +674,7 @@ export default function Page() {
                   />
                 </ChartCard>
               )}
-              {stats.byCategory.length > 0 && (
+              {stats.byCategory.length > 1 && (
                 <ChartCard title={t('events.category')}>
                   <BarList
                     items={stats.byCategory.map((c) => ({

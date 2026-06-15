@@ -55,6 +55,12 @@ export function SongDetailDialog({
     )
   ].join('・');
   const videoId = (song as SongWithVideo).musicVideo?.videoId;
+  const latestPerformance = performedAt.length
+    ? performedAt.reduce((a, b) => (a.date >= b.date ? a : b))
+    : undefined;
+  const lastWitnessPerformance = heardAt.length
+    ? heardAt.reduce((a, b) => (a.date >= b.date ? a : b))
+    : undefined;
   const relativeDate = (date: string) => {
     const days = daysFromToday(date);
     if (days === 0) return t('events.today');
@@ -129,62 +135,70 @@ export function SongDetailDialog({
                 <Text fontWeight="semibold">{t('songs.song_history')}</Text>
               </HStack>
               <Stack gap="1">
-                {debutPerformance && (
-                  <HStack
-                    {...(onSelectEvent ? clickable(() => onSelectEvent(debutPerformance)) : {})}
-                    cursor={onSelectEvent ? 'pointer' : undefined}
-                    gap="2"
-                    alignItems="baseline"
-                    borderRadius="l1"
-                    py="1"
-                    px="1.5"
-                    _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
-                  >
-                    <Badge size="sm" variant="solid" flexShrink={0}>
-                      {t('songs.debut_performance')}
-                    </Badge>
-                    <Text
-                      flexShrink={0}
-                      color="fg.muted"
-                      fontSize="xs"
-                      fontVariantNumeric="tabular-nums"
+                {(
+                  [
+                    {
+                      key: 'debut',
+                      perf: debutPerformance,
+                      label: t('songs.debut_performance'),
+                      variant: 'solid'
+                    },
+                    {
+                      key: 'first_witness',
+                      perf: firstWitnessPerformance,
+                      label: t('songs.first_witness_performance'),
+                      variant: 'outline'
+                    },
+                    {
+                      key: 'latest',
+                      perf:
+                        latestPerformance && latestPerformance.id !== debutPerformance?.id
+                          ? latestPerformance
+                          : undefined,
+                      label: t('songs.latest_performance'),
+                      variant: 'outline'
+                    },
+                    {
+                      key: 'last_witness',
+                      perf:
+                        lastWitnessPerformance &&
+                        lastWitnessPerformance.id !== firstWitnessPerformance?.id
+                          ? lastWitnessPerformance
+                          : undefined,
+                      label: t('songs.last_witness_performance'),
+                      variant: 'solid'
+                    }
+                  ] as const
+                )
+                  .filter((m): m is typeof m & { perf: Performance } => Boolean(m.perf))
+                  .map(({ key, perf, label, variant }) => (
+                    <HStack
+                      key={key}
+                      {...(onSelectEvent ? clickable(() => onSelectEvent(perf)) : {})}
+                      cursor={onSelectEvent ? 'pointer' : undefined}
+                      gap="2"
+                      alignItems="baseline"
+                      borderRadius="l1"
+                      py="1"
+                      px="1.5"
+                      _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
                     >
-                      {debutPerformance.date}
-                    </Text>
-                    <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={1}>
-                      {debutPerformance.tourName}
-                    </Text>
-                  </HStack>
-                )}
-                {firstWitnessPerformance && (
-                  <HStack
-                    {...(onSelectEvent
-                      ? clickable(() => onSelectEvent(firstWitnessPerformance))
-                      : {})}
-                    cursor={onSelectEvent ? 'pointer' : undefined}
-                    gap="2"
-                    alignItems="baseline"
-                    borderRadius="l1"
-                    py="1"
-                    px="1.5"
-                    _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
-                  >
-                    <Badge size="sm" variant="outline" flexShrink={0}>
-                      {t('songs.first_witness_performance')}
-                    </Badge>
-                    <Text
-                      flexShrink={0}
-                      color="fg.muted"
-                      fontSize="xs"
-                      fontVariantNumeric="tabular-nums"
-                    >
-                      {firstWitnessPerformance.date}
-                    </Text>
-                    <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={1}>
-                      {firstWitnessPerformance.tourName}
-                    </Text>
-                  </HStack>
-                )}
+                      <Badge size="sm" variant={variant} flexShrink={0}>
+                        {label}
+                      </Badge>
+                      <Text
+                        flexShrink={0}
+                        color="fg.muted"
+                        fontSize="xs"
+                        fontVariantNumeric="tabular-nums"
+                      >
+                        {perf.date}
+                      </Text>
+                      <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={1}>
+                        {perf.tourName}
+                      </Text>
+                    </HStack>
+                  ))}
               </Stack>
             </Stack>
 
