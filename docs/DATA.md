@@ -20,7 +20,7 @@ All files in `data/` are copied from [the-sorter](https://github.com/hamproducti
 ## Key relationships
 
 - `performance.seriesIds[]` → `series.id` (string)
-- `setlist.items[].songId` → `song.id`
+- `setlist.items[].songId` → `song.id` (empty string + `isCustomSong: true` for collab songs not in the LoveLive catalog — e.g. Idolmaster tracks at 異次元フェス; the-sorter's `lib/song-resolver` normalizes these so LLFans `CollaborationSong` ids never collide with real `Song` ids)
 - `song.artists[].id` → `artist.id` → `artist.characters[]` → `character.id`
 - `song.seriesIds[]` is `number[]`; `performance.seriesIds[]` is `string[]` — normalize with `String()` when crossing.
 

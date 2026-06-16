@@ -133,6 +133,7 @@ export interface SetlistItem {
   position: number;
   songId?: string;
   customSongName?: string;
+  isCustomSong?: boolean;
   title?: string;
   remarks?: string;
 }
