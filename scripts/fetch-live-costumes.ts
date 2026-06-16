@@ -1,101 +1,59 @@
 /**
- * Fetch per-live costume data from the LLFans GraphQL API and write it to
- * `data/performance-costumes.json`, consumed by the "MyPick for a Live" feature
- * (Best Costume award).
+ * Build per-live costume data for the "MyPick for a Live" feature (Best Costume
+ * award) and write it to `data/performance-costumes.json`.
  *
- * Costumes are NOT part of `performance-setlists.json` — that build step drops
- * them. In LLFans they live on each setlist item as a `costumes` array
- * (`EventDetailPage_PerformanceDetail` query):
+ * Like every other LLFans-derived data file in this repo (see
+ * `scripts/build-event-extra.ts`), this reads the pre-fetched raw LLFans dump at
+ * `data/raw/llfans-performances.json` rather than hitting the API live. Costumes
+ * are NOT carried in `performance-setlists.json` — that build step drops them —
+ * but they live on each setlist item in the raw dump:
  *
- *   Performance.setlists[].costumes[] = { id, name, song { name } }
+ *   entry.performance.setlists[].costumes[] = { id, name, song { name } }
  *
  * We flatten those into `Record<performanceId, LiveCostume[]>`, de-duplicated by
- * costume id, tagging each costume with the song it was worn for when LLFans
- * provides one.
+ * costume id, tagging each costume with the song it was worn for. Performance
+ * ids in the dump are LLFans ids, which are also this repo's performance ids.
  *
  * Usage:
- *   bun run scripts/fetch-live-costumes.ts            # all performances w/ setlist
- *   bun run scripts/fetch-live-costumes.ts 264 380    # only these performance ids
+ *   bun run scripts/fetch-live-costumes.ts
  *
- * Requires network access to https://ll-fans.jp/graphql. The committed data file
- * is updated out-of-band (like the other `data/*.json` files), so this script is
- * the documented, runnable mechanism rather than part of CI.
+ * The raw dump is produced out-of-band (not committed), so run this whenever the
+ * dump is refreshed, alongside the other `data/*.json` rebuild steps.
  */
-import { writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import performanceInfo from '../data/performance-info.json';
 import type { LiveCostume, PerformanceCostumes } from '../src/types/mypick-live';
 
-const LLFANS_GRAPHQL = 'https://ll-fans.jp/graphql';
 const here = dirname(fileURLToPath(import.meta.url));
-const OUTPUT = join(here, '../data/performance-costumes.json');
-const REQUEST_DELAY_MS = 250;
+const localRawPath = join(here, '../data/raw/llfans-performances.json');
+const sorterRawPath = join(here, '../../the-sorter/data/raw/llfans-performances.json');
+const RAW_PATH = existsSync(localRawPath) ? localRawPath : sorterRawPath;
+const OUT_PATH = join(here, '../data/performance-costumes.json');
 
-// Minimal slice of the LLFans performance-detail query — just enough for costumes.
-const PERFORMANCE_DETAIL_QUERY = /* GraphQL */ `
-  query EventDetailPage_PerformanceDetail($id: ID!) {
-    performance(id: $id) {
-      id
-      setlists {
-        id
-        content { __typename ... on Song { id name } }
-        costumes {
-          id
-          name
-          song { name }
-          # image fields vary by LLFans schema version; add here if present
-        }
-      }
-    }
-  }
-`;
-
-interface LLFansCostume {
+interface RawCostume {
   id: string;
   name: string | null;
   song: { name: string } | null;
 }
-interface LLFansSetlistItem {
-  id: string;
+interface RawSetlistItem {
   content: { __typename: string; id?: string; name?: string } | null;
-  costumes: LLFansCostume[] | null;
+  costumes?: RawCostume[] | null;
 }
-interface PerformanceDetailResponse {
-  data?: { performance?: { id: string; setlists?: LLFansSetlistItem[] } | null };
-  errors?: { message: string }[];
+interface RawEntry {
+  performance: {
+    id: string;
+    setlists?: RawSetlistItem[] | null;
+  };
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function fetchPerformanceCostumes(performanceId: string): Promise<LiveCostume[]> {
-  const response = await fetch(LLFANS_GRAPHQL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      operationName: 'EventDetailPage_PerformanceDetail',
-      variables: { id: performanceId },
-      query: PERFORMANCE_DETAIL_QUERY
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} for performance ${performanceId}`);
-  }
-
-  const json = (await response.json()) as PerformanceDetailResponse;
-  if (json.errors?.length) {
-    throw new Error(json.errors.map((e) => e.message).join('; '));
-  }
-
-  const setlists = json.data?.performance?.setlists ?? [];
+function costumesForPerformance(setlists: RawSetlistItem[]): LiveCostume[] {
   const byId = new Map<string, LiveCostume>();
-
   for (const item of setlists) {
     const songId = item.content?.__typename === 'Song' ? item.content.id : undefined;
     const songName = item.content?.name ?? undefined;
     for (const costume of item.costumes ?? []) {
-      if (!costume.name && !costume.id) continue;
+      if (!costume.id && !costume.name) continue;
       if (byId.has(costume.id)) continue;
       byId.set(costume.id, {
         id: costume.id,
@@ -105,32 +63,28 @@ async function fetchPerformanceCostumes(performanceId: string): Promise<LiveCost
       });
     }
   }
-
   return [...byId.values()];
 }
 
-async function main() {
-  const requested = process.argv.slice(2);
-  const targets = (performanceInfo as { id: string; hasSetlist?: boolean }[])
-    .filter((p) => (requested.length ? requested.includes(p.id) : p.hasSetlist === true))
-    .map((p) => p.id);
-
-  console.log(`Fetching costumes for ${targets.length} performances...`);
-  const result: PerformanceCostumes = {};
-
-  for (const [index, id] of targets.entries()) {
-    try {
-      const costumes = await fetchPerformanceCostumes(id);
-      if (costumes.length > 0) result[id] = costumes;
-      console.log(`[${index + 1}/${targets.length}] ${id}: ${costumes.length} costumes`);
-    } catch (error) {
-      console.warn(`[${index + 1}/${targets.length}] ${id}: ${(error as Error).message}`);
-    }
-    await sleep(REQUEST_DELAY_MS);
+function main() {
+  if (!existsSync(RAW_PATH)) {
+    console.error(
+      `Raw LLFans dump not found at ${localRawPath} (or sibling the-sorter copy).\n` +
+        'Refresh the dump out-of-band first, like the other data/*.json rebuild steps.'
+    );
+    process.exit(1);
   }
 
-  writeFileSync(OUTPUT, `${JSON.stringify(result, null, 2)}\n`);
-  console.log(`Wrote ${Object.keys(result).length} performances with costume data to ${OUTPUT}`);
+  const raw: RawEntry[] = JSON.parse(readFileSync(RAW_PATH, 'utf-8'));
+  const result: PerformanceCostumes = {};
+
+  for (const entry of raw) {
+    const costumes = costumesForPerformance(entry.performance.setlists ?? []);
+    if (costumes.length > 0) result[entry.performance.id] = costumes;
+  }
+
+  writeFileSync(OUT_PATH, `${JSON.stringify(result, null, 2)}\n`);
+  console.log(`Wrote ${Object.keys(result).length} performances with costume data to ${OUT_PATH}`);
 }
 
-void main();
+main();
