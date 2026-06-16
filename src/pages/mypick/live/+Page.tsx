@@ -54,6 +54,7 @@ export default function Page() {
   const [newAwardLabel, setNewAwardLabel] = useState('');
   const [exporting, setExporting] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
+  const lastPickTargetRef = useRef<PickTarget | null>(null);
 
   const performanceId = state?.performanceId;
   const performance = usePerformance(performanceId);
@@ -270,26 +271,32 @@ export default function Page() {
     }
   };
 
+  // Retain the last target while the dialog animates closed so its contents stay
+  // stable until it unmounts — otherwise picks briefly fall through to the full
+  // song list (a "flash of all songs") as pickTarget clears.
+  if (pickTarget) lastPickTargetRef.current = pickTarget;
+  const activeTarget = pickTarget ?? lastPickTargetRef.current;
+
   const dialogItems =
-    pickTarget?.kind === 'unit'
+    activeTarget?.kind === 'unit'
       ? (unitGroups
-          .find((g) => g.artist.id === pickTarget.artistId)
+          .find((g) => g.artist.id === activeTarget.artistId)
           ?.entries.map((entry) => toSongOption(entry.song)) ?? [])
-      : pickTarget?.slotKind === 'costume' && costumeOptions.length > 0
+      : activeTarget?.slotKind === 'costume' && costumeOptions.length > 0
         ? costumeOptions
         : songOptions;
 
   const selectedOptionId =
-    pickTarget?.kind === 'unit'
-      ? state?.unitPicks[pickTarget.artistId]
-      : pickTarget
-        ? state?.awards[pickTarget.awardKey]?.id
+    activeTarget?.kind === 'unit'
+      ? state?.unitPicks[activeTarget.artistId]
+      : activeTarget
+        ? state?.awards[activeTarget.awardKey]?.id
         : undefined;
 
   const pickDialogTitle =
-    pickTarget?.kind === 'unit'
-      ? t('mypick_live.pick_song_for', { name: pickTarget.label })
-      : pickTarget?.slotKind === 'costume' && costumeOptions.length > 0
+    activeTarget?.kind === 'unit'
+      ? t('mypick_live.pick_song_for', { name: activeTarget.label })
+      : activeTarget?.slotKind === 'costume' && costumeOptions.length > 0
         ? t('mypick_live.pick_costume')
         : t('mypick_live.pick_song');
 
