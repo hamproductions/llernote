@@ -1,11 +1,12 @@
+import { compressToEncodedURIComponent } from 'lz-string';
 import { describe, expect, it } from 'vitest';
 import { decodeMyPickLive, encodeMyPickLive } from '../mypick-live-share';
 import type { MyPickLiveState } from '~/types/mypick-live';
 
 describe('mypick live share', () => {
-  it('round-trips a full state through the compact format', () => {
+  it('round-trips a full multi-performance state through the compact format', () => {
     const state: MyPickLiveState = {
-      performanceId: '264',
+      performanceIds: ['264', '265'],
       awards: {
         best_song: { type: 'song', id: '120' },
         best_costume: { type: 'costume', id: 'c-99' },
@@ -19,9 +20,14 @@ describe('mypick live share', () => {
     expect(decoded).toEqual(state);
   });
 
+  it('decodes the legacy single-performance wire format into an array', () => {
+    const legacy = compressToEncodedURIComponent(JSON.stringify({ p: '264', a: {}, u: {}, c: [] }));
+    expect(decodeMyPickLive(legacy)?.performanceIds).toEqual(['264']);
+  });
+
   it('produces URL-safe encoded output', () => {
     const encoded = encodeMyPickLive({
-      performanceId: '1',
+      performanceIds: ['1'],
       awards: {},
       unitPicks: {},
       customAwards: []

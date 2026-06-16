@@ -3,8 +3,9 @@ import type { MyPickLiveState } from '~/types/mypick-live';
 
 // Compact wire format so live-MyPick share URLs stay short. This is a separate
 // encoder from the grid MyPick (`~/utils/mypick-share`) — the models differ.
+// `p` is an array of performance ids; a legacy string `p` is still decodable.
 interface WireState {
-  p: string;
+  p: string[] | string;
   a: Record<string, [string, string]>; // award key -> [kind, id]
   u: Record<string, string>; // artistId -> songId
   c: { i: string; l: string }[]; // custom awards
@@ -12,7 +13,7 @@ interface WireState {
 
 export function encodeMyPickLive(state: MyPickLiveState): string {
   const wire: WireState = {
-    p: state.performanceId,
+    p: state.performanceIds,
     a: Object.fromEntries(
       Object.entries(state.awards).map(([key, value]) => [key, [value.type, value.id]])
     ),
@@ -28,9 +29,16 @@ export function decodeMyPickLive(encoded: string | null | undefined): MyPickLive
     const json = decompressFromEncodedURIComponent(encoded);
     if (!json) return null;
     const wire = JSON.parse(json) as Partial<WireState>;
-    if (!wire || typeof wire.p !== 'string') return null;
+    if (!wire) return null;
+    const performanceIds =
+      typeof wire.p === 'string'
+        ? [wire.p]
+        : Array.isArray(wire.p)
+          ? wire.p.filter((id): id is string => typeof id === 'string')
+          : null;
+    if (!performanceIds || performanceIds.length === 0) return null;
     return {
-      performanceId: wire.p,
+      performanceIds,
       awards: Object.fromEntries(
         Object.entries(wire.a ?? {}).map(([key, [type, id]]) => [
           key,

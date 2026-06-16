@@ -12,9 +12,9 @@ import { LiveMyPickBoard, type BoardCard } from '~/components/mypick/LiveMyPickB
 import { EXPORT_BG } from '~/components/mypick/MyPickGrid';
 import {
   useArtistById,
-  usePerformance,
+  usePerformanceById,
   useSeriesById,
-  useSetlist,
+  useSetlists,
   useSongById
 } from '~/hooks/useData';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
@@ -24,15 +24,16 @@ import { getPicUrl } from '~/utils/assets';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import { songArtistIds } from '~/utils/mypick-options';
 import { downloadElementAsImage } from '~/utils/share';
+import { statePerformanceIds, liveHeader } from '~/utils/mypick-live';
 import {
   BUILTIN_AWARDS,
   buildUnitGroups,
   createEmptyLiveState,
-  getLiveCostumes,
-  getLiveSongEntries
+  getLiveCostumesForPerformances,
+  getLiveSongEntriesForPerformances
 } from '~/utils/mypick-live';
 import { encodeMyPickLive, myPickLiveShareUrl } from '~/utils/mypick-live-share';
-import type { Artist, Song } from '~/types';
+import type { Artist, Performance, Song } from '~/types';
 import type { MyPickLiveState, MyPickValue } from '~/types/mypick-live';
 
 type PickTarget =
@@ -47,6 +48,8 @@ export default function Page() {
   const songById = useSongById();
   const artistById = useArtistById();
   const seriesById = useSeriesById();
+  const performanceById = usePerformanceById();
+  const setlists = useSetlists();
 
   const [state, setState] = useLocalStorage<MyPickLiveState>(STORAGE_KEY);
   const [livePickerOpen, setLivePickerOpen] = useState(false);
@@ -56,18 +59,37 @@ export default function Page() {
   const boardRef = useRef<HTMLDivElement>(null);
   const lastPickTargetRef = useRef<PickTarget | null>(null);
 
-  const performanceId = state?.performanceId;
-  const performance = usePerformance(performanceId);
-  const setlist = useSetlist(performanceId);
+  const performanceIdsKey = statePerformanceIds(state).join(',');
+  const performanceIds = useMemo(
+    () => (performanceIdsKey ? performanceIdsKey.split(',') : []),
+    [performanceIdsKey]
+  );
+  const performances = useMemo(
+    () => performanceIds.map((id) => performanceById.get(id)).filter((p): p is Performance => !!p),
+    [performanceIds, performanceById]
+  );
 
   const seriesColor = (ids?: (string | number)[]): string | undefined => {
     const id = ids?.[0];
     return id === undefined ? undefined : seriesById.get(String(id))?.color;
   };
 
-  const entries = useMemo(() => getLiveSongEntries(setlist, songById), [setlist, songById]);
+  const entries = useMemo(
+    () => getLiveSongEntriesForPerformances(performanceIds, setlists, songById),
+    [performanceIds, setlists, songById]
+  );
   const unitGroups = useMemo(() => buildUnitGroups(entries, artistById), [entries, artistById]);
-  const costumes = useMemo(() => getLiveCostumes(performanceId), [performanceId]);
+  const costumes = useMemo(() => getLiveCostumesForPerformances(performanceIds), [performanceIds]);
+
+  // Normalized current state (migrates the legacy single-performance shape).
+  const liveState: MyPickLiveState | null = state
+    ? {
+        performanceIds,
+        awards: state.awards ?? {},
+        unitPicks: state.unitPicks ?? {},
+        customAwards: state.customAwards ?? []
+      }
+    : null;
 
   const songSub = (song: Song): string =>
     songArtistIds(song, artistById)
@@ -119,22 +141,22 @@ export default function Page() {
     ...BUILTIN_AWARDS.map((award) => ({
       id: `award:${award.key}`,
       label: t(`mypick_live.awards.${award.key}` as 'mypick_live.awards.best_song'),
-      picked: resolvePicked(state?.awards[award.key]),
+      picked: resolvePicked(liveState?.awards[award.key]),
       hint:
         award.kind === 'costume' && costumes.length === 0
           ? t('mypick_live.costume_fallback_hint')
           : undefined
     })),
-    ...(state?.customAwards ?? []).map((award) => ({
+    ...(liveState?.customAwards ?? []).map((award) => ({
       id: `award:${award.id}`,
       label: award.label,
       removable: true,
-      picked: resolvePicked(state?.awards[award.id])
+      picked: resolvePicked(liveState?.awards[award.id])
     }))
   ];
 
   const unitCards: BoardCard[] = unitGroups.map((group) => {
-    const pickedId = state?.unitPicks[group.artist.id];
+    const pickedId = liveState?.unitPicks[group.artist.id];
     const song = pickedId ? songById.get(pickedId) : undefined;
     return {
       id: `unit:${group.artist.id}`,
@@ -154,9 +176,11 @@ export default function Page() {
   const awardSlotKind = (key: string): 'song' | 'costume' =>
     BUILTIN_AWARDS.find((a) => a.key === key)?.kind ?? 'song';
 
-  const handleSelectLive = (id: string) => {
-    if (state?.performanceId === id) return;
-    setState(createEmptyLiveState(id));
+  const handleConfirmSelection = (ids: string[]) => {
+    // Reuse existing picks only when the exact same performances are chosen;
+    // otherwise reset since the available songs/units change.
+    if ([...ids].sort().join(',') === [...performanceIds].sort().join(',')) return;
+    setState(createEmptyLiveState(ids));
   };
 
   const splitCardId = (cardId: string): [string, string] => [
@@ -168,7 +192,7 @@ export default function Page() {
     const [section, rawId] = splitCardId(cardId);
     if (section === 'award') {
       const builtin = BUILTIN_AWARDS.find((a) => a.key === rawId);
-      const custom = state?.customAwards.find((a) => a.id === rawId);
+      const custom = liveState?.customAwards.find((a) => a.id === rawId);
       setPickTarget({
         kind: 'award',
         awardKey: rawId,
@@ -190,64 +214,64 @@ export default function Page() {
   };
 
   const handleClear = (cardId: string) => {
-    if (!state) return;
+    if (!liveState) return;
     const [section, rawId] = splitCardId(cardId);
     if (section === 'award') {
-      const awards = { ...state.awards };
+      const awards = { ...liveState.awards };
       delete awards[rawId];
-      setState({ ...state, awards });
+      setState({ ...liveState, awards });
     } else {
-      const unitPicks = { ...state.unitPicks };
+      const unitPicks = { ...liveState.unitPicks };
       delete unitPicks[rawId];
-      setState({ ...state, unitPicks });
+      setState({ ...liveState, unitPicks });
     }
   };
 
   const handleRemoveAward = (cardId: string) => {
-    if (!state) return;
+    if (!liveState) return;
     const [, rawId] = splitCardId(cardId);
-    const awards = { ...state.awards };
+    const awards = { ...liveState.awards };
     delete awards[rawId];
     setState({
-      ...state,
+      ...liveState,
       awards,
-      customAwards: state.customAwards.filter((a) => a.id !== rawId)
+      customAwards: liveState.customAwards.filter((a) => a.id !== rawId)
     });
   };
 
   const handleSelectOption = (id: string | undefined) => {
-    if (!state || !pickTarget) return;
+    if (!liveState || !pickTarget) return;
     if (id === undefined) {
       setPickTarget(null);
       return;
     }
     if (pickTarget.kind === 'unit') {
-      setState({ ...state, unitPicks: { ...state.unitPicks, [pickTarget.artistId]: id } });
+      setState({ ...liveState, unitPicks: { ...liveState.unitPicks, [pickTarget.artistId]: id } });
     } else {
       const useCostume = pickTarget.slotKind === 'costume' && costumes.length > 0;
       const value: MyPickValue = { type: useCostume ? 'costume' : 'song', id };
-      setState({ ...state, awards: { ...state.awards, [pickTarget.awardKey]: value } });
+      setState({ ...liveState, awards: { ...liveState.awards, [pickTarget.awardKey]: value } });
     }
     setPickTarget(null);
   };
 
   const addCustomAward = () => {
     const label = newAwardLabel.trim();
-    if (!label || !state) return;
+    if (!label || !liveState) return;
     const id = `c_${Date.now().toString(36)}_${Math.floor(Math.random() * 1e6).toString(36)}`;
-    setState({ ...state, customAwards: [...state.customAwards, { id, label }] });
+    setState({ ...liveState, customAwards: [...liveState.customAwards, { id, label }] });
     setNewAwardLabel('');
   };
 
   const handleReset = () => {
-    if (!state) return;
+    if (!liveState) return;
     if (typeof window !== 'undefined' && !window.confirm(t('mypick_live.reset_confirm'))) return;
-    setState(createEmptyLiveState(state.performanceId));
+    setState(createEmptyLiveState(performanceIds));
   };
 
   const shareUrl = async () => {
-    if (!state) return;
-    const url = myPickLiveShareUrl(encodeMyPickLive(state));
+    if (!liveState) return;
+    const url = myPickLiveShareUrl(encodeMyPickLive(liveState));
     try {
       await navigator.clipboard.writeText(url);
       toast({ title: t('share.copied'), type: 'success' });
@@ -263,7 +287,7 @@ export default function Page() {
     try {
       await downloadElementAsImage(
         boardRef.current,
-        `mypick-live-${performanceId ?? 'live'}.png`,
+        `mypick-live-${performanceIds[0] ?? 'live'}.png`,
         EXPORT_BG
       );
     } finally {
@@ -288,9 +312,9 @@ export default function Page() {
 
   const selectedOptionId =
     activeTarget?.kind === 'unit'
-      ? state?.unitPicks[activeTarget.artistId]
+      ? liveState?.unitPicks[activeTarget.artistId]
       : activeTarget
-        ? state?.awards[activeTarget.awardKey]?.id
+        ? liveState?.awards[activeTarget.awardKey]?.id
         : undefined;
 
   const pickDialogTitle =
@@ -300,14 +324,20 @@ export default function Page() {
         ? t('mypick_live.pick_costume')
         : t('mypick_live.pick_song');
 
-  const liveName = performance
-    ? performance.performanceName?.trim() || performance.concertName?.trim() || performance.tourName
-    : '';
-  const liveSub = performance
-    ? [performance.date, performance.venue].filter(Boolean).join(' • ')
-    : undefined;
-  const accent = seriesColor(performance?.seriesIds);
-  const hasLive = Boolean(state?.performanceId);
+  const header = liveHeader(performances);
+  const liveName = header.name;
+  const liveSub =
+    performances.length > 1
+      ? [
+          header.dateLabel,
+          t('mypick_live.performances_count', { count: performances.length }),
+          header.venue
+        ]
+          .filter(Boolean)
+          .join(' • ')
+      : [header.dateLabel, header.venue].filter(Boolean).join(' • ') || undefined;
+  const accent = seriesColor(performances[0]?.seriesIds);
+  const hasLive = performanceIds.length > 0;
   const hasSongs = entries.length > 0;
 
   return (
@@ -431,7 +461,8 @@ export default function Page() {
       <LivePickerDialog
         open={livePickerOpen}
         onOpenChange={({ open }) => setLivePickerOpen(open)}
-        onSelect={handleSelectLive}
+        initialSelectedIds={performanceIds}
+        onConfirm={handleConfirmSelection}
       />
 
       <PickDialog

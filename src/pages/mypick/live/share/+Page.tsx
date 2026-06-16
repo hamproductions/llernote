@@ -8,9 +8,9 @@ import { Metadata } from '~/components/layout/Metadata';
 import { LiveMyPickBoard, type BoardCard } from '~/components/mypick/LiveMyPickBoard';
 import {
   useArtistById,
-  usePerformance,
+  usePerformanceById,
   useSeriesById,
-  useSetlist,
+  useSetlists,
   useSongById
 } from '~/hooks/useData';
 import { LocalStorage } from '~/hooks/useLocalStorage';
@@ -21,11 +21,12 @@ import { songArtistIds } from '~/utils/mypick-options';
 import {
   BUILTIN_AWARDS,
   buildUnitGroups,
-  getLiveCostumes,
-  getLiveSongEntries
+  getLiveCostumesForPerformances,
+  getLiveSongEntriesForPerformances,
+  liveHeader
 } from '~/utils/mypick-live';
 import { decodeMyPickLive } from '~/utils/mypick-live-share';
-import type { Artist, Song } from '~/types';
+import type { Artist, Performance, Song } from '~/types';
 import type { MyPickValue } from '~/types/mypick-live';
 
 const STORAGE_KEY = 'mypick-live-state';
@@ -35,24 +36,43 @@ export default function Page() {
   const songById = useSongById();
   const artistById = useArtistById();
   const seriesById = useSeriesById();
+  const performanceById = usePerformanceById();
+  const setlists = useSetlists();
 
   const shared = useMemo(() => {
     const params = new URLSearchParams(import.meta.env.SSR ? '' : window.location.search);
     return decodeMyPickLive(params.get('d'));
   }, []);
 
-  const performanceId = shared?.performanceId;
-  const performance = usePerformance(performanceId);
-  const setlist = useSetlist(performanceId);
+  const performanceIds = shared?.performanceIds ?? [];
+  const performanceIdsKey = performanceIds.join(',');
+  const performances = useMemo(
+    () =>
+      (performanceIdsKey ? performanceIdsKey.split(',') : [])
+        .map((id) => performanceById.get(id))
+        .filter((p): p is Performance => !!p),
+    [performanceIdsKey, performanceById]
+  );
 
   const seriesColor = (ids?: (string | number)[]): string | undefined => {
     const id = ids?.[0];
     return id === undefined ? undefined : seriesById.get(String(id))?.color;
   };
 
-  const entries = useMemo(() => getLiveSongEntries(setlist, songById), [setlist, songById]);
+  const entries = useMemo(
+    () =>
+      getLiveSongEntriesForPerformances(
+        performanceIdsKey ? performanceIdsKey.split(',') : [],
+        setlists,
+        songById
+      ),
+    [performanceIdsKey, setlists, songById]
+  );
   const unitGroups = useMemo(() => buildUnitGroups(entries, artistById), [entries, artistById]);
-  const costumes = useMemo(() => getLiveCostumes(performanceId), [performanceId]);
+  const costumes = useMemo(
+    () => getLiveCostumesForPerformances(performanceIdsKey ? performanceIdsKey.split(',') : []),
+    [performanceIdsKey]
+  );
 
   const songSub = (song: Song): string =>
     songArtistIds(song, artistById)
@@ -113,12 +133,18 @@ export default function Page() {
     window.location.href = join(import.meta.env.PUBLIC_ENV__BASE_URL ?? '/', 'mypick/live');
   };
 
-  const liveName = performance
-    ? performance.performanceName?.trim() || performance.concertName?.trim() || performance.tourName
-    : '';
-  const liveSub = performance
-    ? [performance.date, performance.venue].filter(Boolean).join(' • ')
-    : undefined;
+  const header = liveHeader(performances);
+  const liveName = header.name;
+  const liveSub =
+    performances.length > 1
+      ? [
+          header.dateLabel,
+          t('mypick_live.performances_count', { count: performances.length }),
+          header.venue
+        ]
+          .filter(Boolean)
+          .join(' • ')
+      : [header.dateLabel, header.venue].filter(Boolean).join(' • ') || undefined;
 
   return (
     <>
@@ -159,7 +185,7 @@ export default function Page() {
                 liveSub={liveSub}
                 awards={awardCards}
                 units={unitCards}
-                accentColor={seriesColor(performance?.seriesIds)}
+                accentColor={seriesColor(performances[0]?.seriesIds)}
               />
             )}
           </>

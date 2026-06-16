@@ -361,6 +361,21 @@
       "kind_group": "グループ",
       "kind_unit": "ユニット",
       "kind_solo": "ソロ"
+    },
+    "performances_count_one": "{{count}}公演",
+    "performances_count_other": "{{count}}公演",
+    "picker": {
+      "title": "公演を選ぶ",
+      "description": "ライブの公演を1つ以上選んでください。セットリストは1つのボードにまとめられます。",
+      "search": "イベントを検索",
+      "confirm": "この選択を使う",
+      "show_details": "公演を表示",
+      "hide_details": "公演を隠す",
+      "select_hint": "公演を選ぶと、まとめたセットリストをプレビューできます。",
+      "song_count_one": "{{count}}曲",
+      "song_count_other": "{{count}}曲",
+      "selected_one": "{{count}}公演を選択中",
+      "selected_other": "{{count}}公演を選択中"
     }
   },
   "songs": {

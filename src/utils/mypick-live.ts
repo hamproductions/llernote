@@ -1,6 +1,6 @@
 import { isGroupArtist, songArtistIds } from './mypick-options';
 import performanceCostumes from '../../data/performance-costumes.json';
-import type { Artist, Setlist, Song } from '~/types';
+import type { Artist, Performance, Setlist, Song } from '~/types';
 import type {
   BuiltinAward,
   LiveCostume,
@@ -86,6 +86,28 @@ export function getLiveSongEntries(
   return entries;
 }
 
+/**
+ * Merged, de-duplicated songs across several performances of the same live
+ * (e.g. day 1 + day 2). Performances are processed in the given order; a song's
+ * first occurrence wins its label.
+ */
+export function getLiveSongEntriesForPerformances(
+  performanceIds: string[],
+  setlists: Record<string, Setlist>,
+  songById: Map<string, Song>
+): LiveSongEntry[] {
+  const seen = new Set<string>();
+  const entries: LiveSongEntry[] = [];
+  for (const id of performanceIds) {
+    for (const entry of getLiveSongEntries(setlists[id], songById)) {
+      if (seen.has(entry.song.id)) continue;
+      seen.add(entry.song.id);
+      entries.push(entry);
+    }
+  }
+  return entries;
+}
+
 export interface UnitGroup {
   artist: Artist;
   kind: ArtistKind;
@@ -132,6 +154,61 @@ export function getLiveCostumes(performanceId: string | undefined): LiveCostume[
   return data[performanceId] ?? [];
 }
 
-export function createEmptyLiveState(performanceId: string): MyPickLiveState {
-  return { performanceId, awards: {}, unitPicks: {}, customAwards: [] };
+/** Merged, de-duplicated costumes across several performances of the same live. */
+export function getLiveCostumesForPerformances(performanceIds: string[]): LiveCostume[] {
+  const seen = new Set<string>();
+  const costumes: LiveCostume[] = [];
+  for (const id of performanceIds) {
+    for (const costume of getLiveCostumes(id)) {
+      if (seen.has(costume.id)) continue;
+      seen.add(costume.id);
+      costumes.push(costume);
+    }
+  }
+  return costumes;
+}
+
+export function createEmptyLiveState(performanceIds: string[]): MyPickLiveState {
+  return { performanceIds, awards: {}, unitPicks: {}, customAwards: [] };
+}
+
+/** Read performance ids from stored state, migrating the legacy single-id shape. */
+export function statePerformanceIds(
+  state: { performanceIds?: string[]; performanceId?: string } | null | undefined
+): string[] {
+  if (!state) return [];
+  if (Array.isArray(state.performanceIds)) return state.performanceIds;
+  return state.performanceId ? [state.performanceId] : [];
+}
+
+export interface LiveHeader {
+  name: string;
+  dateLabel: string;
+  venue?: string;
+}
+
+/**
+ * Board title/subtitle for the selected performances. A single performance shows
+ * its own name + date + venue; multiple show the shared tour/event name and a
+ * date range (and the shared venue when they all match).
+ */
+export function liveHeader(performances: Performance[]): LiveHeader {
+  if (performances.length === 0) return { name: '', dateLabel: '' };
+  const sorted = [...performances].sort((a, b) => a.date.localeCompare(b.date));
+  const first = sorted[0]!;
+  if (sorted.length === 1) {
+    return {
+      name: first.performanceName?.trim() || first.concertName?.trim() || first.tourName,
+      dateLabel: first.date,
+      venue: first.venue || undefined
+    };
+  }
+  const last = sorted[sorted.length - 1]!;
+  const sameTour = sorted.every((p) => p.tourName === first.tourName);
+  const sameVenue = sorted.every((p) => p.venue === first.venue);
+  return {
+    name: sameTour ? first.tourName : `${first.tourName}…`,
+    dateLabel: first.date === last.date ? first.date : `${first.date} – ${last.date}`,
+    venue: sameVenue ? first.venue || undefined : undefined
+  };
 }

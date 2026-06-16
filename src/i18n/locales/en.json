@@ -364,6 +364,21 @@
       "kind_group": "Group",
       "kind_unit": "Unit",
       "kind_solo": "Solo"
+    },
+    "performances_count_one": "{{count}} performance",
+    "performances_count_other": "{{count}} performances",
+    "picker": {
+      "title": "Choose performances",
+      "description": "Pick one or more performances of a live. Their setlists are merged into one board.",
+      "search": "Search events",
+      "confirm": "Use selection",
+      "show_details": "Show performances",
+      "hide_details": "Hide performances",
+      "select_hint": "Select performances to preview the merged setlist.",
+      "song_count_one": "{{count}} song",
+      "song_count_other": "{{count}} songs",
+      "selected_one": "{{count}} performance selected",
+      "selected_other": "{{count}} performances selected"
     }
   },
   "songs": {

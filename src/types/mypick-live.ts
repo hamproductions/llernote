@@ -31,7 +31,11 @@ export interface MyPickValue {
 }
 
 export interface MyPickLiveState {
-  performanceId: string;
+  /**
+   * One or more performances of the same live/event. Their setlists are merged
+   * (de-duplicated) into a single board — e.g. a two-day concert picked together.
+   */
+  performanceIds: string[];
   /** award key (builtin key or custom award id) -> pick */
   awards: Record<string, MyPickValue>;
   /** artist/unit id -> picked songId */
