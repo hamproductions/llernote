@@ -10,6 +10,7 @@
     "stats": "Stats",
     "songs": "Songs",
     "mypick": "MyPick",
+    "mypick_live": "Live MyPick",
     "home": "Home",
     "venues": "Venues",
     "infographic": "Infographic"
@@ -325,6 +326,44 @@
       "deleted": "Slot deleted",
       "summary_one": "{{count}} pick · {{date}}",
       "summary_other": "{{count}} picks · {{date}}"
+    }
+  },
+  "mypick_live": {
+    "title": "MyPick for a Live",
+    "description": "Pick your favourites from one live and share the board.",
+    "choose_live": "Choose a live",
+    "change_live": "Change live",
+    "share_url": "Copy share link",
+    "download_image": "Download Image",
+    "reset": "Reset picks",
+    "reset_confirm": "Clear every pick for this live?",
+    "no_live_selected": "No live selected yet",
+    "no_live_hint": "Choose a live to start picking your favourites.",
+    "no_songs": "This live has no setlist songs to pick from yet.",
+    "add_award": "Add award",
+    "add_award_placeholder": "Name a custom award…",
+    "remove_award": "Remove award",
+    "pick_song": "Pick a song",
+    "pick_costume": "Pick a costume",
+    "pick_song_for": "Pick a song for {{name}}",
+    "costume_fallback_hint": "No costume data for this live — pick the song whose costume you loved.",
+    "empty_pick": "Nothing picked yet",
+    "clear_pick": "Clear",
+    "shared_view": "You're viewing a shared live MyPick.",
+    "make_own": "Make your own",
+    "awards": {
+      "section": "Awards",
+      "best_song": "Best Song",
+      "most_surprised": "Most Surprised",
+      "cried_most": "Cried the Most",
+      "best_costume": "Best Costume",
+      "best_performance": "Best Performance"
+    },
+    "units": {
+      "section": "Best Song per Unit",
+      "kind_group": "Group",
+      "kind_unit": "Unit",
+      "kind_solo": "Solo"
     }
   },
   "songs": {
