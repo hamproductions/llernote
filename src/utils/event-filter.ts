@@ -36,22 +36,26 @@ export const daysFromToday = (date: string) => {
 export const foldKana = (text: string) =>
   text.toLowerCase().replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
 
+const normalizeSearch = (text: string) =>
+  foldKana(text)
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 export const filterEvents = (
   performances: Performance[],
   filters: EventFilters,
   attendanceMap: AttendanceMap,
   performanceCharacters?: Map<string, Set<string>>
 ): Performance[] => {
-  const search = foldKana(filters.search.trim());
+  const searchTokens = normalizeSearch(filters.search).split(' ').filter(Boolean);
 
   return performances.filter((p) => {
-    if (
-      search &&
-      !foldKana(
+    if (searchTokens.length > 0) {
+      const haystack = normalizeSearch(
         `${p.tourName} ${p.venue} ${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`
-      ).includes(search)
-    ) {
-      return false;
+      );
+      if (!searchTokens.every((token) => haystack.includes(token))) return false;
     }
     if (filters.multiSeries || filters.seriesIds.length > 0) {
       const matchesMulti = filters.multiSeries && p.seriesIds.length > 1;

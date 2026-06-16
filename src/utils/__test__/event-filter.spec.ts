@@ -58,6 +58,19 @@ describe('filterEvents', () => {
     ).toHaveLength(2);
   });
 
+  it('matches multi-token queries across punctuation and word order', () => {
+    const liella = [
+      performance({
+        id: 'l',
+        tourName: 'ラブライブ！スーパースター!! Liella! 3rd LoveLive! Tour ～WE WILL!!～'
+      })
+    ];
+    expect(filterEvents(liella, { ...EMPTY_FILTERS, search: 'liella 3rd' }, {})).toHaveLength(1);
+    expect(filterEvents(liella, { ...EMPTY_FILTERS, search: '3rd liella' }, {})).toHaveLength(1);
+    expect(filterEvents(liella, { ...EMPTY_FILTERS, search: 'liella! 3rd' }, {})).toHaveLength(1);
+    expect(filterEvents(liella, { ...EMPTY_FILTERS, search: 'liella 99th' }, {})).toHaveLength(0);
+  });
+
   it('filters by year range', () => {
     expect(
       filterEvents(performances, { ...EMPTY_FILTERS, yearFrom: '2022', yearTo: '2024' }, {})
