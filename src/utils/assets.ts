@@ -4,7 +4,11 @@ import { getSongThumbId } from './song-thumbs';
 export const assetsURL = import.meta.env.PUBLIC_ENV__BASE_URL + 'assets/';
 
 export const getAssetUrl = (path: string) => {
-  return join(import.meta.env.PUBLIC_ENV__BASE_URL ?? '', path);
+  // Default to a root-absolute base so asset URLs resolve correctly on nested
+  // routes (e.g. /mypick/live). In dev PUBLIC_ENV__BASE_URL is unset; without a
+  // leading slash, getPicUrl's relative paths would resolve against the current
+  // route's directory and 404. In prod the env is always set, so this is a no-op.
+  return join(import.meta.env.PUBLIC_ENV__BASE_URL ?? '/', path);
 };
 export const getPicUrl = (
   id: string,
