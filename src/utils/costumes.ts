@@ -2,7 +2,10 @@ import performanceCostumes from '../../data/performance-costumes.json';
 import costumeNamesEnJson from '../../data/costume-names-en.json';
 import type { Performance, Song } from '~/types';
 
-/** Hand-written English names for outfit-style costumes that aren't named after a song. */
+/**
+ * Hand-written English names for outfit-style costumes that aren't named after a
+ * song, keyed by costume id (robust to a name changing in the LLFans dump).
+ */
 const costumeNamesEn = costumeNamesEnJson as Record<string, string>;
 
 /** A costume (outfit) worn during a live, from `data/performance-costumes.json` (LLFans). */
@@ -222,13 +225,13 @@ export function getCostumeSummaries(
  * is itself already English for Latin-script titles).
  */
 export function costumeDisplayName(
-  costume: Pick<CostumeSummary, 'name'>,
+  costume: Pick<CostumeSummary, 'id' | 'name'>,
   language: string,
   songByName: Map<string, Song>
 ): string {
   if (!language.startsWith('en')) return costume.name;
-  return costumeNamesEn[costume.name] ?? songByName.get(costume.name)?.englishName ?? costume.name;
+  return costumeNamesEn[costume.id] ?? songByName.get(costume.name)?.englishName ?? costume.name;
 }
 
-/** English outfit-name override, if one exists (for search indexing). */
-export const costumeNameOverrideEn = (name: string): string | undefined => costumeNamesEn[name];
+/** English outfit-name override for a costume id, if one exists (for search indexing). */
+export const costumeNameOverrideEn = (id: string): string | undefined => costumeNamesEn[id];

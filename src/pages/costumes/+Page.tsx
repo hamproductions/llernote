@@ -134,7 +134,7 @@ export default function Page() {
       });
       map.set(
         costume.id,
-        foldKana([costume.name, costumeNameOverrideEn(costume.name) ?? '', ...songNames].join(' '))
+        foldKana([costume.name, costumeNameOverrideEn(costume.id) ?? '', ...songNames].join(' '))
       );
     }
     return map;
