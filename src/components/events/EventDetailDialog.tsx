@@ -539,21 +539,21 @@ export function EventDetailDialog({
                           aria-current={isCurrent ? 'true' : undefined}
                           onClick={() => !isCurrent && setActivePerformanceId(leg.id)}
                         >
-                          {!isCurrent && (
-                            <Box
-                              flexShrink={0}
-                              borderRadius="full"
-                              w="1.5"
-                              h="1.5"
-                              bgColor={
-                                legRecord?.status === 'attended'
+                          <Box
+                            flexShrink={0}
+                            borderRadius="full"
+                            w="1.5"
+                            h="1.5"
+                            bgColor={
+                              isCurrent
+                                ? 'transparent'
+                                : legRecord?.status === 'attended'
                                   ? 'accent.default'
                                   : legRecord?.status === 'interested'
                                     ? 'amber.9'
                                     : 'border.emphasized'
-                              }
-                            />
-                          )}
+                            }
+                          />
                           <Text fontVariantNumeric="tabular-nums">
                             {leg.date.slice(5).replace('-', '/')}
                           </Text>
