@@ -10,6 +10,7 @@
     "stats": "統計",
     "songs": "楽曲",
     "mypick": "MyPick",
+    "mypick_live": "ライブMyPick",
     "home": "ホーム",
     "venues": "会場",
     "infographic": "分析"
@@ -322,6 +323,59 @@
       "deleted": "スロットを削除しました",
       "summary_one": "{{count}}件 · {{date}}",
       "summary_other": "{{count}}件 · {{date}}"
+    }
+  },
+  "mypick_live": {
+    "title": "ライブのMyPick",
+    "description": "ひとつのライブからお気に入りを選んでシェアしよう。",
+    "choose_live": "ライブを選ぶ",
+    "change_live": "ライブを変更",
+    "share_url": "共有リンクをコピー",
+    "download_image": "画像をダウンロード",
+    "reset": "選択をリセット",
+    "reset_confirm": "このライブの選択をすべて消去しますか？",
+    "no_live_selected": "ライブが未選択です",
+    "no_live_hint": "ライブを選んでお気に入りを選びましょう。",
+    "no_songs": "このライブにはまだ選べるセットリスト曲がありません。",
+    "add_award": "賞を追加",
+    "add_award_placeholder": "カスタム賞の名前…",
+    "remove_award": "賞を削除",
+    "pick_song": "曲を選ぶ",
+    "pick_costume": "衣装を選ぶ",
+    "pick_song_for": "{{name}}の曲を選ぶ",
+    "costume_fallback_hint": "このライブの衣装データがありません。衣装が好きだった曲を選んでください。",
+    "empty_pick": "未選択",
+    "clear_pick": "クリア",
+    "shared_view": "共有されたライブのMyPickを表示しています。",
+    "make_own": "自分でも作る",
+    "awards": {
+      "section": "アワード",
+      "best_song": "ベストソング",
+      "most_surprised": "一番びっくり",
+      "cried_most": "一番泣いた",
+      "best_costume": "ベスト衣装",
+      "best_performance": "ベストパフォーマンス"
+    },
+    "units": {
+      "section": "ユニット別ベストソング",
+      "kind_group": "グループ",
+      "kind_unit": "ユニット",
+      "kind_solo": "ソロ"
+    },
+    "performances_count_one": "{{count}}公演",
+    "performances_count_other": "{{count}}公演",
+    "picker": {
+      "title": "公演を選ぶ",
+      "description": "ライブの公演を1つ以上選んでください。セットリストは1つのボードにまとめられます。",
+      "search": "イベントを検索",
+      "confirm": "この選択を使う",
+      "show_details": "公演を表示",
+      "hide_details": "公演を隠す",
+      "select_hint": "公演を選ぶと、まとめたセットリストをプレビューできます。",
+      "song_count_one": "{{count}}曲",
+      "song_count_other": "{{count}}曲",
+      "selected_one": "{{count}}公演を選択中",
+      "selected_other": "{{count}}公演を選択中"
     }
   },
   "songs": {

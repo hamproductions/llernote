@@ -10,7 +10,8 @@ import {
   FaMapLocationDot,
   FaMusic,
   FaStar,
-  FaTicket
+  FaTicket,
+  FaTrophy
 } from 'react-icons/fa6';
 import { Box, Container, HStack, Stack } from 'styled-system/jsx';
 import { DetailStackProvider } from '~/components/detail/DetailStack';
@@ -42,7 +43,8 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/stats', key: 'navigation.stats', icon: FaChartSimple },
   { path: '/songs', key: 'navigation.songs', icon: FaMusic },
   { path: '/infographic', key: 'navigation.infographic', icon: FaChartPie },
-  { path: '/mypick', key: 'navigation.mypick', icon: FaStar }
+  { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
+  { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy }
 ];
 
 const MOBILE_PRIMARY_PATHS = ['/', '/events', '/calendar', '/songs'];
