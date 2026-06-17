@@ -535,7 +535,7 @@ export function EventDetailDialog({
                         <Button
                           key={leg.id}
                           size="xs"
-                          variant={isCurrent ? 'subtle' : 'outline'}
+                          variant={isCurrent ? 'solid' : 'outline'}
                           aria-current={isCurrent ? 'true' : undefined}
                           onClick={() => !isCurrent && setActivePerformanceId(leg.id)}
                         >
@@ -545,11 +545,13 @@ export function EventDetailDialog({
                             w="1.5"
                             h="1.5"
                             bgColor={
-                              legRecord?.status === 'attended'
-                                ? 'accent.default'
-                                : legRecord?.status === 'interested'
-                                  ? 'amber.9'
-                                  : 'border.emphasized'
+                              isCurrent
+                                ? 'accent.fg'
+                                : legRecord?.status === 'attended'
+                                  ? 'accent.default'
+                                  : legRecord?.status === 'interested'
+                                    ? 'amber.9'
+                                    : 'border.emphasized'
                             }
                           />
                           <Text fontVariantNumeric="tabular-nums">
