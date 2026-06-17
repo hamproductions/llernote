@@ -321,10 +321,11 @@ export function EventDetailDialog({
   const [diffOpen, setDiffOpen] = useState(false);
   const [selectedSongId, setSelectedSongId] = useState<string>();
 
-  // Reset the in-dialog leg selection whenever the dialog is opened on a new event.
+  // Reset the in-dialog leg selection whenever the dialog is (re)opened or
+  // pointed at a new event, so a previously navigated leg never carries over.
   useEffect(() => {
     setActivePerformanceId(undefined);
-  }, [externalPerformance?.id]);
+  }, [externalPerformance?.id, open]);
 
   useEffect(() => {
     setMemo(record?.memo ?? '');
@@ -536,8 +537,7 @@ export function EventDetailDialog({
                           size="xs"
                           variant={isCurrent ? 'subtle' : 'outline'}
                           aria-current={isCurrent ? 'true' : undefined}
-                          disabled={isCurrent}
-                          onClick={() => setActivePerformanceId(leg.id)}
+                          onClick={() => !isCurrent && setActivePerformanceId(leg.id)}
                         >
                           <Box
                             flexShrink={0}
