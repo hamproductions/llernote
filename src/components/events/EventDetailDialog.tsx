@@ -21,6 +21,7 @@ import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
+import { legLabel } from './TourCard';
 import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
@@ -42,6 +43,7 @@ import {
   xShareUrl
 } from '~/utils/share';
 import { hasSongThumb } from '~/utils/song-thumbs';
+import { groupByTour } from '~/utils/tour';
 import {
   buildSetlistInsights,
   compareSetlists,
@@ -280,7 +282,7 @@ export function SetlistItemRow({
 }
 
 export function EventDetailDialog({
-  performance,
+  performance: externalPerformance,
   open,
   onClose
 }: {
@@ -294,6 +296,21 @@ export function EventDetailDialog({
   const setlists = useSetlists();
   const performances = usePerformances();
   const performanceById = usePerformanceById();
+  const [activePerformanceId, setActivePerformanceId] = useState<string>();
+  // The other dates/legs that belong to the same event as the opened one.
+  const tourLegs = useMemo(() => {
+    if (!externalPerformance) return [];
+    const group = groupByTour(performances).find((g) =>
+      g.legs.some((leg) => leg.id === externalPerformance.id)
+    );
+    return group?.legs ?? [externalPerformance];
+  }, [performances, externalPerformance]);
+  // Honor an in-dialog leg switch only while it points at a sibling of the
+  // opened performance; otherwise fall back to the externally provided one.
+  const performance =
+    (activePerformanceId && tourLegs.some((leg) => leg.id === activePerformanceId)
+      ? performanceById.get(activePerformanceId)
+      : undefined) ?? externalPerformance;
   const setlist = useSetlist(performance?.id);
   const songById = useSongById();
   const record = performance ? get(performance.id) : undefined;
@@ -303,6 +320,11 @@ export function EventDetailDialog({
   const [diffToPerformanceId, setDiffToPerformanceId] = useState('');
   const [diffOpen, setDiffOpen] = useState(false);
   const [selectedSongId, setSelectedSongId] = useState<string>();
+
+  // Reset the in-dialog leg selection whenever the dialog is opened on a new event.
+  useEffect(() => {
+    setActivePerformanceId(undefined);
+  }, [externalPerformance?.id]);
 
   useEffect(() => {
     setMemo(record?.memo ?? '');
@@ -497,6 +519,49 @@ export function EventDetailDialog({
                   </Text>
                 )}
               </Stack>
+
+              {tourLegs.length > 1 && (
+                <Stack gap="1.5">
+                  <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
+                    {t('events.event_legs')}
+                  </Text>
+                  <Wrap gap="1.5">
+                    {tourLegs.map((leg) => {
+                      const isCurrent = leg.id === performance.id;
+                      const legRecord = get(leg.id);
+                      const label = legLabel(leg);
+                      return (
+                        <Button
+                          key={leg.id}
+                          size="xs"
+                          variant={isCurrent ? 'subtle' : 'outline'}
+                          aria-current={isCurrent ? 'true' : undefined}
+                          disabled={isCurrent}
+                          onClick={() => setActivePerformanceId(leg.id)}
+                        >
+                          <Box
+                            flexShrink={0}
+                            borderRadius="full"
+                            w="1.5"
+                            h="1.5"
+                            bgColor={
+                              legRecord?.status === 'attended'
+                                ? 'accent.default'
+                                : legRecord?.status === 'interested'
+                                  ? 'amber.9'
+                                  : 'border.emphasized'
+                            }
+                          />
+                          <Text fontVariantNumeric="tabular-nums">
+                            {leg.date.slice(5).replace('-', '/')}
+                          </Text>
+                          {label && <Text lineClamp={1}>{label}</Text>}
+                        </Button>
+                      );
+                    })}
+                  </Wrap>
+                </Stack>
+              )}
 
               <Wrap gap="2">
                 <AttendanceButtons

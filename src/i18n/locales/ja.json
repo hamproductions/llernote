@@ -79,6 +79,7 @@
     "leg": "公演",
     "first_witness": "初見",
     "song_debut": "初披露",
+    "event_legs": "この公演の各日程",
     "previous_performance": "前回公演",
     "days_since_previous_one": "前回から{{ count }}日",
     "days_since_previous_other": "前回から{{ count }}日",

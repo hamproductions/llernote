@@ -80,6 +80,7 @@
     "results_count_one": "{{ count }} event",
     "first_witness": "First seen",
     "song_debut": "Debut",
+    "event_legs": "Performances in this event",
     "previous_performance": "Previous performance",
     "days_since_previous_one": "{{ count }} day since previous",
     "days_since_previous_other": "{{ count }} days since previous",
