@@ -526,7 +526,11 @@ export function EventDetailDialog({
                   <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
                     {t('events.event_legs')}
                   </Text>
-                  <Wrap gap="1.5">
+                  <Box
+                    display="grid"
+                    gap="1.5"
+                    gridTemplateColumns="repeat(auto-fill, minmax(10rem, 1fr))"
+                  >
                     {tourLegs.map((leg) => {
                       const isCurrent = leg.id === performance.id;
                       const legRecord = get(leg.id);
@@ -538,6 +542,8 @@ export function EventDetailDialog({
                           variant={isCurrent ? 'solid' : 'outline'}
                           aria-current={isCurrent ? 'true' : undefined}
                           onClick={() => !isCurrent && setActivePerformanceId(leg.id)}
+                          w="full"
+                          minW="0"
                         >
                           <Box
                             flexShrink={0}
@@ -561,7 +567,7 @@ export function EventDetailDialog({
                         </Button>
                       );
                     })}
-                  </Wrap>
+                  </Box>
                 </Stack>
               )}
 
