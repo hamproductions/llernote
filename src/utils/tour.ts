@@ -44,5 +44,5 @@ export const groupByTour = (performances: Performance[]): TourGroup[] => {
         endDate: sorted[sorted.length - 1]!.date
       };
     })
-    .sort((a, b) => b.endDate.localeCompare(a.endDate));
+    .sort((a, b) => b.startDate.localeCompare(a.startDate) || b.endDate.localeCompare(a.endDate));
 };
