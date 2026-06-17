@@ -9,7 +9,7 @@ import { Text } from '~/components/ui/text';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useDetail } from '~/components/detail/DetailStack';
-import { usePerformanceById, useSongById } from '~/hooks/useData';
+import { usePerformanceById, useSongById, useSongByName } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { localizedName } from '~/utils/names';
 import { hasSongThumb } from '~/utils/song-thumbs';
@@ -40,6 +40,7 @@ export function CostumeDetailDialog({
 }) {
   const { t, i18n } = useTranslation();
   const songById = useSongById();
+  const songByName = useSongByName();
   const performanceById = usePerformanceById();
   const { get } = useAttendance();
   const { openSong, openEvent } = useDetail();
@@ -75,7 +76,9 @@ export function CostumeDetailDialog({
                 <SongThumb songId={costume.imageSongId} large />
               )}
               <Stack gap="1" minW="0">
-                <Dialog.Title>{costumeDisplayName(costume, i18n.language, songById)}</Dialog.Title>
+                <Dialog.Title>
+                  {costumeDisplayName(costume, i18n.language, songByName)}
+                </Dialog.Title>
                 <Text color="fg.muted" fontSize="sm" fontVariantNumeric="tabular-nums">
                   {costume.firstDate} – {costume.lastDate}
                 </Text>

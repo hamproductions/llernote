@@ -215,20 +215,19 @@ export function getCostumeSummaries(
 }
 
 /**
- * Localized costume name. In English, prefer a hand-written outfit translation,
- * then the namesake song's English title, falling back to the original name.
+ * Localized costume name, resolved the same way as song titles. In English,
+ * prefer a hand-written outfit translation, then — when the costume is named
+ * after a song — that song's own `englishName` (looked up by name, so it always
+ * matches the costume's literal name), falling back to the original name (which
+ * is itself already English for Latin-script titles).
  */
 export function costumeDisplayName(
-  costume: Pick<CostumeSummary, 'name' | 'imageSongId'>,
+  costume: Pick<CostumeSummary, 'name'>,
   language: string,
-  songById: Map<string, Song>
+  songByName: Map<string, Song>
 ): string {
   if (!language.startsWith('en')) return costume.name;
-  return (
-    costumeNamesEn[costume.name] ??
-    (costume.imageSongId ? songById.get(costume.imageSongId)?.englishName : undefined) ??
-    costume.name
-  );
+  return costumeNamesEn[costume.name] ?? songByName.get(costume.name)?.englishName ?? costume.name;
 }
 
 /** English outfit-name override, if one exists (for search indexing). */

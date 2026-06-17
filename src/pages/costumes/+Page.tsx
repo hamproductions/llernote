@@ -19,7 +19,13 @@ import {
 } from '~/components/costumes/CostumeFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { useArtistById, usePerformanceById, useSetlists, useSongById } from '~/hooks/useData';
+import {
+  useArtistById,
+  usePerformanceById,
+  useSetlists,
+  useSongById,
+  useSongByName
+} from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
@@ -49,6 +55,7 @@ export default function Page() {
   const { t, i18n } = useTranslation();
   const performanceById = usePerformanceById();
   const songById = useSongById();
+  const songByName = useSongByName();
   const artistById = useArtistById();
   const setlists = useSetlists();
   const { records } = useAttendance();
@@ -179,7 +186,7 @@ export default function Page() {
   };
 
   const costumeName = (costume: CostumeSummary) =>
-    costumeDisplayName(costume, i18n.language, songById);
+    costumeDisplayName(costume, i18n.language, songByName);
 
   // The song most tied to the costume by rate (worn for the highest share of its
   // own performances), so a song doesn't lead just because it's performed a lot.
