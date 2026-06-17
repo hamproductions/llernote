@@ -1,6 +1,8 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import Masonry from 'react-masonry-css';
 import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
+import { css } from 'styled-system/css';
 import { Center, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Pagination } from '~/components/ui/pagination';
@@ -11,20 +13,15 @@ import { EventTable } from '~/components/events/EventTable';
 import { EventFiltersBar } from '~/components/events/EventFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
+import { useDetail } from '~/components/detail/DetailStack';
 import { useArtists, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { EMPTY_FILTERS, type EventFilters } from '~/utils/event-filter';
-import type { Performance } from '~/types';
 
 const PAGE_SIZE = 24;
-const EventDetailDialog = lazy(() =>
-  import('~/components/events/EventDetailDialog').then((module) => ({
-    default: module.EventDetailDialog
-  }))
-);
 
 export default function Page() {
   const { t } = useTranslation();
@@ -39,7 +36,7 @@ export default function Page() {
     const q = new URLSearchParams(window.location.search).get('q');
     if (q) setFilters((prev) => ({ ...prev, search: q }));
   }, []);
-  const [selected, setSelected] = useState<Performance>();
+  const { openEvent } = useDetail();
   const [page, setPage] = useState(1);
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-events-view', 'cards');
   const columns = useColumnCount();
@@ -110,25 +107,29 @@ export default function Page() {
           <EventTable
             performances={filtered}
             pageSize={PAGE_SIZE}
-            onSelect={setSelected}
+            onSelect={(p) => openEvent(p.id)}
             page={page}
           />
         ) : (
-          <HStack gap="3" alignItems="flex-start">
-            {Array.from({ length: columns }, (_, col) => (
-              <Stack key={col} flex="1" gap="3" minW="0">
-                {pageTours
-                  .filter((_, i) => i % columns === col)
-                  .map((tour) => (
-                    <TourCard
-                      key={`${tour.tourName}|${tour.startDate}`}
-                      tour={tour}
-                      onSelect={setSelected}
-                    />
-                  ))}
-              </Stack>
+          <Masonry
+            className={css({ display: 'flex', w: 'auto', ml: '-3' })}
+            breakpointCols={columns}
+            columnClassName={css({
+              flex: '1',
+              minW: '0',
+              pl: '3',
+              bgClip: 'padding-box',
+              '& > *': { mb: '3' }
+            })}
+          >
+            {pageTours.map((tour) => (
+              <TourCard
+                key={`${tour.tourName}|${tour.startDate}`}
+                tour={tour}
+                onSelect={(p) => openEvent(p.id)}
+              />
             ))}
-          </HStack>
+          </Masonry>
         )}
         {totalCount > PAGE_SIZE && (
           <Center>
@@ -143,15 +144,6 @@ export default function Page() {
               page={page}
             />
           </Center>
-        )}
-        {selected && (
-          <Suspense fallback={null}>
-            <EventDetailDialog
-              performance={selected}
-              open={selected !== undefined}
-              onClose={() => setSelected(undefined)}
-            />
-          </Suspense>
         )}
       </Stack>
     </>

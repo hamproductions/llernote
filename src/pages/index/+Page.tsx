@@ -24,15 +24,10 @@ import { SectionHeading } from '~/components/layout/SectionHeading';
 import { usePerformances, useSetlists, useSongs, useVenueById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
+import { useDetail } from '~/components/detail/DetailStack';
 import { todayString } from '~/utils/event-filter';
-import type { Performance } from '~/types';
 
 const href = (path: string) => join(import.meta.env.BASE_URL, path);
-const EventDetailDialog = lazy(() =>
-  import('~/components/events/EventDetailDialog').then((module) => ({
-    default: module.EventDetailDialog
-  }))
-);
 const EventernoteImportDialog = lazy(() =>
   import('~/components/eventernote/EventernoteImportDialog').then((module) => ({
     default: module.EventernoteImportDialog
@@ -82,8 +77,8 @@ export default function Page() {
   const songs = useSongs();
   const venueById = useVenueById();
   const { records } = useAttendance();
+  const { openEvent } = useDetail();
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Performance>();
   const [eventernoteOpen, setEventernoteOpen] = useState(false);
   const [eventernoteMounted, setEventernoteMounted] = useState(false);
 
@@ -287,7 +282,7 @@ export default function Page() {
                       </Badge>
                     </Wrap>
                   )}
-                  <EventCard performance={p} onClick={() => setSelected(p)} />
+                  <EventCard performance={p} onClick={() => openEvent(p.id)} />
                 </Stack>
               ))}
             </Grid>
@@ -310,7 +305,7 @@ export default function Page() {
               gridTemplateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }}
             >
               {recentAttended.map((p) => (
-                <EventCard key={p.id} performance={p} onClick={() => setSelected(p)} />
+                <EventCard key={p.id} performance={p} onClick={() => openEvent(p.id)} />
               ))}
             </Grid>
           </Stack>
@@ -346,15 +341,6 @@ export default function Page() {
           />
         </Grid>
 
-        {selected && (
-          <Suspense fallback={null}>
-            <EventDetailDialog
-              performance={selected}
-              open={selected !== undefined}
-              onClose={() => setSelected(undefined)}
-            />
-          </Suspense>
-        )}
         {eventernoteMounted && (
           <Suspense fallback={null}>
             <EventernoteImportDialog

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FaArrowDownLong, FaArrowUpLong, FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import type { SortingState } from '@tanstack/react-table';
@@ -14,32 +14,14 @@ import { SongFiltersBar } from '~/components/songs/SongFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
-import {
-  useArtists,
-  usePerformanceById,
-  usePerformances,
-  useSetlists,
-  useSongs
-} from '~/hooks/useData';
+import { useArtists, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
+import { useDetail } from '~/components/detail/DetailStack';
 import { EMPTY_SONG_FILTERS, type SongFilters } from '~/utils/song-filter';
-import { getSongDebutPerformance, getSongFirstWitnessPerformance } from '~/utils/setlist-insights';
-import type { Performance, Song } from '~/types';
 
 const PAGE_SIZE = 48;
-
-const SongDetailDialog = lazy(() =>
-  import('~/components/songs/SongDetailDialog').then((module) => ({
-    default: module.SongDetailDialog
-  }))
-);
-const EventDetailDialog = lazy(() =>
-  import('~/components/events/EventDetailDialog').then((module) => ({
-    default: module.EventDetailDialog
-  }))
-);
 
 export default function Page() {
   const { t } = useTranslation();
@@ -47,12 +29,10 @@ export default function Page() {
   const songs = useSongs();
   const artists = useArtists();
   const performances = usePerformances();
-  const performanceById = usePerformanceById();
   const setlists = useSetlists();
+  const { openSong } = useDetail();
   const [filters, setFilters] = useState<SongFilters>(EMPTY_SONG_FILTERS);
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Song>();
-  const [selectedEvent, setSelectedEvent] = useState<Performance>();
   const columns = useColumnCount();
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-songs-view', 'cards');
   const effectiveView = columns === 1 ? 'cards' : view;
@@ -101,19 +81,6 @@ export default function Page() {
     });
   }, [filtered, sort.id, sort.desc, tallyById, allPerformanceTallyById]);
   const pageItems = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const selectedHeardAt = selected ? (tallyById.get(selected.id)?.performances ?? []) : [];
-  const selectedPerformedAt = selected
-    ? (allPerformanceTallyById.get(selected.id)?.performances ?? [])
-    : [];
-  const selectedDebutPerformance = selected
-    ? getSongDebutPerformance(selected.id, performanceById, setlists)
-    : undefined;
-  const selectedFirstWitnessPerformance = selected
-    ? getSongFirstWitnessPerformance(selected.id, records, performanceById, setlists)
-    : undefined;
-  const selectedPerformanceCount = selected
-    ? (allPerformanceTallyById.get(selected.id)?.count ?? 0)
-    : 0;
 
   return (
     <>
@@ -216,7 +183,7 @@ export default function Page() {
             pageSize={PAGE_SIZE}
             heardCount={heardCount}
             performedCount={performedCount}
-            onSelect={setSelected}
+            onSelect={(s) => openSong(s.id)}
             sorting={sorting}
             onSortingChange={setSorting}
             page={page}
@@ -237,7 +204,7 @@ export default function Page() {
                 song={song}
                 heardCount={heardCount(song.id)}
                 performedCount={performedCount(song.id)}
-                onClick={() => setSelected(song)}
+                onClick={() => openSong(song.id)}
               />
             ))}
           </Grid>
@@ -255,33 +222,6 @@ export default function Page() {
               page={page}
             />
           </Center>
-        )}
-        {selected && (
-          <Suspense fallback={null}>
-            <SongDetailDialog
-              song={selected}
-              heardAt={selectedHeardAt}
-              performedAt={selectedPerformedAt}
-              debutPerformance={selectedDebutPerformance}
-              firstWitnessPerformance={selectedFirstWitnessPerformance}
-              performanceCount={selectedPerformanceCount}
-              open={selected !== undefined}
-              onClose={() => setSelected(undefined)}
-              onSelectEvent={(p) => {
-                setSelected(undefined);
-                setSelectedEvent(p);
-              }}
-            />
-          </Suspense>
-        )}
-        {selectedEvent && (
-          <Suspense fallback={null}>
-            <EventDetailDialog
-              performance={selectedEvent}
-              open={selectedEvent !== undefined}
-              onClose={() => setSelectedEvent(undefined)}
-            />
-          </Suspense>
         )}
       </Stack>
     </>

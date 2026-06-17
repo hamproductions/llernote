@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { FaXmark } from 'react-icons/fa6';
+import { FaChevronLeft, FaXmark } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
 import { hasSongThumb } from '~/utils/song-thumbs';
@@ -28,6 +28,7 @@ export function SongDetailDialog({
   open,
   layer = 50,
   onClose,
+  onBack,
   onSelectEvent
 }: {
   song?: Song;
@@ -39,6 +40,7 @@ export function SongDetailDialog({
   open: boolean;
   layer?: number;
   onClose: () => void;
+  onBack?: () => void;
   onSelectEvent?: (performance: Performance) => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -79,6 +81,7 @@ export function SongDetailDialog({
               alignItems="flex-start"
               borderColor="border.subtle"
               borderBottomWidth="1px"
+              pl={onBack ? '8' : undefined}
               pr="8"
               pb="3"
             >
@@ -303,6 +306,19 @@ export function SongDetailDialog({
               </Stack>
             </Stack>
           </Stack>
+          {onBack && (
+            <IconButton
+              aria-label={t('common.back')}
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              position="absolute"
+              top="2"
+              left="2"
+            >
+              <FaChevronLeft />
+            </IconButton>
+          )}
           <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">
             <IconButton aria-label={t('common.close')} variant="ghost" size="sm">
               <FaXmark />

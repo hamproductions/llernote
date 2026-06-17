@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
@@ -28,13 +28,8 @@ import { buildVenueSummaries } from '~/utils/venues';
 import { foldKana } from '~/utils/event-filter';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
+import { useDetail } from '~/components/detail/DetailStack';
 import type { VenueSummary } from '~/types';
-
-const VenueDetailDialog = lazy(() =>
-  import('~/components/venues/VenueDetailDialog').then((module) => ({
-    default: module.VenueDetailDialog
-  }))
-);
 
 const PAGE_SIZE = 48;
 type VisitFilter = '' | 'visited' | 'unvisited';
@@ -52,7 +47,7 @@ export default function Page() {
   const [sort, setSort] = useState<SortKey>('performances');
   const [page, setPage] = useState(1);
   const [selectedVenueId, setSelectedVenueId] = useState<string>();
-  const [detailVenue, setDetailVenue] = useState<VenueSummary>();
+  const { openVenue } = useDetail();
   const [tableSorting, setTableSorting] = useState<SortingState>([
     { id: 'performances', desc: true }
   ]);
@@ -65,7 +60,7 @@ export default function Page() {
     setSearch(params.get('q') ?? '');
     const venueParam = params.get('venue') ?? undefined;
     setSelectedVenueId(venueParam);
-    if (venueParam) setDetailVenue(venues.find((venue) => venue.id === venueParam));
+    if (venueParam) openVenue(venueParam);
   }, []);
 
   const attendedIds = useMemo(
@@ -346,7 +341,7 @@ export default function Page() {
             sorting={tableSorting}
             onSortingChange={setTableSorting}
             pageSize={PAGE_SIZE}
-            onRowClick={(venue) => setDetailVenue(venue)}
+            onRowClick={(venue) => openVenue(venue.id)}
             minW="2xl"
             columns={tableColumns}
             page={page}
@@ -354,7 +349,7 @@ export default function Page() {
         ) : (
           <Grid gap="3" gridTemplateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}>
             {pageItems.map((venue) => (
-              <Card.Root key={venue.id} onClick={() => setDetailVenue(venue)} cursor="pointer">
+              <Card.Root key={venue.id} onClick={() => openVenue(venue.id)} cursor="pointer">
                 <Card.Body gap="3" p="4">
                   <HStack gap="3" justifyContent="space-between" alignItems="flex-start">
                     <Stack gap="1" minW="0">
@@ -409,15 +404,6 @@ export default function Page() {
           </Grid>
         )}
 
-        {detailVenue && (
-          <Suspense fallback={null}>
-            <VenueDetailDialog
-              venue={detailVenue}
-              open={detailVenue !== undefined}
-              onClose={() => setDetailVenue(undefined)}
-            />
-          </Suspense>
-        )}
         {filtered.length === 0 && <Text color="fg.muted">{t('common.no_results')}</Text>}
         {filtered.length > PAGE_SIZE && (
           <Center>

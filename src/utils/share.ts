@@ -7,6 +7,14 @@ export const eventernoteSearchUrl = (performance: Performance) => {
   return `https://www.eventernote.com/events/search?${params.toString()}`;
 };
 
+export const llFansEventUrl = (performance: Performance): string | undefined => {
+  if (!performance.eventId) return undefined;
+  const params = new URLSearchParams();
+  if (performance.concertId) params.set('concert', performance.concertId);
+  params.set('performance', performance.id);
+  return `https://ll-fans.jp/data/event/${performance.eventId}?${params.toString()}`;
+};
+
 export const xShareUrl = (text: string, url?: string) => {
   const params = new URLSearchParams({ text });
   if (url) params.set('url', url);

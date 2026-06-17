@@ -57,6 +57,8 @@ export type PerformanceStatus = 'upcoming' | 'completed';
 
 export interface Performance {
   id: string;
+  eventId?: string;
+  concertId?: string;
   tourName: string;
   date: string;
   venue: string;

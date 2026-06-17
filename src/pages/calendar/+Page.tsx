@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaChevronRight, FaStar } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
@@ -13,8 +13,9 @@ import { NativeSelect } from '~/components/events/NativeSelect';
 import { VenueText } from '~/components/events/VenueText';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { usePerformance, usePerformances, useSeriesById } from '~/hooks/useData';
+import { usePerformances, useSeriesById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
+import { useDetail } from '~/components/detail/DetailStack';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { legLabel } from '~/components/events/TourCard';
 import { getSeriesShortName } from '~/utils/series-short';
@@ -23,11 +24,6 @@ import type { Performance } from '~/types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const MULTI_SERIES_FILTER = '__multi_series__';
-const EventDetailDialog = lazy(() =>
-  import('~/components/events/EventDetailDialog').then((module) => ({
-    default: module.EventDetailDialog
-  }))
-);
 
 function MonthView({
   onSelect,
@@ -505,9 +501,8 @@ function Timeline({
 export default function Page() {
   const { t } = useTranslation();
   const series = useSeriesById();
-  const [selectedId, setSelectedId] = useState<string>();
+  const { openEvent } = useDetail();
   const [seriesFilter, setSeriesFilter] = useState('');
-  const selected = usePerformance(selectedId);
 
   return (
     <>
@@ -534,24 +529,15 @@ export default function Page() {
             <Tabs.Indicator />
           </Tabs.List>
           <Tabs.Content value="calendar">
-            <MonthView seriesFilter={seriesFilter} onSelect={(p) => setSelectedId(p.id)} />
+            <MonthView seriesFilter={seriesFilter} onSelect={(p) => openEvent(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="upcoming">
-            <Upcoming seriesFilter={seriesFilter} onSelect={(p) => setSelectedId(p.id)} />
+            <Upcoming seriesFilter={seriesFilter} onSelect={(p) => openEvent(p.id)} />
           </Tabs.Content>
           <Tabs.Content value="timeline">
-            <Timeline seriesFilter={seriesFilter} onSelect={(p) => setSelectedId(p.id)} />
+            <Timeline seriesFilter={seriesFilter} onSelect={(p) => openEvent(p.id)} />
           </Tabs.Content>
         </Tabs.Root>
-        {selected && (
-          <Suspense fallback={null}>
-            <EventDetailDialog
-              performance={selected}
-              open={selected !== undefined}
-              onClose={() => setSelectedId(undefined)}
-            />
-          </Suspense>
-        )}
       </Stack>
     </>
   );

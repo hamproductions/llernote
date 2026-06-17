@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FaArrowUpRightFromSquare,
+  FaCheck,
+  FaChevronLeft,
   FaCircleInfo,
   FaCopy,
   FaStar,
@@ -21,7 +23,6 @@ import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
-import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
 import {
@@ -39,14 +40,13 @@ import {
   copyTextToClipboard,
   eventernoteSearchUrl,
   formatEventShareText,
+  llFansEventUrl,
   xShareUrl
 } from '~/utils/share';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import {
   buildSetlistInsights,
   compareSetlists,
-  getSongDebutPerformance,
-  getSongFirstWitnessPerformance,
   isPerformanceAtOrBefore,
   type SongSetlistInsight
 } from '~/utils/setlist-insights';
@@ -190,7 +190,7 @@ export function SetlistItemRow({
   item: SetlistItem;
   index: number;
   showArtists: boolean;
-  witnessInfo?: { count: number; isFirst: boolean };
+  witnessInfo?: { count: number; isFirst: boolean; daysSinceSeen?: number };
   setlistInsight?: SongSetlistInsight;
   onSelectSong?: (songId: string) => void;
 }) {
@@ -199,11 +199,16 @@ export function SetlistItemRow({
   const artistById = useArtistById();
   if (item.type !== 'song') {
     return (
-      <HStack gap="2" py="0.5">
+      <HStack gap="2" alignItems="center" py="0.5">
         <Box minW="8" />
-        <Badge size="sm" variant="outline" color="fg.muted">
+        <Badge size="sm" variant="outline" flexShrink={0} color="fg.muted">
           {item.title ?? item.customSongName ?? item.type.toUpperCase()}
         </Badge>
+        {item.remarks && (
+          <Text color="fg.muted" fontSize="xs" lineClamp={2}>
+            {item.remarks}
+          </Text>
+        )}
       </HStack>
     );
   }
@@ -219,11 +224,15 @@ export function SetlistItemRow({
         .map((a) => localizedName(i18n.language, a!.name, a!.englishName))
     )
   ].join('・');
+  const hasLine2 =
+    Boolean(item.remarks) ||
+    setlistInsight?.daysSincePreviousPerformance !== undefined ||
+    (showArtists && Boolean(artistNames));
   return (
-    <HStack gap="2" alignItems="flex-start" py="1">
+    <HStack gap="2.5" alignItems="center" py="1.5">
       <Text
-        minW="8"
-        pt="1"
+        flexShrink={0}
+        minW="7"
         color="fg.subtle"
         fontSize="sm"
         fontVariantNumeric="tabular-nums"
@@ -233,35 +242,55 @@ export function SetlistItemRow({
       </Text>
       {song && hasSongThumb(song.id) && <SongThumb songId={song.id} />}
       <Stack flex="1" gap="0.5" minW="0">
-        <Text fontSize="sm" lineClamp={1}>
-          {songLabel}
-        </Text>
-        <Wrap gap="1" color="fg.subtle" fontSize="2xs">
+        <HStack gap="1.5" minW="0" flexWrap="wrap">
+          <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
+            {songLabel}
+          </Text>
           {setlistInsight?.isDebut && (
             <Badge size="sm" variant="solid">
               {t('events.song_debut')}
             </Badge>
           )}
-          {witnessInfo?.isFirst && (
-            <Badge size="sm" variant="solid">
+          {witnessInfo?.isFirst ? (
+            <Badge size="sm" variant="subtle">
               {t('events.first_witness')}
             </Badge>
-          )}
-          {setlistInsight?.daysSincePreviousPerformance !== undefined && (
-            <Text fontVariantNumeric="tabular-nums">
-              {t('events.song_days_since_previous', {
-                count: setlistInsight.daysSincePreviousPerformance
-              })}
-            </Text>
+          ) : (
+            witnessInfo?.daysSinceSeen !== undefined && (
+              <Text
+                color="fg.subtle"
+                fontSize="2xs"
+                fontVariantNumeric="tabular-nums"
+                whiteSpace="nowrap"
+              >
+                {t('events.song_days_since_witness', { count: witnessInfo.daysSinceSeen })}
+              </Text>
+            )
           )}
           {witnessInfo && witnessInfo.count > 1 && (
-            <Text color="accent.text" fontSize="xs" fontVariantNumeric="tabular-nums">
+            <Text
+              color="accent.text"
+              fontSize="xs"
+              fontWeight="semibold"
+              fontVariantNumeric="tabular-nums"
+            >
               ×{witnessInfo.count}
             </Text>
           )}
-          {showArtists && artistNames && <Text lineClamp={1}>{artistNames}</Text>}
-          {item.remarks && <Text lineClamp={1}>{item.remarks}</Text>}
-        </Wrap>
+        </HStack>
+        {hasLine2 && (
+          <HStack gap="2" minW="0" color="fg.subtle" fontSize="2xs" flexWrap="wrap">
+            {item.remarks && <Text lineClamp={1}>{item.remarks}</Text>}
+            {setlistInsight?.daysSincePreviousPerformance !== undefined && (
+              <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
+                {t('events.song_days_since_previous', {
+                  count: setlistInsight.daysSincePreviousPerformance
+                })}
+              </Text>
+            )}
+            {showArtists && artistNames && <Text lineClamp={1}>{artistNames}</Text>}
+          </HStack>
+        )}
       </Stack>
       {song && onSelectSong && (
         <IconButton
@@ -282,11 +311,17 @@ export function SetlistItemRow({
 export function EventDetailDialog({
   performance,
   open,
-  onClose
+  onClose,
+  onBack,
+  onNavigate,
+  onOpenSong
 }: {
   performance?: Performance;
   open: boolean;
   onClose: () => void;
+  onBack?: () => void;
+  onNavigate?: (performance: Performance) => void;
+  onOpenSong?: (songId: string) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { toast } = useToaster();
@@ -302,14 +337,12 @@ export function EventDetailDialog({
   const [diffFromPerformanceId, setDiffFromPerformanceId] = useState('');
   const [diffToPerformanceId, setDiffToPerformanceId] = useState('');
   const [diffOpen, setDiffOpen] = useState(false);
-  const [selectedSongId, setSelectedSongId] = useState<string>();
 
   useEffect(() => {
     setMemo(record?.memo ?? '');
     setDiffFromPerformanceId('');
     setDiffToPerformanceId('');
     setDiffOpen(false);
-    setSelectedSongId(undefined);
   }, [record?.memo, performance?.id]);
 
   if (!performance) return null;
@@ -339,7 +372,10 @@ export function EventDetailDialog({
   }
   const witnessBySong = (() => {
     if (record?.status !== 'attended' || !setlist) return null;
-    const map = new Map<string, { count: number; firstPerformanceId: string }>();
+    const map = new Map<
+      string,
+      { count: number; firstPerformanceId: string; prevSeenDate?: string }
+    >();
     for (const r of records) {
       if (r.status !== 'attended') continue;
       const perf = performanceById.get(r.performanceId);
@@ -358,11 +394,16 @@ export function EventDetailDialog({
           if (!firstPerformance || isPerformanceAtOrBefore(perf, firstPerformance)) {
             prev.firstPerformanceId = perf.id;
           }
+          if (perf.id !== performance.id && perf.date < performance.date) {
+            if (!prev.prevSeenDate || perf.date > prev.prevSeenDate) prev.prevSeenDate = perf.date;
+          }
         }
       }
     }
     return map;
   })();
+  const daysBetween = (from: string, to: string) =>
+    Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
 
   const sections =
     setlist && setlist.sections.length > 0
@@ -370,6 +411,61 @@ export function EventDetailDialog({
       : setlist
         ? [{ name: '', startIndex: 0, endIndex: setlist.items.length - 1, type: 'main' }]
         : [];
+  const setlistFlow = (() => {
+    type Run = { grow: number; color: string; songs: number; title: string };
+    if (!setlist) return { runs: [] as Run[], counts: { songs: 0, mc: 0, vtr: 0, enc: 0 } };
+    const items = setlist.items;
+    const secType: string[] = Array.from({ length: items.length }, () => 'main');
+    for (const s of sections)
+      for (let i = s.startIndex; i <= s.endIndex && i < secType.length; i++) secType[i] = s.type;
+    const C: Record<string, string> = {
+      main: 'var(--colors-accent-default)',
+      encore: 'var(--colors-accent-7)',
+      mc: '#f59e0b',
+      vtr: '#a855f7',
+      other: 'var(--colors-fg-muted)'
+    };
+    const runs: Run[] = [];
+    let lastK = '',
+      mc = 0,
+      vtr = 0,
+      songs = 0;
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (it.type === 'song') {
+        songs++;
+        const k = secType[i] === 'encore' ? 'encore' : 'main';
+        const label = k === 'encore' ? 'Encore' : 'Main';
+        if (k === lastK) {
+          const last = runs[runs.length - 1];
+          last.songs++;
+          last.grow++;
+          last.title = `${label}: ${last.songs}`;
+        } else runs.push({ grow: 1, color: C[k], songs: 1, title: `${label}: 1` });
+        lastK = k;
+      } else if (it.type === 'mc') {
+        mc++;
+        runs.push({ grow: 1.2, color: C.mc, songs: 0, title: 'MC' });
+        lastK = 'mc';
+      } else if (it.type === 'vtr') {
+        vtr++;
+        runs.push({ grow: 1.2, color: C.vtr, songs: 0, title: 'VTR' });
+        lastK = 'vtr';
+      } else {
+        runs.push({
+          grow: 1,
+          color: C.other,
+          songs: 0,
+          title: it.title ?? it.customSongName ?? '—'
+        });
+        lastK = 'other';
+      }
+    }
+    return {
+      runs,
+      counts: { songs, mc, vtr, enc: sections.filter((s) => s.type === 'encore').length }
+    };
+  })();
   const setlistInsights = setlist
     ? buildSetlistInsights(performance, performances, setlists)
     : undefined;
@@ -413,6 +509,11 @@ export function EventDetailDialog({
           .toLowerCase()
       };
     });
+  const siblingPerformances = onNavigate
+    ? performances
+        .filter((candidate) => candidate.tourName === performance.tourName)
+        .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))
+    : [];
   const formatDaysSincePrevious = (count: number | undefined) =>
     count === undefined ? undefined : t('events.days_since_previous', { count });
   const formatSongName = (songId: string) => {
@@ -431,30 +532,6 @@ export function EventDetailDialog({
     );
     return selected ? `${selected.date} ${selected.title}` : t('events.setlist_diff_to');
   })();
-  const selectedSong = selectedSongId ? songById.get(selectedSongId) : undefined;
-  const selectedSongHeardAt = selectedSong
-    ? records
-        .filter((r) => r.status === 'attended')
-        .map((r) => performanceById.get(r.performanceId))
-        .filter((p): p is Performance => Boolean(p))
-        .filter((p) =>
-          Boolean(
-            setlists[p.id]?.items.some(
-              (item) => item.type === 'song' && item.songId === selectedSong.id
-            )
-          )
-        )
-    : [];
-  const selectedSongPerformedAt = selectedSong
-    ? performances.filter((p) =>
-        Boolean(
-          setlists[p.id]?.items.some(
-            (item) => item.type === 'song' && item.songId === selectedSong.id
-          )
-        )
-      )
-    : [];
-
   return (
     <>
       <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
@@ -462,7 +539,14 @@ export function EventDetailDialog({
         <Dialog.Positioner zIndex="61">
           <Dialog.Content w="full" maxW="2xl" maxH="85vh" mx="4" overflowY="auto">
             <Stack gap="4" p={{ base: '4', md: '6' }}>
-              <Stack gap="1" borderColor="border.subtle" borderBottomWidth="1px" pr="8" pb="3">
+              <Stack
+                gap="1"
+                borderColor="border.subtle"
+                borderBottomWidth="1px"
+                pl={onBack ? '8' : undefined}
+                pr="8"
+                pb="3"
+              >
                 <Wrap gap="2">
                   <Text color="fg.muted" fontSize="sm">
                     {performance.date}
@@ -505,6 +589,37 @@ export function EventDetailDialog({
                   size="sm"
                 />
               </Wrap>
+
+              {onNavigate && siblingPerformances.length > 1 && (
+                <Stack gap="1.5">
+                  <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
+                    {t('events.other_shows', { count: siblingPerformances.length })}
+                  </Text>
+                  <Wrap gap="1.5">
+                    {siblingPerformances.map((sibling) => {
+                      const isCurrent = sibling.id === performance.id;
+                      const attended = get(sibling.id)?.status === 'attended';
+                      const label =
+                        sibling.performanceName ||
+                        sibling.concertName ||
+                        sibling.date.slice(5).replace('-', '/');
+                      return (
+                        <Button
+                          key={sibling.id}
+                          size="xs"
+                          variant={isCurrent ? 'solid' : 'outline'}
+                          aria-current={isCurrent}
+                          title={`${sibling.date} · ${sibling.venue}`}
+                          onClick={() => !isCurrent && onNavigate(sibling)}
+                        >
+                          {attended && <FaCheck />}
+                          {label}
+                        </Button>
+                      );
+                    })}
+                  </Wrap>
+                </Stack>
+              )}
 
               {record?.status === 'attended' && (
                 <Stack gap="3">
@@ -588,6 +703,14 @@ export function EventDetailDialog({
                     {t('share.eventernote')}
                   </a>
                 </Button>
+                {llFansEventUrl(performance) && (
+                  <Button asChild size="xs" variant="outline">
+                    <a href={llFansEventUrl(performance)} target="_blank" rel="noreferrer">
+                      <FaArrowUpRightFromSquare />
+                      {t('share.ll_fans')}
+                    </a>
+                  </Button>
+                )}
               </Wrap>
 
               <Stack gap="2">
@@ -644,22 +767,64 @@ export function EventDetailDialog({
                         {formatDaysSincePrevious(setlistInsights.daysSincePreviousPerformance)}
                       </Text>
                     )}
-                    {sections.map((section) => (
-                      <Box key={`${section.name}-${section.startIndex}`}>
-                        {section.name && (
-                          <Text
-                            mb="1"
-                            color="fg.muted"
-                            fontSize="xs"
-                            fontWeight="bold"
-                            textTransform="uppercase"
-                          >
-                            {section.name}
-                          </Text>
-                        )}
-                        {setlist.items
-                          .slice(section.startIndex, section.endIndex + 1)
-                          .map((item) => (
+                    {setlistFlow.runs.length > 0 && (
+                      <Stack gap="1.5">
+                        <HStack gap="0.5" borderRadius="l2" h="6" overflow="hidden">
+                          {setlistFlow.runs.map((r, i) => (
+                            <Box
+                              key={i}
+                              title={r.title}
+                              style={{ flexGrow: r.grow, background: r.color }}
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                              minW="1"
+                              h="full"
+                            >
+                              {r.songs > 1 && (
+                                <Text color="white" fontSize="2xs" fontWeight="bold">
+                                  {r.songs}
+                                </Text>
+                              )}
+                            </Box>
+                          ))}
+                        </HStack>
+                        <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
+                          {[
+                            t('events.struct_songs', { count: setlistFlow.counts.songs }),
+                            ...(setlistFlow.counts.enc
+                              ? [t('events.struct_encores', { count: setlistFlow.counts.enc })]
+                              : []),
+                            ...(setlistFlow.counts.mc
+                              ? [t('events.struct_mc', { count: setlistFlow.counts.mc })]
+                              : []),
+                            ...(setlistFlow.counts.vtr
+                              ? [t('events.struct_vtr', { count: setlistFlow.counts.vtr })]
+                              : [])
+                          ].join(' · ')}
+                        </Text>
+                      </Stack>
+                    )}
+                    {sections.map((section) => {
+                      const sectionItems = setlist.items.slice(
+                        section.startIndex,
+                        section.endIndex + 1
+                      );
+                      const hasSong = sectionItems.some((it) => it.type === 'song');
+                      return (
+                        <Box key={`${section.name}-${section.startIndex}`}>
+                          {section.name && hasSong && (
+                            <Text
+                              mb="1"
+                              color="fg.muted"
+                              fontSize="xs"
+                              fontWeight="bold"
+                              textTransform="uppercase"
+                            >
+                              {section.name}
+                            </Text>
+                          )}
+                          {sectionItems.map((item) => (
                             <SetlistItemRow
                               key={item.id}
                               item={item}
@@ -671,7 +836,13 @@ export function EventDetailDialog({
                                       count: witnessBySong.get(item.songId)?.count ?? 0,
                                       isFirst:
                                         witnessBySong.get(item.songId)?.firstPerformanceId ===
-                                        performance.id
+                                        performance.id,
+                                      daysSinceSeen: witnessBySong.get(item.songId)?.prevSeenDate
+                                        ? daysBetween(
+                                            witnessBySong.get(item.songId)!.prevSeenDate!,
+                                            performance.date
+                                          )
+                                        : undefined
                                     }
                                   : undefined
                               }
@@ -680,11 +851,12 @@ export function EventDetailDialog({
                                   ? setlistInsights?.songInsights.get(item.songId)
                                   : undefined
                               }
-                              onSelectSong={setSelectedSongId}
+                              onSelectSong={onOpenSong}
                             />
                           ))}
-                      </Box>
-                    ))}
+                        </Box>
+                      );
+                    })}
                   </Stack>
                 ) : (
                   <Text color="fg.muted" fontSize="sm">
@@ -693,6 +865,19 @@ export function EventDetailDialog({
                 )}
               </Stack>
             </Stack>
+            {onBack && (
+              <IconButton
+                aria-label={t('common.back')}
+                variant="ghost"
+                size="sm"
+                onClick={onBack}
+                position="absolute"
+                top="2"
+                left="2"
+              >
+                <FaChevronLeft />
+              </IconButton>
+            )}
             <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">
               <IconButton aria-label={t('common.close')} variant="ghost" size="sm">
                 <FaXmark />
@@ -701,25 +886,6 @@ export function EventDetailDialog({
           </Dialog.Content>
         </Dialog.Positioner>
       </Dialog.Root>
-
-      {selectedSong && (
-        <SongDetailDialog
-          song={selectedSong}
-          heardAt={selectedSongHeardAt}
-          performedAt={selectedSongPerformedAt}
-          debutPerformance={getSongDebutPerformance(selectedSong.id, performanceById, setlists)}
-          firstWitnessPerformance={getSongFirstWitnessPerformance(
-            selectedSong.id,
-            records,
-            performanceById,
-            setlists
-          )}
-          performanceCount={selectedSongPerformedAt.length}
-          open={selectedSong !== undefined}
-          layer={90}
-          onClose={() => setSelectedSongId(undefined)}
-        />
-      )}
 
       <Dialog.Root open={diffOpen} onOpenChange={(e) => setDiffOpen(e.open)}>
         <Dialog.Backdrop zIndex="70" />
