@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { groupByTour } from '../tour';
 import type { Performance } from '~/types';
 
-const makePerformance = (overrides: Partial<Performance> & { id: string; date: string }): Performance => ({
+const makePerformance = (
+  overrides: Partial<Performance> & { id: string; date: string }
+): Performance => ({
   tourName: overrides.tourName ?? overrides.id,
   performanceName: '',
   venue: '',
