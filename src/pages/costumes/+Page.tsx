@@ -390,7 +390,19 @@ export default function Page() {
                     {signature && (
                       <Text color="fg.muted" fontSize="xs" lineClamp={1}>
                         {t('costumes.signature_song')}: {signature.name}
-                        {signature.pct != null ? ` · ${signature.pct}%` : ''}
+                        {signature.pct != null && (
+                          <Text
+                            as="span"
+                            title={t('costumes.signature_share_title', {
+                              song: signature.name,
+                              pct: signature.pct
+                            })}
+                            color="accent.default"
+                            fontWeight="medium"
+                          >
+                            {` · ${signature.pct}%`}
+                          </Text>
+                        )}
                       </Text>
                     )}
                   </Card.Body>

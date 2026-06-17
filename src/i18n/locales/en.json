@@ -469,6 +469,7 @@
     "witnessed_count_other": "{{ count }} performances witnessed",
     "most_worn_for": "Most worn for",
     "signature_song": "Signature song",
+    "signature_share_title": "Worn for {{ pct }}% of the times {{ song }} was performed",
     "song_sort_worn": "Most worn",
     "song_sort_rate": "Strongest match",
     "worn_times_one": "{{ count }}×",

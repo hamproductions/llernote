@@ -458,6 +458,7 @@
     "witnessed_count": "{{ count }}公演で観賞",
     "most_worn_for": "最も着用した楽曲",
     "signature_song": "代表曲",
+    "signature_share_title": "{{ song }}が披露された公演の{{ pct }}%でこの衣装を着用",
     "song_sort_worn": "着用回数",
     "song_sort_rate": "結びつきの強さ",
     "worn_times_one": "{{ count }}回",
