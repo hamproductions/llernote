@@ -533,6 +533,15 @@
       "song": "Song",
       "venue": "Venue",
       "costume": "Costume"
-    }
+    },
+    "group": {
+      "event": "Lives",
+      "song": "Songs",
+      "venue": "Venues",
+      "costume": "Costumes"
+    },
+    "nav_move": "navigate",
+    "nav_open": "open",
+    "count": "{{count}} results"
   }
 }

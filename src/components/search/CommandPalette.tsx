@@ -8,23 +8,34 @@ import {
   FaShirt
 } from 'react-icons/fa6';
 import type { ReactNode } from 'react';
-import { Box, HStack, Stack } from 'styled-system/jsx';
+import { Box, Center, HStack, Stack } from 'styled-system/jsx';
 import { Dialog } from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { Kbd } from '~/components/ui/kbd';
 import { useDetail } from '~/components/detail/DetailStack';
-import { usePerformanceById, usePerformances, useVenues } from '~/hooks/useData';
+import { getLiveThumb, usePerformanceById, usePerformances, useVenues } from '~/hooks/useData';
 import { useSongs } from '~/hooks/useSongData';
 import { getCostumeSummaries } from '~/utils/costumes';
 import { fuzzySearch, getSearchScore, type SearchableItem } from '~/utils/search';
 import { displayVenueLocation } from '~/utils/venues';
+import { getPicUrl } from '~/utils/assets';
 import { localizedName } from '~/utils/names';
 
 type Kind = 'event' | 'song' | 'venue' | 'costume';
-type Result = { key: string; kind: Kind; title: string; subtitle: string; open: () => void };
+type Result = {
+  key: string;
+  kind: Kind;
+  title: string;
+  subtitle: string;
+  thumbSongId?: string;
+  thumbUrl?: string;
+  open: () => void;
+};
+type Group = { kind: Kind; label: string; items: Result[] };
 
 const PER_GROUP = 6;
+const GROUP_ORDER: Kind[] = ['event', 'song', 'venue', 'costume'];
 const ICON: Record<Kind, ReactNode> = {
   event: <FaCalendarDays />,
   song: <FaMusic />,
@@ -37,6 +48,34 @@ const rank = <T,>(items: (SearchableItem & T)[], query: string, limit: number) =
     .filter((item) => fuzzySearch(item, query))
     .sort((a, b) => getSearchScore(b, query) - getSearchScore(a, query))
     .slice(0, limit);
+
+function ResultThumb({
+  kind,
+  thumbSongId,
+  thumbUrl
+}: Pick<Result, 'kind' | 'thumbSongId' | 'thumbUrl'>) {
+  const [failed, setFailed] = useState(false);
+  const src = thumbSongId ? getPicUrl(thumbSongId, 'thumbnail') : thumbUrl;
+  useEffect(() => setFailed(false), [src]);
+  return (
+    <Box flexShrink={0} borderRadius="l2" w="10" h="10" bgColor="accent.a3" overflow="hidden">
+      {src && !failed ? (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Center w="full" h="full" color="accent.default" fontSize="sm">
+          {ICON[kind]}
+        </Center>
+      )}
+    </Box>
+  );
+}
 
 export default function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t, i18n } = useTranslation();
@@ -64,41 +103,54 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
     }
   }, [open]);
 
-  const results = useMemo<Result[]>(() => {
+  const groups = useMemo<Group[]>(() => {
     const q = query.trim();
     if (!q) return [];
-    const out: Result[] = [];
+    const bucket: Record<Kind, Result[]> = { event: [], song: [], venue: [], costume: [] };
 
-    const eventItems = performances.map((p) => ({
-      id: p.id,
-      name: p.performanceName ? `${p.tourName} ${p.performanceName}` : p.tourName
-    }));
-    for (const e of rank(eventItems, q, PER_GROUP)) {
+    for (const e of rank(
+      performances.map((p) => ({
+        id: p.id,
+        name: p.performanceName ? `${p.tourName} ${p.performanceName}` : p.tourName
+      })),
+      q,
+      PER_GROUP
+    )) {
       const p = performanceById.get(e.id)!;
-      out.push({
+      bucket.event.push({
         key: `event-${e.id}`,
         kind: 'event',
         title: p.performanceName ?? p.tourName,
         subtitle: [p.date, p.venue].filter(Boolean).join(' · '),
+        thumbUrl: getLiveThumb(p)?.image,
         open: () => openEvent(e.id)
       });
     }
 
-    const songItems = songs.map((s) => ({ id: s.id, name: s.name, englishName: s.englishName }));
-    for (const s of rank(songItems, q, PER_GROUP)) {
-      out.push({
+    for (const s of rank(
+      songs.map((s) => ({ id: s.id, name: s.name, englishName: s.englishName })),
+      q,
+      PER_GROUP
+    )) {
+      const title = localizedName(lang, s.name, s.englishName);
+      const alt = s.englishName && s.englishName !== title ? s.englishName : s.name;
+      bucket.song.push({
         key: `song-${s.id}`,
         kind: 'song',
-        title: localizedName(lang, s.name, s.englishName),
-        subtitle: t('navigation.songs'),
+        title,
+        subtitle: alt !== title ? alt : '',
+        thumbSongId: s.id,
         open: () => openSong(s.id)
       });
     }
 
-    const venueItems = venues.map((v) => ({ id: v.id, name: v.name }));
-    for (const v of rank(venueItems, q, PER_GROUP)) {
+    for (const v of rank(
+      venues.map((v) => ({ id: v.id, name: v.name })),
+      q,
+      PER_GROUP
+    )) {
       const v0 = venues.find((x) => x.id === v.id)!;
-      out.push({
+      bucket.venue.push({
         key: `venue-${v.id}`,
         kind: 'venue',
         title: v0.name,
@@ -107,10 +159,13 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
       });
     }
 
-    const costumeItems = costumes.map((c) => ({ id: c.id, name: c.name }));
-    for (const c of rank(costumeItems, q, PER_GROUP)) {
+    for (const c of rank(
+      costumes.map((c) => ({ id: c.id, name: c.name })),
+      q,
+      PER_GROUP
+    )) {
       const c0 = costumes.find((x) => x.id === c.id)!;
-      out.push({
+      bucket.costume.push({
         key: `costume-${c.id}`,
         kind: 'costume',
         title: c0.name,
@@ -118,11 +173,16 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           count: c0.liveCount,
           defaultValue: '{{count}} lives'
         }),
+        thumbSongId: c0.imageSongId,
         open: () => openCostume(c.id)
       });
     }
 
-    return out;
+    return GROUP_ORDER.filter((k) => bucket[k].length).map((k) => ({
+      kind: k,
+      label: t(`search.group.${k}`, { defaultValue: k }),
+      items: bucket[k]
+    }));
   }, [
     query,
     performances,
@@ -138,9 +198,11 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
     openCostume
   ]);
 
+  const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+
   useEffect(() => {
-    setActive((a) => Math.min(a, Math.max(0, results.length - 1)));
-  }, [results.length]);
+    setActive((a) => Math.min(a, Math.max(0, flat.length - 1)));
+  }, [flat.length]);
 
   const choose = (r: Result | undefined) => {
     if (!r) return;
@@ -151,13 +213,13 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActive((a) => Math.min(a + 1, results.length - 1));
+      setActive((a) => Math.min(a + 1, flat.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      choose(results[active]);
+      choose(flat[active]);
     }
   };
 
@@ -165,13 +227,32 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
     listRef.current?.querySelector(`[data-idx="${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
+  let idx = -1;
+
   return (
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()} lazyMount unmountOnExit>
-      <Dialog.Backdrop zIndex="70" />
+      <Dialog.Backdrop zIndex="70" bgColor="black.a7" backdropFilter="blur(4px)" />
       <Dialog.Positioner zIndex="71" alignItems="flex-start">
-        <Dialog.Content w="full" maxW="2xl" mx="4" mt={{ base: '12', md: '20' }} overflow="hidden">
-          <HStack gap="2" borderColor="border.subtle" borderBottomWidth="1px" py="3" px="4">
-            <Box color="fg.muted">
+        <Dialog.Content
+          borderColor="border.default"
+          borderRadius="l3"
+          borderWidth="1px"
+          w="full"
+          maxW="2xl"
+          mx="4"
+          mt={{ base: '10', md: '20' }}
+          boxShadow="2xl"
+          overflow="hidden"
+        >
+          <HStack
+            gap="3"
+            borderColor="border.subtle"
+            borderBottomWidth="1px"
+            py="3"
+            px="4"
+            bgColor="bg.subtle"
+          >
+            <Box color="accent.default" fontSize="md">
               <FaMagnifyingGlass />
             </Box>
             <Input
@@ -184,57 +265,122 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
               })}
               border="none"
               outline="none"
+              h="auto"
               px="0"
+              fontSize="md"
+              bgColor="transparent"
               _focus={{ boxShadow: 'none' }}
             />
-            <Kbd>esc</Kbd>
+            <Kbd flexShrink={0}>esc</Kbd>
           </HStack>
-          <Box ref={listRef} maxH="60vh" p="2" overflowY="auto">
-            {query.trim() && results.length === 0 ? (
-              <Text py="6" color="fg.muted" fontSize="sm" textAlign="center">
-                {t('search.no_results', { defaultValue: 'No results' })}
-              </Text>
-            ) : !query.trim() ? (
-              <Text py="6" color="fg.muted" fontSize="sm" textAlign="center">
-                {t('search.hint', {
-                  defaultValue: 'Type to search lives, songs, venues, and costumes'
-                })}
-              </Text>
+
+          <Box ref={listRef} maxH={{ base: '60vh', md: '420px' }} py="2" overflowY="auto">
+            {!query.trim() ? (
+              <Center gap="2" flexDirection="column" py="10" px="4" color="fg.muted">
+                <Box color="accent.a8" fontSize="2xl">
+                  <FaMagnifyingGlass />
+                </Box>
+                <Text fontSize="sm" textAlign="center">
+                  {t('search.hint', {
+                    defaultValue: 'Search lives, songs, venues, and costumes'
+                  })}
+                </Text>
+              </Center>
+            ) : flat.length === 0 ? (
+              <Center py="10" px="4">
+                <Text color="fg.muted" fontSize="sm">
+                  {t('search.no_results', { defaultValue: 'No results' })}
+                </Text>
+              </Center>
             ) : (
-              <Stack gap="0.5">
-                {results.map((r, idx) => (
-                  <HStack
-                    key={r.key}
-                    data-idx={idx}
-                    onMouseMove={() => setActive(idx)}
-                    onClick={() => choose(r)}
-                    cursor="pointer"
-                    gap="3"
-                    borderRadius="l2"
-                    py="2"
-                    px="3"
-                    bgColor={idx === active ? 'accent.a3' : undefined}
-                    _hover={{ bgColor: 'accent.a2' }}
-                  >
-                    <Box flexShrink="0" color="accent.default">
-                      {ICON[r.kind]}
-                    </Box>
-                    <Stack flex="1" gap="0" minW="0">
-                      <Text fontWeight="medium" lineClamp={1}>
-                        {r.title}
-                      </Text>
-                      <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-                        {r.subtitle}
-                      </Text>
-                    </Stack>
-                    <Text flexShrink="0" color="fg.subtle" fontSize="2xs" textTransform="uppercase">
-                      {t(`search.kind.${r.kind}`, { defaultValue: r.kind })}
+              groups.map((g) => (
+                <Box key={g.kind}>
+                  <HStack gap="1.5" px="4" pt="3" pb="1" color="fg.subtle">
+                    <Box fontSize="2xs">{ICON[g.kind]}</Box>
+                    <Text
+                      fontSize="2xs"
+                      fontWeight="bold"
+                      letterSpacing="wide"
+                      textTransform="uppercase"
+                    >
+                      {g.label}
                     </Text>
                   </HStack>
-                ))}
-              </Stack>
+                  <Stack gap="0" px="2">
+                    {g.items.map((r) => {
+                      idx += 1;
+                      const i = idx;
+                      return (
+                        <HStack
+                          key={r.key}
+                          data-idx={i}
+                          onMouseMove={() => setActive(i)}
+                          onClick={() => choose(r)}
+                          cursor="pointer"
+                          gap="3"
+                          borderRadius="l2"
+                          py="1.5"
+                          px="2"
+                          bgColor={i === active ? 'accent.a3' : undefined}
+                          boxShadow={
+                            i === active ? 'inset 2px 0 0 var(--colors-accent-default)' : undefined
+                          }
+                          transition="background 0.06s"
+                        >
+                          <ResultThumb
+                            kind={r.kind}
+                            thumbSongId={r.thumbSongId}
+                            thumbUrl={r.thumbUrl}
+                          />
+                          <Stack flex="1" gap="0" minW="0">
+                            <Text fontWeight="medium" lineClamp={1}>
+                              {r.title}
+                            </Text>
+                            {r.subtitle && (
+                              <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+                                {r.subtitle}
+                              </Text>
+                            )}
+                          </Stack>
+                          {i === active && (
+                            <Kbd hideBelow="sm" flexShrink={0}>
+                              ↵
+                            </Kbd>
+                          )}
+                        </HStack>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              ))
             )}
           </Box>
+
+          <HStack
+            gap="4"
+            borderColor="border.subtle"
+            borderTopWidth="1px"
+            py="2"
+            px="4"
+            color="fg.subtle"
+            fontSize="2xs"
+            bgColor="bg.subtle"
+          >
+            <HStack gap="1">
+              <Kbd>↑</Kbd>
+              <Kbd>↓</Kbd>
+              <Text>{t('search.nav_move', { defaultValue: 'navigate' })}</Text>
+            </HStack>
+            <HStack gap="1">
+              <Kbd>↵</Kbd>
+              <Text>{t('search.nav_open', { defaultValue: 'open' })}</Text>
+            </HStack>
+            {flat.length > 0 && (
+              <Text ml="auto">
+                {t('search.count', { count: flat.length, defaultValue: '{{count}} results' })}
+              </Text>
+            )}
+          </HStack>
         </Dialog.Content>
       </Dialog.Positioner>
     </Dialog.Root>

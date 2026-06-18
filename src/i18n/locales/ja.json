@@ -519,6 +519,15 @@
       "song": "楽曲",
       "venue": "会場",
       "costume": "衣装"
-    }
+    },
+    "group": {
+      "event": "ライブ",
+      "song": "楽曲",
+      "venue": "会場",
+      "costume": "衣装"
+    },
+    "nav_move": "移動",
+    "nav_open": "開く",
+    "count": "{{count}}件"
   }
 }
