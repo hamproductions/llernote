@@ -231,7 +231,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
                 <HStack gap="1" alignItems="center" justifySelf="flex-end">
                   <SearchButton />
-                  <HStack hideBelow="md" gap="0">
+                  <HStack hideBelow="md" gap="0.5">
                     <LanguageToggle />
                     <ColorModeToggle />
                     <SettingsMenu />

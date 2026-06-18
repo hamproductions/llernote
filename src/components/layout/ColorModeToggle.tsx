@@ -6,7 +6,8 @@ export function ColorModeToggle() {
   const { colorMode, setColorMode } = useColorModeContext();
   return (
     <IconButton
-      variant="subtle"
+      variant="ghost"
+      size="sm"
       aria-label="Toggle Color Mode"
       onClick={() => setColorMode?.(colorMode === 'dark' ? 'light' : 'dark')}
     >
