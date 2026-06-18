@@ -68,6 +68,7 @@ const liveSetlists = Object.fromEntries(
   )
 );
 const songById = new Map(songs.map((s) => [s.id, s]));
+const songByName = new Map(songs.map((s) => [s.name, s]));
 const artistById = new Map(artists.map((a) => [a.id, a]));
 const seriesById = new Map(series.map((s) => [s.id, s]));
 const venueById = new Map(venues.map((v) => [v.id, v]));
@@ -102,6 +103,7 @@ export const useSetlist = (performanceId: string | undefined) => {
 };
 export const useSongs = () => songs;
 export const useSongById = () => songById;
+export const useSongByName = () => songByName;
 export const useCharacters = () => characters;
 export const useArtists = () => artists;
 export const useArtistById = () => artistById;

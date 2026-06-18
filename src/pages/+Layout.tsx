@@ -9,6 +9,7 @@ import {
   FaHouse,
   FaMapLocationDot,
   FaMusic,
+  FaShirt,
   FaStar,
   FaTicket
 } from 'react-icons/fa6';
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/venues', key: 'navigation.venues', icon: FaMapLocationDot },
   { path: '/stats', key: 'navigation.stats', icon: FaChartSimple },
   { path: '/songs', key: 'navigation.songs', icon: FaMusic },
+  { path: '/costumes', key: 'navigation.costumes', icon: FaShirt },
   { path: '/infographic', key: 'navigation.infographic', icon: FaChartPie },
   { path: '/mypick', key: 'navigation.mypick', icon: FaStar }
 ];
