@@ -7,7 +7,7 @@ export const whenIdle = (cb: () => void, timeout = 3000) => {
 
 export const onFirstInteraction = (cb: () => void) => {
   if (typeof window === 'undefined') return;
-  const events = ['pointerdown', 'keydown', 'touchstart', 'scroll'] as const;
+  const events = ['pointerdown', 'keydown', 'touchstart'] as const;
   let done = false;
   const run = () => {
     if (done) return;
