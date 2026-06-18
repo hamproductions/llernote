@@ -57,6 +57,7 @@ jobs:
         with:
           urls: ${{ needs.deploy.outputs.url }}
           budgetPath: ./budget.json
+          runs: 5
           temporaryPublicStorage: true
       - name: Running Page Speed Insights
         uses: jakepartusch/psi-action@v1.3
