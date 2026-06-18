@@ -5,7 +5,7 @@ import { Box, HStack, Wrap } from 'styled-system/jsx';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAnalysis } from '~/hooks/useAnalysis';
 import { useDetail } from '~/components/detail/DetailStack';
-import { useSongById } from '~/hooks/useData';
+import { useSongById } from '~/hooks/useSongData';
 import { localizedName } from '~/utils/names';
 
 export const GROUP_LABEL: Record<string, { en: string; ja: string }> = {

@@ -15,7 +15,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useAppSettings } from '~/hooks/useAppSettings';
-import { useSongs } from '~/hooks/useData';
+import { useSongs } from '~/hooks/useSongData';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';

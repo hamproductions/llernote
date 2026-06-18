@@ -21,7 +21,7 @@ import { Link } from '~/components/ui/link';
 import { EventCard } from '~/components/events/EventCard';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { usePerformances, useSongs } from '~/hooks/useData';
+import { usePerformances } from '~/hooks/useData';
 import { useAppSettings } from '~/hooks/useAppSettings';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
@@ -74,12 +74,10 @@ function QuickLink({
 
 function HomeStats({
   records,
-  inPersonOnly,
-  songsTotal
+  inPersonOnly
 }: {
   records: AttendanceRecord[];
   inPersonOnly: boolean;
-  songsTotal: number;
 }) {
   const { t } = useTranslation();
   const { result: stats } = useDerivedDataWorker(
@@ -94,7 +92,7 @@ function HomeStats({
         [
           ['total_attended', stats.attendedCount],
           ['songs_witnessed', stats.songsWitnessed],
-          ['unique_songs', `${stats.uniqueSongs}/${songsTotal}`],
+          ['unique_songs', `${stats.uniqueSongs}/${stats.totalSongs}`],
           ['venues_visited', stats.venuesVisited],
           ['total_interested', stats.interestedCount]
         ] as const
@@ -141,7 +139,6 @@ function HomeStats({
 export default function Page() {
   const { t } = useTranslation();
   const performances = usePerformances();
-  const songs = useSongs();
   const { inPersonOnly } = useAppSettings();
   const { records } = useAttendance();
   const { openEvent } = useDetail();
@@ -260,9 +257,7 @@ export default function Page() {
           )}
         </Stack>
 
-        {hasData && (
-          <HomeStats records={records} inPersonOnly={inPersonOnly} songsTotal={songs.length} />
-        )}
+        {hasData && <HomeStats records={records} inPersonOnly={inPersonOnly} />}
 
         {nextUp.length > 0 && (
           <Stack gap="2">

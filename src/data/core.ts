@@ -1,23 +1,12 @@
 import performanceInfo from '../../data/performance-info.json';
 import eventExtra from '../../data/event-extra.json';
-import songInfo from '../../data/song-info.json';
-import characterInfo from '../../data/character-info.json';
 import artistsInfo from '../../data/artists-info.json';
 import seriesInfo from '../../data/series-info.json';
 import unitsInfo from '../../data/units.json';
 import venueInfo from '../../data/venue-info.json';
 import eventernoteMap from '../../data/eventernote-map.json';
 import liveThumbInfo from '../../data/live-thumb-info.json';
-import type {
-  Artist,
-  Character,
-  LiveThumb,
-  Performance,
-  Series,
-  Song,
-  Unit,
-  VenueInfo
-} from '~/types';
+import type { Artist, LiveThumb, Performance, Series, Unit, VenueInfo } from '~/types';
 
 const extraById = eventExtra as Record<string, Partial<Performance>>;
 
@@ -46,8 +35,6 @@ export const performances: Performance[] = (performanceInfo as Omit<Performance,
     return { ...merged, category: deriveCategory(merged) };
   }
 );
-export const songs = songInfo as unknown as Song[];
-export const characters = characterInfo as unknown as Character[];
 export const artists = artistsInfo as unknown as Artist[];
 export const series = seriesInfo as Series[];
 export const units = unitsInfo as unknown as Unit[];
@@ -57,8 +44,6 @@ export const sortedPerformances = [...performances].sort((a, b) => b.date.locale
 export const performanceById = new Map(performances.map((p) => [p.id, p]));
 export const livePerformances = sortedPerformances.filter((p) => p.category === 'live');
 export const livePerformanceById = new Map(livePerformances.map((p) => [p.id, p]));
-export const songById = new Map(songs.map((s) => [s.id, s]));
-export const songByName = new Map(songs.map((s) => [s.name, s]));
 export const artistById = new Map(artists.map((a) => [a.id, a]));
 export const seriesById = new Map(series.map((s) => [s.id, s]));
 export const venueById = new Map(venues.map((v) => [v.id, v]));

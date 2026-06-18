@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import type { Setlist } from '~/types';
-import { makeAnalysis, populateSetlists } from '~/utils/setlistAnalysis';
+import type { Setlist, Song } from '~/types';
+import { makeAnalysis, populateSetlists, populateSongs } from '~/utils/setlistAnalysis';
+import type { SongData } from '~/data/songs';
 import setlistsJson from '../../../data/performance-setlists.json';
+import songsJson from '../../../data/song-info.json';
 
+populateSongs({ songs: songsJson as unknown as Song[] } as SongData);
 populateSetlists(setlistsJson as unknown as Record<string, Setlist>);
 const ANALYSIS = makeAnalysis(false);
 

@@ -53,6 +53,9 @@ export default defineConfig({
         hoistTransitiveImports: false,
         manualChunks(id) {
           if (id.includes('performance-setlists.json')) return 'setlists-analysis';
+          if (id.includes('song-info.json')) return 'data-songs';
+          if (id.includes('character-info.json') || id.includes('/data/characters'))
+            return 'data-characters';
           if (id.includes('/data/')) return 'data-core';
           if (id.includes('/components/events/EventDetailDialog')) return 'event-detail';
           if (id.includes('/components/songs/SongDetailDialog')) return 'song-detail';

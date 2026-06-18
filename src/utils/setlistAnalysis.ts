@@ -1,5 +1,5 @@
 import artistsJson from '../../data/artists-info.json';
-import songsJson from '../../data/song-info.json';
+import { loadSongData, type SongData } from '~/data/songs';
 import perfsJson from '../../data/performance-info.json';
 import { loadSetlists } from '~/data/setlists';
 import seriesJson from '../../data/series-info.json';
@@ -134,7 +134,7 @@ function bindCategories(rows: { keys: Set<string>; date: string; venue: string }
 }
 
 const artists = artistsJson as unknown as Artist[];
-const songs = songsJson as unknown as SongRec[];
+let songs: SongRec[] = [];
 const perfs = perfsJson as unknown as Perf[];
 const perfNameById = new Map(perfs.map((p) => [p.id, p.performanceName] as const));
 const seriesInfo = seriesJson as unknown as { id: string; name: string; color: string }[];
@@ -182,7 +182,7 @@ function classify(a: Artist): ArtistType {
 }
 const artistType = new Map(artists.map((a) => [a.id, classify(a)] as const));
 
-const songById = new Map(songs.map((s) => [s.id, s]));
+let songById = new Map<string, SongRec>();
 function songArtistType(songId: string): ArtistType | 'unknown' {
   const s = songById.get(songId);
   if (!s || !s.artists?.length) return 'unknown';
@@ -215,6 +215,13 @@ function songOccs(sl: Setlist): Occ[] {
 }
 
 const setlistByPerf = new Map<string, Setlist>();
+export function populateSongs(data: SongData) {
+  if (songById.size) return;
+  songs = data.songs as unknown as SongRec[];
+  songById = new Map(songs.map((s) => [s.id, s]));
+  for (const s of songs) songCensus[songArtistType(s.id)]++;
+}
+
 export function populateSetlists(obj: Record<string, Setlist>) {
   if (setlistByPerf.size) return;
   for (const k of Object.keys(obj)) {
@@ -686,7 +693,6 @@ function build(includeSpin: boolean) {
 const artistCensus: Record<string, number> = { solo: 0, subunit: 0, group: 0, collab: 0 };
 for (const t of artistType.values()) artistCensus[t]++;
 const songCensus: Record<string, number> = { group: 0, subunit: 0, solo: 0, collab: 0, unknown: 0 };
-for (const s of songs) songCensus[songArtistType(s.id)]++;
 
 const GROUP_COLOR: Record<string, string> = {
   "μ's": seriesColor['1'],
@@ -714,6 +720,7 @@ const analysisCache: Record<string, AnalysisResults> = {};
 export const loadAnalysis = async (includeSpin = false): Promise<AnalysisResults> => {
   const key = String(includeSpin);
   if (!analysisCache[key]) {
+    populateSongs(await loadSongData());
     const { all } = await loadSetlists();
     populateSetlists(all);
     analysisCache[key] = makeAnalysis(includeSpin);

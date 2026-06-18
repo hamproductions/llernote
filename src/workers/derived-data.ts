@@ -9,10 +9,10 @@ import {
   livePerformanceById,
   livePerformances,
   performanceById,
-  songById,
   sortedPerformances,
   venueById
 } from '~/data/core';
+import { loadSongData } from '~/data/songs';
 import { loadSetlists } from '~/data/setlists';
 import type { Performance, Song } from '~/types';
 import type { AttendanceMap } from '~/utils/attendance/storage';
@@ -52,7 +52,7 @@ type WorkerRequest =
 
 type WorkerResponse =
   | { id: number; type: 'events'; result: { filtered: Performance[]; tours: TourGroup[] } }
-  | { id: number; type: 'stats'; result: StatsSummary }
+  | { id: number; type: 'stats'; result: StatsSummary & { totalSongs: number } }
   | {
       id: number;
       type: 'songs';
@@ -91,6 +91,7 @@ const statsPerformanceFilter = (
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
   const setlistData = await loadSetlists();
+  const { songById } = await loadSongData();
   const setlistsFor = (inPersonOnly: boolean) =>
     inPersonOnly ? setlistData.live : setlistData.all;
 
@@ -131,13 +132,16 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     const response: WorkerResponse = {
       id: request.id,
       type: request.type,
-      result: computeStats(
-        filteredRecords,
-        perfById,
-        setlistsFor(inPersonOnly),
-        filteredPerformances,
-        venueById
-      )
+      result: {
+        ...computeStats(
+          filteredRecords,
+          perfById,
+          setlistsFor(inPersonOnly),
+          filteredPerformances,
+          venueById
+        ),
+        totalSongs: songById.size
+      }
     };
     self.postMessage(response);
     return;

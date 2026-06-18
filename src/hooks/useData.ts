@@ -3,7 +3,6 @@ import { useAppSettings } from './useAppSettings';
 import {
   artistById,
   artists,
-  characters,
   eventernoteIdByPerformanceId,
   liveThumbByPerformanceId,
   liveThumbByTourName,
@@ -13,9 +12,6 @@ import {
   performanceById,
   series,
   seriesById,
-  songByName,
-  songById,
-  songs,
   sortedPerformances,
   units,
   venueById,
@@ -31,10 +27,6 @@ export const usePerformance = (id: string | undefined) => {
   const byId = usePerformanceById();
   return id !== undefined ? byId.get(id) : undefined;
 };
-export const useSongs = () => songs;
-export const useSongById = () => songById;
-export const useSongByName = () => songByName;
-export const useCharacters = () => characters;
 export const useArtists = () => artists;
 export const useArtistById = () => artistById;
 export const useSeries = () => series;
