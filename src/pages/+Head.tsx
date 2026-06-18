@@ -14,6 +14,20 @@ export function Head() {
       <link
         href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Outfit:wght@400;600;800&display=swap"
         rel="stylesheet"
+        media="print"
+        data-font="1"
+      />
+      <noscript>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Outfit:wght@400;600;800&display=swap"
+          rel="stylesheet"
+        />
+      </noscript>
+      <script
+        dangerouslySetInnerHTML={{
+          __html:
+            "(function(){var l=document.querySelector('link[data-font=\"1\"]');if(!l)return;if(l.sheet){l.media='all';}else{l.addEventListener('load',function(){l.media='all';});}})();"
+        }}
       />
     </>
   );
