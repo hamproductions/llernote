@@ -2,15 +2,17 @@ import { useMemo } from 'react';
 import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { VenueDetailDialog } from '~/components/venues/VenueDetailDialog';
+import { CostumeDetailDialog } from '~/components/costumes/CostumeDetailDialog';
 import { usePerformanceById, usePerformances, useVenueById } from '~/hooks/useData';
 import { useSongById } from '~/hooks/useSongData';
 import { useSetlists } from '~/hooks/useSetlists';
 import { useAttendance } from '~/hooks/useAttendance';
 import { getSongDebutPerformance, getSongFirstWitnessPerformance } from '~/utils/setlist-insights';
 import { buildVenueSummaries } from '~/utils/venues';
+import { getCostumeSummaries } from '~/utils/costumes';
 import type { Performance } from '~/types';
 
-type Item = { kind: 'song' | 'event' | 'venue'; id: string };
+type Item = { kind: 'song' | 'event' | 'venue' | 'costume'; id: string };
 
 export default function DetailStackHost({
   item,
@@ -31,6 +33,8 @@ export default function DetailStackHost({
     return <SongHost id={item.id} onBack={onBack} onClose={onClose} onOpenEvent={openEvent} />;
   if (item.kind === 'venue')
     return <VenueHost id={item.id} onBack={onBack} onClose={onClose} onOpenEvent={openEvent} />;
+  if (item.kind === 'costume')
+    return <CostumeHost id={item.id} onBack={onBack} onClose={onClose} />;
   return (
     <EventHost
       id={item.id}
@@ -155,4 +159,25 @@ function VenueHost({
       onOpenEvent={onOpenEvent}
     />
   );
+}
+
+function CostumeHost({
+  id,
+  onBack,
+  onClose
+}: {
+  id: string;
+  onBack?: () => void;
+  onClose: () => void;
+}) {
+  const performanceById = usePerformanceById();
+  const { records } = useAttendance();
+  const costume = useMemo(() => {
+    const attendedIds = new Set(
+      records.filter((r) => r.status === 'attended').map((r) => r.performanceId)
+    );
+    return getCostumeSummaries(performanceById, attendedIds).find((c) => c.id === id);
+  }, [performanceById, records, id]);
+  if (!costume) return null;
+  return <CostumeDetailDialog costume={costume} open onClose={onClose} onBack={onBack} />;
 }

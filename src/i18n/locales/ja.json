@@ -475,7 +475,8 @@
     "stat_years": "年数",
     "stat_venues": "会場",
     "songs_worn_for": "着用楽曲 {{ count }}曲",
-    "worn_in_lives": "登場ライブ {{ count }}件"
+    "worn_in_lives": "登場ライブ {{ count }}件",
+    "worn_count": "{{count}}公演"
   },
   "eventernote": {
     "title": "イベンターノートインポート",
@@ -506,5 +507,18 @@
     "onboarding_text": "イベンターノートで参加記録をつけていますか？参加イベントをインポートしてすぐに始められます。",
     "onboarding_dismiss": "あとで",
     "open_event": "イベンターノートで開く"
+  },
+  "search": {
+    "open": "検索",
+    "label": "検索",
+    "placeholder": "ライブ・楽曲・会場・衣装を検索…",
+    "hint": "ライブ・楽曲・会場・衣装を検索",
+    "no_results": "結果がありません",
+    "kind": {
+      "event": "ライブ",
+      "song": "楽曲",
+      "venue": "会場",
+      "costume": "衣装"
+    }
   }
 }

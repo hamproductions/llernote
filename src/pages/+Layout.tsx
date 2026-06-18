@@ -15,6 +15,8 @@ import {
 } from 'react-icons/fa6';
 import { Box, Container, HStack, Stack } from 'styled-system/jsx';
 import { DetailStackProvider } from '~/components/detail/DetailStack';
+import { CommandPaletteProvider } from '~/components/search/CommandPaletteProvider';
+import { SearchButton } from '~/components/search/SearchButton';
 import { ColorModeToggle } from '~/components/layout/ColorModeToggle';
 import { Footer } from '~/components/layout/Footer';
 import { LanguageToggle } from '~/components/layout/LanguageToggle';
@@ -203,106 +205,111 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <DetailStackProvider>
-      <Stack position="relative" w="full" minH="100vh" bgColor="bg.default">
-        <Container
-          zIndex="1"
-          position="relative"
-          flex={1}
-          w="full"
-          px={4}
-          pt={4}
-          pb={{ base: '24', md: '4' }}
-        >
-          <Stack>
-            <HStack justifyContent="space-between" alignItems="center" w="full">
-              <HStack gap="4" alignItems="center">
-                <Link href={toAppUrl('/')} _hover={{ textDecoration: 'none' }}>
-                  <Text color="accent.default" fontSize="lg" fontWeight="bold">
-                    LLerNote
-                  </Text>
-                </Link>
-                <HStack hideBelow="md" gap="0.5">
-                  <HeaderNav />
+      <CommandPaletteProvider>
+        <Stack position="relative" w="full" minH="100vh" bgColor="bg.default">
+          <Container
+            zIndex="1"
+            position="relative"
+            flex={1}
+            w="full"
+            px={4}
+            pt={4}
+            pb={{ base: '24', md: '4' }}
+          >
+            <Stack>
+              <HStack justifyContent="space-between" alignItems="center" w="full">
+                <HStack gap="4" alignItems="center">
+                  <Link href={toAppUrl('/')} _hover={{ textDecoration: 'none' }}>
+                    <Text color="accent.default" fontSize="lg" fontWeight="bold">
+                      LLerNote
+                    </Text>
+                  </Link>
+                  <HStack hideBelow="md" gap="0.5">
+                    <HeaderNav />
+                  </HStack>
                 </HStack>
-              </HStack>
 
-              <HStack hideBelow="md" justifySelf="flex-end">
-                <LanguageToggle />
-                <ColorModeToggle />
-                <SettingsMenu />
-              </HStack>
-            </HStack>
-            {children}
-          </Stack>
-        </Container>
-        <Footer />
-        <MobileBottomNav />
-
-        <Drawer.Root open={isDrawerOpen} onOpenChange={(e) => setIsDrawerOpen(e.open)}>
-          <Drawer.Backdrop />
-          <Drawer.Positioner>
-            <Drawer.Content>
-              <Drawer.Header>
-                <HStack justifyContent="space-between" alignItems="center" w="full">
-                  <Drawer.Title>{t('common.menu', { defaultValue: 'Menu' })}</Drawer.Title>
-                  <Drawer.CloseTrigger asChild>
-                    <IconButton variant="ghost" size="sm">
-                      <BiX size={24} />
-                    </IconButton>
-                  </Drawer.CloseTrigger>
-                </HStack>
-              </Drawer.Header>
-              <Drawer.Body>
-                <Stack gap={1}>
-                  <DrawerNav />
-                </Stack>
-              </Drawer.Body>
-              <Drawer.Footer>
-                <HStack justifyContent="space-between" w="full">
-                  <LanguageToggle />
-                  <HStack>
+                <HStack gap="1" alignItems="center" justifySelf="flex-end">
+                  <SearchButton />
+                  <HStack hideBelow="md" gap="0">
+                    <LanguageToggle />
                     <ColorModeToggle />
                     <SettingsMenu />
                   </HStack>
                 </HStack>
-              </Drawer.Footer>
-            </Drawer.Content>
-          </Drawer.Positioner>
-        </Drawer.Root>
+              </HStack>
+              {children}
+            </Stack>
+          </Container>
+          <Footer />
+          <MobileBottomNav />
 
-        <Box
-          style={{
-            background:
-              'radial-gradient(ellipse at center, rgba(228,0,127,0.14) 0%, rgba(0,152,240,0.05) 45%, transparent 70%)'
-          }}
-          zIndex="0"
-          position="fixed"
-          top="-40%"
-          left="50%"
-          transform="translateX(-50%)"
-          w="140vw"
-          h="80vh"
-          pointerEvents="none"
-        />
-        <Box
-          style={{
-            ['--bg-image' as 'backgroundImage']: `url('${getAssetUrl('/assets/bg.webp')}')`
-          }}
-          zIndex="0"
-          position="fixed"
-          top="0"
-          left="0"
-          w="100vw"
-          h="100vh"
-          backgroundPosition="center"
-          backgroundAttachment="fixed"
-          backgroundImage="var(--bg-image)"
-          backgroundSize="cover"
-          opacity="0.03"
-          mixBlendMode={{ base: 'darken', _dark: 'lighten' }}
-          pointerEvents="none"
-        />
-      </Stack>
+          <Drawer.Root open={isDrawerOpen} onOpenChange={(e) => setIsDrawerOpen(e.open)}>
+            <Drawer.Backdrop />
+            <Drawer.Positioner>
+              <Drawer.Content>
+                <Drawer.Header>
+                  <HStack justifyContent="space-between" alignItems="center" w="full">
+                    <Drawer.Title>{t('common.menu', { defaultValue: 'Menu' })}</Drawer.Title>
+                    <Drawer.CloseTrigger asChild>
+                      <IconButton variant="ghost" size="sm">
+                        <BiX size={24} />
+                      </IconButton>
+                    </Drawer.CloseTrigger>
+                  </HStack>
+                </Drawer.Header>
+                <Drawer.Body>
+                  <Stack gap={1}>
+                    <DrawerNav />
+                  </Stack>
+                </Drawer.Body>
+                <Drawer.Footer>
+                  <HStack justifyContent="space-between" w="full">
+                    <LanguageToggle />
+                    <HStack>
+                      <ColorModeToggle />
+                      <SettingsMenu />
+                    </HStack>
+                  </HStack>
+                </Drawer.Footer>
+              </Drawer.Content>
+            </Drawer.Positioner>
+          </Drawer.Root>
+
+          <Box
+            style={{
+              background:
+                'radial-gradient(ellipse at center, rgba(228,0,127,0.14) 0%, rgba(0,152,240,0.05) 45%, transparent 70%)'
+            }}
+            zIndex="0"
+            position="fixed"
+            top="-40%"
+            left="50%"
+            transform="translateX(-50%)"
+            w="140vw"
+            h="80vh"
+            pointerEvents="none"
+          />
+          <Box
+            style={{
+              ['--bg-image' as 'backgroundImage']: `url('${getAssetUrl('/assets/bg.webp')}')`
+            }}
+            zIndex="0"
+            position="fixed"
+            top="0"
+            left="0"
+            w="100vw"
+            h="100vh"
+            backgroundPosition="center"
+            backgroundAttachment="fixed"
+            backgroundImage="var(--bg-image)"
+            backgroundSize="cover"
+            opacity="0.03"
+            mixBlendMode={{ base: 'darken', _dark: 'lighten' }}
+            pointerEvents="none"
+          />
+        </Stack>
+      </CommandPaletteProvider>
     </DetailStackProvider>
   );
 }

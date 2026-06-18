@@ -488,7 +488,8 @@
     "songs_worn_for": "Worn for {{ count }} songs",
     "songs_worn_for_one": "Worn for {{ count }} song",
     "worn_in_lives": "Worn in {{ count }} lives",
-    "worn_in_lives_one": "Worn in {{ count }} live"
+    "worn_in_lives_one": "Worn in {{ count }} live",
+    "worn_count": "{{count}} lives"
   },
   "eventernote": {
     "title": "Eventernote Import",
@@ -520,5 +521,18 @@
     "onboarding_text": "Already logging events on Eventernote? Import your attended events to get started in seconds.",
     "onboarding_dismiss": "Not now",
     "open_event": "Open on Eventernote"
+  },
+  "search": {
+    "open": "Search",
+    "label": "Search",
+    "placeholder": "Search lives, songs, venues, costumes…",
+    "hint": "Type to search lives, songs, venues, and costumes",
+    "no_results": "No results",
+    "kind": {
+      "event": "Live",
+      "song": "Song",
+      "venue": "Venue",
+      "costume": "Costume"
+    }
   }
 }

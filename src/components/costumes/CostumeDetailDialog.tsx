@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaXmark } from 'react-icons/fa6';
+import { FaCheck, FaChevronLeft, FaXmark } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
@@ -33,11 +33,13 @@ function StatBlock({ label, value }: { label: string; value: number | string }) 
 export function CostumeDetailDialog({
   costume,
   open,
-  onClose
+  onClose,
+  onBack
 }: {
   costume?: CostumeSummary;
   open: boolean;
   onClose: () => void;
+  onBack?: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const songById = useSongById();
@@ -72,7 +74,7 @@ export function CostumeDetailDialog({
       <Dialog.Positioner zIndex="41">
         <Dialog.Content w="full" maxW="xl" maxH="85vh" mx="4" overflowY="auto">
           <Stack gap="4" p={{ base: '4', md: '6' }}>
-            <HStack gap="3" alignItems="flex-start" pr="8">
+            <HStack gap="3" alignItems="flex-start" pl={onBack ? '8' : undefined} pr="8">
               {costume.imageSongId && hasSongThumb(costume.imageSongId) && (
                 <SongThumb songId={costume.imageSongId} large />
               )}
@@ -217,6 +219,19 @@ export function CostumeDetailDialog({
               </Stack>
             </Stack>
           </Stack>
+          {onBack && (
+            <IconButton
+              aria-label={t('common.back')}
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              position="absolute"
+              top="2"
+              left="2"
+            >
+              <FaChevronLeft />
+            </IconButton>
+          )}
           <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">
             <IconButton aria-label={t('common.close')} variant="ghost" size="sm">
               <FaXmark />
