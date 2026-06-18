@@ -19,13 +19,8 @@ import {
 } from '~/components/costumes/CostumeFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import {
-  useArtistById,
-  usePerformanceById,
-  useSetlists,
-  useSongById,
-  useSongByName
-} from '~/hooks/useData';
+import { useArtistById, usePerformanceById, useSongById, useSongByName } from '~/hooks/useData';
+import { useSetlists } from '~/hooks/useSetlists';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';

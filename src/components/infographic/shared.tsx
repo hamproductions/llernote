@@ -59,6 +59,15 @@ type InfoCtx = {
   openEvent: (id: string) => void;
 };
 
+function InfographicLoading() {
+  const { t } = useTranslation();
+  return (
+    <Box py="20" color="fg.muted" textAlign="center">
+      {t('common.loading', 'Loading…')}
+    </Box>
+  );
+}
+
 const Ctx = createContext<InfoCtx | null>(null);
 export const useInfo = () => useContext(Ctx) as InfoCtx;
 
@@ -69,6 +78,7 @@ export function InfographicProvider({ children }: { children: React.ReactNode })
   const { openSong, openEvent } = useDetail();
   const songById = useSongById();
   const [tip, setTip] = useState<Tip>(null);
+  if (!d) return <InfographicLoading />;
   const lang = i18n.language === 'ja' ? 'ja' : 'en';
   const gLabel = (g: string) => GROUP_LABEL[g]?.[lang] ?? g;
   const typeLabel = (k: string) => t(`infographic.type_${k}`);

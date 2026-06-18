@@ -33,10 +33,10 @@ import {
   useCharacters,
   usePerformances,
   useSeries,
-  useSetlists,
   useSongById,
   useSongs
 } from '~/hooks/useData';
+import { useSetlists } from '~/hooks/useSetlists';
 import { setMyPick, setMyPickCell, setMyPickConfig } from '~/utils/attendance/storage';
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { getPicUrl } from '~/utils/assets';

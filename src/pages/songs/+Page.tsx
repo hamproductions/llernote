@@ -14,7 +14,8 @@ import { SongFiltersBar } from '~/components/songs/SongFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useArtists, usePerformances, useSetlists, useSongs } from '~/hooks/useData';
+import { useAppSettings } from '~/hooks/useAppSettings';
+import { useSongs } from '~/hooks/useData';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
@@ -26,10 +27,8 @@ const PAGE_SIZE = 48;
 export default function Page() {
   const { t } = useTranslation();
   const { records } = useAttendance();
+  const { inPersonOnly } = useAppSettings();
   const songs = useSongs();
-  const artists = useArtists();
-  const performances = usePerformances();
-  const setlists = useSetlists();
   const { openSong } = useDetail();
   const [filters, setFilters] = useState<SongFilters>(EMPTY_SONG_FILTERS);
   const [page, setPage] = useState(1);
@@ -39,11 +38,11 @@ export default function Page() {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'performed', desc: true }]);
   const sort = sorting[0] ?? { id: 'performed', desc: true };
 
-  const derived = useDerivedDataWorker(
-    'songs',
-    { records, performances, setlists, songs, artists, filters },
-    [records, performances, setlists, songs, artists, filters]
-  );
+  const derived = useDerivedDataWorker('songs', { records, filters, inPersonOnly }, [
+    records,
+    filters,
+    inPersonOnly
+  ]);
   const tally = useMemo(() => derived.result?.tally ?? [], [derived.result]);
   const tallyById = useMemo(() => new Map(tally.map((e) => [e.songId, e])), [tally]);
   const allPerformanceTally = useMemo(

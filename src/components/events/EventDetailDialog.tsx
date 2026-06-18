@@ -25,14 +25,8 @@ import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
-import {
-  useArtistById,
-  usePerformanceById,
-  usePerformances,
-  useSetlist,
-  useSetlists,
-  useSongById
-} from '~/hooks/useData';
+import { useArtistById, usePerformanceById, usePerformances, useSongById } from '~/hooks/useData';
+import { useSetlist, useSetlists } from '~/hooks/useSetlists';
 import { useToaster } from '~/context/ToasterContext';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';

@@ -21,7 +21,8 @@ import { Link } from '~/components/ui/link';
 import { EventCard } from '~/components/events/EventCard';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { usePerformances, useSetlists, useSongs, useVenueById } from '~/hooks/useData';
+import { usePerformances, useSongs } from '~/hooks/useData';
+import { useAppSettings } from '~/hooks/useAppSettings';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useDetail } from '~/components/detail/DetailStack';
@@ -73,9 +74,8 @@ function QuickLink({
 export default function Page() {
   const { t } = useTranslation();
   const performances = usePerformances();
-  const setlists = useSetlists();
   const songs = useSongs();
-  const venueById = useVenueById();
+  const { inPersonOnly } = useAppSettings();
   const { records } = useAttendance();
   const { openEvent } = useDetail();
   const [search, setSearch] = useState('');
@@ -91,15 +91,13 @@ export default function Page() {
     'stats',
     {
       records,
-      performances,
-      setlists,
       year: '',
       seriesId: '',
       category: '',
       multiSeries: false,
-      venueById
+      inPersonOnly
     },
-    [records, performances, setlists, venueById]
+    [records, inPersonOnly]
   );
   const stats = derivedStats.result;
 

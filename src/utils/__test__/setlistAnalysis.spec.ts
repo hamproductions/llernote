@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { ANALYSIS } from '~/utils/setlistAnalysis';
+import type { Setlist } from '~/types';
+import { makeAnalysis, populateSetlists } from '~/utils/setlistAnalysis';
+import setlistsJson from '../../../data/performance-setlists.json';
+
+populateSetlists(setlistsJson as unknown as Record<string, Setlist>);
+const ANALYSIS = makeAnalysis(false);
 
 const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizurai-bu!'];
 const JUNK = /^(告知|ENCORE|W-ENCORE|AFTER|OP|MC|選手MC|M\d+)$|^実況席/;

@@ -13,14 +13,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAppSettings } from '~/hooks/useAppSettings';
 import { useAttendance } from '~/hooks/useAttendance';
-import {
-  useEventYears,
-  useSeries,
-  useSeriesById,
-  useSetlists,
-  usePerformances,
-  useVenueById
-} from '~/hooks/useData';
+import { useEventYears, useSeries, useSeriesById, usePerformances } from '~/hooks/useData';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { getSeriesShortName } from '~/utils/series-short';
 import { copyTextToClipboard, downloadElementAsImage, formatEventShareText } from '~/utils/share';
@@ -405,8 +398,6 @@ export default function Page() {
   const { toast } = useToaster();
   const { records } = useAttendance();
   const performances = usePerformances();
-  const setlists = useSetlists();
-  const venueById = useVenueById();
   const series = useSeries();
   const seriesById = useSeriesById();
   const years = useEventYears();
@@ -429,8 +420,8 @@ export default function Page() {
 
   const derived = useDerivedDataWorker(
     'stats',
-    { records, performances, setlists, year, seriesId, category, multiSeries, venueById },
-    [records, performances, setlists, year, seriesId, category, multiSeries, venueById]
+    { records, year, seriesId, category, multiSeries, inPersonOnly },
+    [records, year, seriesId, category, multiSeries, inPersonOnly]
   );
   const stats = derived.result;
 

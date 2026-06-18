@@ -4,7 +4,17 @@ import { filterSongs, type SongFilters } from '~/utils/song-filter';
 import { groupByTour, type TourGroup } from '~/utils/tour';
 import { computeStats, type StatsSummary } from '~/utils/stats';
 import { tallyAllSongPerformances, tallySongs, type SongTallyEntry } from '~/utils/song-tally';
-import type { Artist, EventCategory, Performance, Setlist, Song, VenueInfo } from '~/types';
+import {
+  artistById,
+  livePerformanceById,
+  livePerformances,
+  performanceById,
+  songById,
+  sortedPerformances,
+  venueById
+} from '~/data/core';
+import { loadSetlists } from '~/data/setlists';
+import type { Performance, Song } from '~/types';
 import type { AttendanceMap } from '~/utils/attendance/storage';
 import type { AttendanceRecord } from '~/types/attendance';
 
@@ -13,12 +23,9 @@ type WorkerRequest =
       id: number;
       type: 'events';
       payload: {
-        performances: Performance[];
         filters: EventFilters;
         attendanceMap: AttendanceMap;
-        setlists: Record<string, Setlist>;
-        songs: Song[];
-        artists: Artist[];
+        inPersonOnly: boolean;
       };
     }
   | {
@@ -26,13 +33,11 @@ type WorkerRequest =
       type: 'stats';
       payload: {
         records: AttendanceRecord[];
-        performances: Performance[];
-        setlists: Record<string, Setlist>;
         year: string;
         seriesId: string;
         category: string;
         multiSeries: boolean;
-        venueById: Map<string, VenueInfo>;
+        inPersonOnly: boolean;
       };
     }
   | {
@@ -40,11 +45,8 @@ type WorkerRequest =
       type: 'songs';
       payload: {
         records: AttendanceRecord[];
-        performances: Performance[];
-        setlists: Record<string, Setlist>;
-        songs: Song[];
-        artists: Artist[];
         filters: SongFilters;
+        inPersonOnly: boolean;
       };
     };
 
@@ -64,6 +66,11 @@ type WorkerResponse =
       };
     };
 
+const performancesFor = (inPersonOnly: boolean) =>
+  inPersonOnly ? livePerformances : sortedPerformances;
+const performanceByIdFor = (inPersonOnly: boolean) =>
+  inPersonOnly ? livePerformanceById : performanceById;
+
 const statsPerformanceFilter = (
   performance: Performance,
   filters: { year: string; seriesId: string; category: string; multiSeries: boolean }
@@ -77,20 +84,29 @@ const statsPerformanceFilter = (
       performance.seriesIds[0] === filters.seriesId;
     if (!matchesMulti && !matchesSingle) return false;
   }
-  if (filters.category && performance.category !== (filters.category as EventCategory))
-    return false;
+  if (filters.category && performance.category !== filters.category) return false;
   return true;
 };
 
-self.onmessage = (event: MessageEvent<WorkerRequest>) => {
+self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
+  const setlistData = await loadSetlists();
+  const setlistsFor = (inPersonOnly: boolean) =>
+    inPersonOnly ? setlistData.live : setlistData.all;
 
   if (request.type === 'events') {
-    const { performances, filters, attendanceMap, setlists, songs, artists } = request.payload;
-    const songById = new Map(songs.map((song) => [song.id, song]));
-    const artistById = new Map(artists.map((artist) => [artist.id, artist]));
-    const performanceCharacters = buildPerformanceCharacterMap(setlists, songById, artistById);
-    const filtered = filterEvents(performances, filters, attendanceMap, performanceCharacters);
+    const { filters, attendanceMap, inPersonOnly } = request.payload;
+    const performanceCharacters = buildPerformanceCharacterMap(
+      setlistsFor(inPersonOnly),
+      songById,
+      artistById
+    );
+    const filtered = filterEvents(
+      performancesFor(inPersonOnly),
+      filters,
+      attendanceMap,
+      performanceCharacters
+    );
     const response: WorkerResponse = {
       id: request.id,
       type: request.type,
@@ -101,18 +117,15 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   }
 
   if (request.type === 'stats') {
-    const { records, performances, setlists, year, seriesId, category, multiSeries, venueById } =
-      request.payload;
-    const performanceById = new Map(
-      performances.map((performance) => [performance.id, performance])
-    );
+    const { records, year, seriesId, category, multiSeries, inPersonOnly } = request.payload;
+    const perfById = performanceByIdFor(inPersonOnly);
     const filteredRecords = records.filter((record) => {
-      const performance = performanceById.get(record.performanceId);
+      const performance = perfById.get(record.performanceId);
       return performance
         ? statsPerformanceFilter(performance, { year, seriesId, category, multiSeries })
         : false;
     });
-    const filteredPerformances = performances.filter((performance) =>
+    const filteredPerformances = performancesFor(inPersonOnly).filter((performance) =>
       statsPerformanceFilter(performance, { year, seriesId, category, multiSeries })
     );
     const response: WorkerResponse = {
@@ -120,8 +133,8 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       type: request.type,
       result: computeStats(
         filteredRecords,
-        performanceById,
-        setlists,
+        perfById,
+        setlistsFor(inPersonOnly),
         filteredPerformances,
         venueById
       )
@@ -130,21 +143,27 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
     return;
   }
 
-  const { records, performances, setlists, songs, artists, filters } = request.payload;
-  const performanceById = new Map(performances.map((performance) => [performance.id, performance]));
-  const artistById = new Map(artists.map((artist) => [artist.id, artist]));
-  const tally = tallySongs(records, performanceById, setlists);
+  const { records, filters, inPersonOnly } = request.payload;
+  const perfById = performanceByIdFor(inPersonOnly);
+  const sls = setlistsFor(inPersonOnly);
+  const tally = tallySongs(records, perfById, sls);
   const tallyById = new Map(tally.map((entry) => [entry.songId, entry]));
-  const allPerformanceTally = tallyAllSongPerformances(performanceById, setlists);
+  const allPerformanceTally = tallyAllSongPerformances(perfById, sls);
   const performedById = new Map(allPerformanceTally.map((entry) => [entry.songId, entry]));
   const heardCount = (songId: string) => tallyById.get(songId)?.count ?? 0;
   const performedCount = (songId: string) => performedById.get(songId)?.count ?? 0;
-  const filtered = filterSongs(songs, filters, artistById, heardCount).sort(
+  const allSongs = [...songById.values()];
+  const filtered = filterSongs(allSongs, filters, artistById, heardCount).sort(
     (a, b) =>
       performedCount(b.id) - performedCount(a.id) ||
       (b.releasedOn ?? '').localeCompare(a.releasedOn ?? '')
   );
-  const scopeSongs = filterSongs(songs, { ...filters, heard: undefined }, artistById, heardCount);
+  const scopeSongs = filterSongs(
+    allSongs,
+    { ...filters, heard: undefined },
+    artistById,
+    heardCount
+  );
   const heardInScope = scopeSongs.filter((song) => heardCount(song.id) > 0).length;
   const response: WorkerResponse = {
     id: request.id,

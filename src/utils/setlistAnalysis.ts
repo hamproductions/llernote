@@ -1,7 +1,7 @@
 import artistsJson from '../../data/artists-info.json';
 import songsJson from '../../data/song-info.json';
 import perfsJson from '../../data/performance-info.json';
-import setlistsJson from '../../data/performance-setlists.json';
+import { loadSetlists } from '~/data/setlists';
 import seriesJson from '../../data/series-info.json';
 import extraJson from '../../data/event-extra.json';
 
@@ -137,7 +137,6 @@ const artists = artistsJson as unknown as Artist[];
 const songs = songsJson as unknown as SongRec[];
 const perfs = perfsJson as unknown as Perf[];
 const perfNameById = new Map(perfs.map((p) => [p.id, p.performanceName] as const));
-const setlistsObj = setlistsJson as unknown as Record<string, Setlist>;
 const seriesInfo = seriesJson as unknown as { id: string; name: string; color: string }[];
 const extraById = extraJson as unknown as Record<
   string,
@@ -216,9 +215,13 @@ function songOccs(sl: Setlist): Occ[] {
 }
 
 const setlistByPerf = new Map<string, Setlist>();
-for (const k of Object.keys(setlistsObj)) {
-  const sl = setlistsObj[k];
-  setlistByPerf.set(String(sl.performanceId), sl);
+export function populateSetlists(obj: Record<string, Setlist>) {
+  if (setlistByPerf.size) return;
+  for (const k of Object.keys(obj)) {
+    const sl = obj[k];
+    setlistByPerf.set(String(sl.performanceId), sl);
+  }
+  tourStats = computeTourStats();
 }
 
 function songKeys(sl: Setlist): string[] {
@@ -320,82 +323,86 @@ function jaccard(a: Set<string>, b: Set<string>) {
   return uni === 0 ? 1 : inter / uni;
 }
 
-const tourStats: TourStat[] = [];
-for (const [tourName, ps] of tours) {
-  const withSet = ps.filter((p) => p.hasSetlist && setlistByPerf.has(p.id));
-  if (!withSet.length) continue;
-  const sls = withSet.map((p) => setlistByPerf.get(p.id)!);
-  const sets = sls.map((sl) => new Set(songKeys(sl)));
-  const lens = sets.map((s) => s.size).filter((n) => n > 0);
-  if (!lens.length) continue;
+let tourStats: TourStat[] = [];
+function computeTourStats(): TourStat[] {
+  const out: TourStat[] = [];
+  for (const [tourName, ps] of tours) {
+    const withSet = ps.filter((p) => p.hasSetlist && setlistByPerf.has(p.id));
+    if (!withSet.length) continue;
+    const sls = withSet.map((p) => setlistByPerf.get(p.id)!);
+    const sets = sls.map((sl) => new Set(songKeys(sl)));
+    const lens = sets.map((s) => s.size).filter((n) => n > 0);
+    if (!lens.length) continue;
 
-  const counts = new Map<string, number>();
-  for (const s of sets) for (const x of s) counts.set(x, (counts.get(x) || 0) + 1);
-  const nShows = sets.filter((s) => s.size > 0).length;
-  const core = [...counts.values()].filter((c) => c === nShows).length;
-  const avgLen = lens.reduce((a, b) => a + b, 0) / lens.length;
+    const counts = new Map<string, number>();
+    for (const s of sets) for (const x of s) counts.set(x, (counts.get(x) || 0) + 1);
+    const nShows = sets.filter((s) => s.size > 0).length;
+    const core = [...counts.values()].filter((c) => c === nShows).length;
+    const avgLen = lens.reduce((a, b) => a + b, 0) / lens.length;
 
-  const idx: number[] = [];
-  for (let i = 0; i < sets.length; i++) if (sets[i].size > 0) idx.push(i);
-  let jSum = 0,
-    jN = 0;
-  for (let a = 0; a < idx.length; a++)
-    for (let b = a + 1; b < idx.length; b++) {
-      jSum += jaccard(sets[idx[a]], sets[idx[b]]);
-      jN++;
-    }
-  const meanJaccard = jN ? jSum / jN : 1;
-
-  const venueGroups = new Map<string, number[]>();
-  for (const i of idx) {
-    const v = withSet[i].venue || '?';
-    if (!venueGroups.has(v)) venueGroups.set(v, []);
-    venueGroups.get(v)!.push(i);
-  }
-  let jDay = 0,
-    nDay = 0;
-  for (const grp of venueGroups.values())
-    for (let a = 0; a < grp.length; a++)
-      for (let b = a + 1; b < grp.length; b++) {
-        jDay += jaccard(sets[grp[a]], sets[grp[b]]);
-        nDay++;
+    const idx: number[] = [];
+    for (let i = 0; i < sets.length; i++) if (sets[i].size > 0) idx.push(i);
+    let jSum = 0,
+      jN = 0;
+    for (let a = 0; a < idx.length; a++)
+      for (let b = a + 1; b < idx.length; b++) {
+        jSum += jaccard(sets[idx[a]], sets[idx[b]]);
+        jN++;
       }
-  const reps = [...venueGroups.values()].map((grp) => grp[0]);
-  let jLeg = 0,
-    nLeg = 0;
-  for (let a = 0; a < reps.length; a++)
-    for (let b = a + 1; b < reps.length; b++) {
-      jLeg += jaccard(sets[reps[a]], sets[reps[b]]);
-      nLeg++;
+    const meanJaccard = jN ? jSum / jN : 1;
+
+    const venueGroups = new Map<string, number[]>();
+    for (const i of idx) {
+      const v = withSet[i].venue || '?';
+      if (!venueGroups.has(v)) venueGroups.set(v, []);
+      venueGroups.get(v)!.push(i);
     }
-  const simDays = nDay ? jDay / nDay : null;
-  const simLegs = nLeg ? jLeg / nLeg : null;
+    let jDay = 0,
+      nDay = 0;
+    for (const grp of venueGroups.values())
+      for (let a = 0; a < grp.length; a++)
+        for (let b = a + 1; b < grp.length; b++) {
+          jDay += jaccard(sets[grp[a]], sets[grp[b]]);
+          nDay++;
+        }
+    const reps = [...venueGroups.values()].map((grp) => grp[0]);
+    let jLeg = 0,
+      nLeg = 0;
+    for (let a = 0; a < reps.length; a++)
+      for (let b = a + 1; b < reps.length; b++) {
+        jLeg += jaccard(sets[reps[a]], sets[reps[b]]);
+        nLeg++;
+      }
+    const simDays = nDay ? jDay / nDay : null;
+    const simLegs = nLeg ? jLeg / nLeg : null;
 
-  const comp: Record<string, number> = { group: 0, subunit: 0, solo: 0, collab: 0, unknown: 0 };
-  for (const sl of sls) for (const o of songOccs(sl)) comp[o.t] += o.w;
+    const comp: Record<string, number> = { group: 0, subunit: 0, solo: 0, collab: 0, unknown: 0 };
+    for (const sl of sls) for (const o of songOccs(sl)) comp[o.t] += o.w;
 
-  const seriesIds = ps[0].seriesIds || [];
-  const primarySeries = seriesIds.length === 1 ? seriesIds[0] : 'mixed';
+    const seriesIds = ps[0].seriesIds || [];
+    const primarySeries = seriesIds.length === 1 ? seriesIds[0] : 'mixed';
 
-  tourStats.push({
-    tour: tourName,
-    seriesIds,
-    group: seriesIds.length > 1 ? 'Mixed / Series' : seriesName[primarySeries] || 'Other',
-    headliner: detectHeadliner(tourName)?.name ?? null,
-    from: [...ps].map((p) => p.date).sort()[0],
-    nShows,
-    legs: venueGroups.size,
-    avgLen: +avgLen.toFixed(1),
-    coreShare: +(core / avgLen).toFixed(3),
-    meanJaccard: +meanJaccard.toFixed(3),
-    changeRate: +(1 - meanJaccard).toFixed(3),
-    changeDays: simDays === null ? null : +(1 - simDays).toFixed(3),
-    changeLegs: simLegs === null ? null : +(1 - simLegs).toFixed(3),
-    dayPairs: nDay,
-    legPairs: nLeg,
-    comp,
-    isFlagship: !!flagOf(tourName)
-  });
+    out.push({
+      tour: tourName,
+      seriesIds,
+      group: seriesIds.length > 1 ? 'Mixed / Series' : seriesName[primarySeries] || 'Other',
+      headliner: detectHeadliner(tourName)?.name ?? null,
+      from: [...ps].map((p) => p.date).sort()[0],
+      nShows,
+      legs: venueGroups.size,
+      avgLen: +avgLen.toFixed(1),
+      coreShare: +(core / avgLen).toFixed(3),
+      meanJaccard: +meanJaccard.toFixed(3),
+      changeRate: +(1 - meanJaccard).toFixed(3),
+      changeDays: simDays === null ? null : +(1 - simDays).toFixed(3),
+      changeLegs: simLegs === null ? null : +(1 - simLegs).toFixed(3),
+      dayPairs: nDay,
+      legPairs: nLeg,
+      comp,
+      isFlagship: !!flagOf(tourName)
+    });
+  }
+  return out;
 }
 
 function agg(items: TourStat[]) {
@@ -692,7 +699,7 @@ const GROUP_COLOR: Record<string, string> = {
   'Ikizurai-bu!': seriesColor['8']
 };
 
-const makeAnalysis = (includeSpin: boolean) => ({
+export const makeAnalysis = (includeSpin: boolean) => ({
   ...build(includeSpin),
   canon: CANON,
   spinoff: SPINOFF,
@@ -701,5 +708,15 @@ const makeAnalysis = (includeSpin: boolean) => ({
   artistCensus
 });
 
-export const ANALYSIS = makeAnalysis(false);
-export const ANALYSIS_SPIN = makeAnalysis(true);
+export type AnalysisResults = ReturnType<typeof makeAnalysis>;
+
+const analysisCache: Record<string, AnalysisResults> = {};
+export const loadAnalysis = async (includeSpin = false): Promise<AnalysisResults> => {
+  const key = String(includeSpin);
+  if (!analysisCache[key]) {
+    const { all } = await loadSetlists();
+    populateSetlists(all);
+    analysisCache[key] = makeAnalysis(includeSpin);
+  }
+  return analysisCache[key];
+};
