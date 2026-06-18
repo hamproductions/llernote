@@ -110,8 +110,9 @@ export const artistsForRow = (
   return [];
 };
 
-export const songArtistIds = (song: Song, artistById: Map<string, Artist>) =>
-  (song.artists ?? []).map((artist) => artist.id).filter((id) => artistById.has(id));
+export const songArtistIds = (song: Song, artistById: Map<string, Artist>) => [
+  ...new Set((song.artists ?? []).map((artist) => artist.id).filter((id) => artistById.has(id)))
+];
 
 export const isGroupSong = (ids: string[], artistById: Map<string, Artist>) =>
   ids.length === 1 && isGroupArtist(artistById.get(ids[0]));
