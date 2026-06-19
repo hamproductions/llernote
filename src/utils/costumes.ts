@@ -40,8 +40,12 @@ export interface CostumeSummary {
   songAppearances: number;
   /** Distinct songs the costume was worn for. */
   uniqueSongCount: number;
-  /** Distinct attended performances the user witnessed the costume in. */
+  /** Distinct attended performances the costume was worn in (witnessed + watched). */
   attendedCount: number;
+  /** Distinct in-person (witnessed) performances the costume was worn in. */
+  witnessedCount: number;
+  /** Distinct remote (watched) performances the costume was worn in. */
+  watchedCount: number;
   firstDate: string;
   lastDate: string;
   /** Distinct calendar years the costume was worn in. */
@@ -89,7 +93,8 @@ interface CostumeAccumulator {
   songCounts: Map<string, number>;
   songNames: Map<string, string>;
   performanceIds: Set<string>;
-  attendedIds: Set<string>;
+  witnessedIds: Set<string>;
+  watchedIds: Set<string>;
   tourNames: Set<string>;
   venues: Set<string>;
   years: Set<string>;
@@ -113,7 +118,8 @@ const sortByCountDesc = (counts: Map<string, number>) =>
 export function buildCostumeSummaries(
   costumeMap: PerformanceCostumes,
   performanceById: Map<string, Performance>,
-  attendedIds: Set<string> = new Set(),
+  witnessedIds: Set<string> = new Set(),
+  watchedIds: Set<string> = new Set(),
   /** Per-song reach (performances + events) used for the rate and signature floor. */
   songStats?: Map<string, SongPerformanceStat>
 ): CostumeSummary[] {
@@ -131,7 +137,8 @@ export function buildCostumeSummaries(
           songCounts: new Map(),
           songNames: new Map(),
           performanceIds: new Set(),
-          attendedIds: new Set(),
+          witnessedIds: new Set(),
+          watchedIds: new Set(),
           tourNames: new Set(),
           venues: new Set(),
           years: new Set(),
@@ -148,7 +155,8 @@ export function buildCostumeSummaries(
         if (costume.songName) entry.songNames.set(costume.songId, costume.songName);
       }
       entry.performanceIds.add(performanceId);
-      if (attendedIds.has(performanceId)) entry.attendedIds.add(performanceId);
+      if (witnessedIds.has(performanceId)) entry.witnessedIds.add(performanceId);
+      if (watchedIds.has(performanceId)) entry.watchedIds.add(performanceId);
       entry.tourNames.add(performance.tourName);
       if (performance.venue) entry.venues.add(performance.venue);
       entry.years.add(performance.date.slice(0, 4));
@@ -188,7 +196,9 @@ export function buildCostumeSummaries(
       eventCount: entry.tourNames.size,
       songAppearances: entry.songAppearances,
       uniqueSongCount: entry.songCounts.size,
-      attendedCount: entry.attendedIds.size,
+      attendedCount: entry.witnessedIds.size + entry.watchedIds.size,
+      witnessedCount: entry.witnessedIds.size,
+      watchedCount: entry.watchedIds.size,
       firstDate: entry.firstDate,
       lastDate: entry.lastDate,
       yearCount: entry.years.size,
@@ -206,13 +216,15 @@ export function buildCostumeSummaries(
 /** Build the catalog from the bundled costume dataset. */
 export function getCostumeSummaries(
   performanceById: Map<string, Performance>,
-  attendedIds: Set<string> = new Set(),
+  witnessedIds: Set<string> = new Set(),
+  watchedIds: Set<string> = new Set(),
   songStats?: Map<string, SongPerformanceStat>
 ): CostumeSummary[] {
   return buildCostumeSummaries(
     performanceCostumes as PerformanceCostumes,
     performanceById,
-    attendedIds,
+    witnessedIds,
+    watchedIds,
     songStats
   );
 }

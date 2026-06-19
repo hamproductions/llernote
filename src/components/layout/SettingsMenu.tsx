@@ -14,8 +14,8 @@ import { Button } from '~/components/ui/button';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
 import { Heading } from '~/components/ui/heading';
-import { Switch } from '~/components/ui/switch';
 import { Text } from '~/components/ui/text';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { useAppSettings } from '~/hooks/useAppSettings';
 import { useToaster } from '~/context/ToasterContext';
 import { deleteAllLocalData } from '~/utils/app-settings';
@@ -35,7 +35,7 @@ export function SettingsMenu() {
   const [eventernoteOpen, setEventernoteOpen] = useState(false);
   const [eventernoteMounted, setEventernoteMounted] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const { inPersonOnly, setAppSettings } = useAppSettings();
+  const { scope, setAppSettings } = useAppSettings();
 
   const handleImport = async (file: File) => {
     try {
@@ -66,18 +66,15 @@ export function SettingsMenu() {
                 <Heading as="h3" color="fg.muted" fontSize="sm">
                   {t('settings.display')}
                 </Heading>
-                <HStack gap="3" justifyContent="space-between">
+                <Stack gap="2">
                   <Stack gap="0">
-                    <Text fontSize="sm">{t('settings.in_person_only')}</Text>
+                    <Text fontSize="sm">{t('settings.scope_label')}</Text>
                     <Text color="fg.muted" fontSize="xs">
-                      {t('settings.in_person_only_hint')}
+                      {t('settings.scope_hint')}
                     </Text>
                   </Stack>
-                  <Switch
-                    checked={inPersonOnly}
-                    onCheckedChange={(e) => setAppSettings({ inPersonOnly: e.checked })}
-                  />
-                </HStack>
+                  <ScopeTabs value={scope} onChange={(next) => setAppSettings({ scope: next })} />
+                </Stack>
               </Stack>
               <Stack gap="2">
                 <Heading as="h3" color="fg.muted" fontSize="sm">

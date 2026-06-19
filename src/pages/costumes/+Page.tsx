@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { FaTableCellsLarge, FaTableList } from 'react-icons/fa6';
@@ -19,12 +19,15 @@ import {
 } from '~/components/costumes/CostumeFiltersBar';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { useArtistById, usePerformanceById } from '~/hooks/useData';
+import { useArtistById } from '~/hooks/useData';
+import { performanceById } from '~/data/core';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { useSongById, useSongByName } from '~/hooks/useSongData';
 import { useSetlists } from '~/hooks/useSetlists';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
+import { useDetail } from '~/components/detail/DetailStack';
 import {
   costumeDisplayName,
   costumeNameOverrideEn,
@@ -33,6 +36,8 @@ import {
   type SongPerformanceStat
 } from '~/utils/costumes';
 import { tallyAllSongPerformances } from '~/utils/song-tally';
+import { partitionAttendance, scopeMatches } from '~/utils/attendance/witness';
+import { useAppSettings } from '~/hooks/useAppSettings';
 import { foldKana } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
 import { songMatchesCategory, SONG_CATEGORIES, type SongCategory } from '~/utils/song-filter';
@@ -41,15 +46,10 @@ import { hasSongThumb } from '~/utils/song-thumbs';
 const PAGE_SIZE = 48;
 type SortKey = 'lives' | 'witnessed' | 'songs' | 'latest' | 'first' | 'name';
 
-const CostumeDetailDialog = lazy(() =>
-  import('~/components/costumes/CostumeDetailDialog').then((module) => ({
-    default: module.CostumeDetailDialog
-  }))
-);
-
 export default function Page() {
   const { t, i18n } = useTranslation();
-  const performanceById = usePerformanceById();
+  const { scope, setAppSettings } = useAppSettings();
+  const { openCostume } = useDetail();
   const songById = useSongById();
   const songByName = useSongByName();
   const artistById = useArtistById();
@@ -58,7 +58,6 @@ export default function Page() {
   const [filters, setFilters] = useState<CostumeFilters>(EMPTY_COSTUME_FILTERS);
   const [sort, setSort] = useState<SortKey>('lives');
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<CostumeSummary>();
   const [tableSorting, setTableSorting] = useState<SortingState>([{ id: 'lives', desc: true }]);
   const columns = useColumnCount();
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-costumes-view', 'cards');
@@ -74,30 +73,33 @@ export default function Page() {
     if (q) setFilters((prev) => ({ ...prev, search: q }));
   }, []);
 
-  const attendedIds = useMemo(
-    () =>
-      new Set(
-        records
-          .filter((record) => record.status === 'attended' && !record.deleted)
-          .map((record) => record.performanceId)
-      ),
+  const { witnessed, watched } = useMemo(
+    () => partitionAttendance(records, performanceById),
     [records]
+  );
+
+  const scopedPerfById = useMemo(
+    () =>
+      new Map(
+        [...performanceById].filter(([, performance]) => scopeMatches(scope, performance.category))
+      ),
+    [scope]
   );
 
   // Per-song reach: distinct performances (rate denominator) and distinct events
   // (eventId, falling back to tour name) used as the signature-song floor.
   const songStats = useMemo(() => {
     const map = new Map<string, SongPerformanceStat>();
-    for (const entry of tallyAllSongPerformances(performanceById, setlists)) {
+    for (const entry of tallyAllSongPerformances(scopedPerfById, setlists)) {
       const events = new Set(entry.performances.map((p) => p.eventId ?? p.tourName));
       map.set(entry.songId, { performances: entry.performances.length, events: events.size });
     }
     return map;
-  }, [performanceById, setlists]);
+  }, [scopedPerfById, setlists]);
 
   const costumes = useMemo(
-    () => getCostumeSummaries(performanceById, attendedIds, songStats),
-    [performanceById, attendedIds, songStats]
+    () => getCostumeSummaries(scopedPerfById, witnessed, watched, songStats),
+    [scopedPerfById, witnessed, watched, songStats]
   );
 
   // Classify each costume by the artist types (group / unit / solo / others) of
@@ -248,14 +250,26 @@ export default function Page() {
         header: t('costumes.col_witnessed'),
         sortDescFirst: true,
         cell: ({ row }) => (
-          <Text
-            color={row.original.attendedCount > 0 ? 'accent.default' : 'fg.muted'}
-            fontSize="sm"
-            fontWeight={row.original.attendedCount > 0 ? 'semibold' : undefined}
-            fontVariantNumeric="tabular-nums"
-          >
-            {row.original.attendedCount}
-          </Text>
+          <HStack gap="1.5" justifyContent="flex-end" fontVariantNumeric="tabular-nums">
+            <Text
+              title={t('common.scope_inperson')}
+              color={row.original.witnessedCount > 0 ? 'accent.default' : 'fg.subtle'}
+              fontSize="sm"
+              fontWeight={row.original.witnessedCount > 0 ? 'semibold' : undefined}
+            >
+              {row.original.witnessedCount}
+            </Text>
+            <Text color="fg.subtle" fontSize="xs">
+              ·
+            </Text>
+            <Text
+              title={t('common.scope_remote')}
+              color={row.original.watchedCount > 0 ? 'blue.9' : 'fg.subtle'}
+              fontSize="sm"
+            >
+              {row.original.watchedCount}
+            </Text>
+          </HStack>
         ),
         meta: { textAlign: 'right', width: '20' }
       }
@@ -292,6 +306,7 @@ export default function Page() {
             <Text color="fg.muted" fontSize="sm">
               {t('costumes.results_count', { count: filtered.length })}
             </Text>
+            <ScopeTabs value={scope} onChange={(s) => setAppSettings({ scope: s })} size="xs" />
           </HStack>
           {effectiveView !== 'table' && (
             <NativeSelect
@@ -333,7 +348,7 @@ export default function Page() {
             sorting={tableSorting}
             onSortingChange={setTableSorting}
             pageSize={PAGE_SIZE}
-            onRowClick={(costume) => setSelected(costume)}
+            onRowClick={(costume) => openCostume(costume.id)}
             minW="2xl"
             columns={tableColumns}
             page={page}
@@ -349,7 +364,7 @@ export default function Page() {
               return (
                 <Card.Root
                   key={costume.id}
-                  onClick={() => setSelected(costume)}
+                  onClick={() => openCostume(costume.id)}
                   cursor="pointer"
                   borderColor={witnessed ? 'accent.7' : undefined}
                   bgColor={witnessed ? 'accent.a2' : undefined}
@@ -383,9 +398,14 @@ export default function Page() {
                       <Badge variant="outline">
                         {t('costumes.songs_count', { count: costume.uniqueSongCount })}
                       </Badge>
-                      {witnessed && (
+                      {costume.witnessedCount > 0 && (
                         <Badge variant="solid">
-                          {t('costumes.witnessed_count', { count: costume.attendedCount })}
+                          {t('costumes.witnessed_count', { count: costume.witnessedCount })}
+                        </Badge>
+                      )}
+                      {costume.watchedCount > 0 && (
+                        <Badge variant="solid" colorPalette="blue">
+                          {t('costumes.watched_count', { count: costume.watchedCount })}
                         </Badge>
                       )}
                     </HStack>
@@ -431,16 +451,6 @@ export default function Page() {
           </Center>
         )}
       </Stack>
-
-      {selected && (
-        <Suspense fallback={null}>
-          <CostumeDetailDialog
-            costume={selected}
-            open={selected !== undefined}
-            onClose={() => setSelected(undefined)}
-          />
-        </Suspense>
-      )}
     </>
   );
 }

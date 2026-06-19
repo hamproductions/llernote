@@ -10,11 +10,22 @@ import type { Artist, LiveThumb, Performance, Series, Unit, VenueInfo } from '~/
 
 const extraById = eventExtra as Record<string, Partial<Performance>>;
 
+export const TOUR_TYPE_CATEGORY: Record<string, Performance['category']> = {
+  'ライブ・ファンミ': 'live',
+  外部のフェス: 'live',
+  外部イベント内のライブ: 'live',
+  'リリイベ・ミニライブ': 'live',
+  有観客バーチャルライブ: 'live',
+  バーチャルライブ: 'online',
+  収録配信: 'online',
+  TV出演: 'tv'
+};
+
 const deriveCategory = (p: Partial<Performance>): Performance['category'] => {
-  if (p.tourType === 'TV出演') return 'tv';
-  if (p.tourType === 'バーチャルライブ' || p.tourType === '収録配信') return 'online';
+  const base = p.tourType ? TOUR_TYPE_CATEGORY[p.tourType] : undefined;
+  if (base === 'tv' || base === 'online') return base;
   if (p.audience === false) return 'online';
-  return 'live';
+  return base ?? 'live';
 };
 
 const tourTypeByName = new Map<string, string>();
@@ -44,6 +55,8 @@ export const sortedPerformances = [...performances].sort((a, b) => b.date.locale
 export const performanceById = new Map(performances.map((p) => [p.id, p]));
 export const livePerformances = sortedPerformances.filter((p) => p.category === 'live');
 export const livePerformanceById = new Map(livePerformances.map((p) => [p.id, p]));
+export const remotePerformances = sortedPerformances.filter((p) => p.category !== 'live');
+export const remotePerformanceById = new Map(remotePerformances.map((p) => [p.id, p]));
 export const artistById = new Map(artists.map((a) => [a.id, a]));
 export const seriesById = new Map(series.map((s) => [s.id, s]));
 export const venueById = new Map(venues.map((v) => [v.id, v]));

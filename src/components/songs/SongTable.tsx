@@ -34,6 +34,7 @@ export function SongTable({
   page,
   pageSize,
   heardCount,
+  watchedCount,
   performedCount,
   onSelect,
   sorting: controlledSorting,
@@ -43,6 +44,7 @@ export function SongTable({
   page: number;
   pageSize: number;
   heardCount: (songId: string) => number;
+  watchedCount?: (songId: string) => number;
   performedCount: (songId: string) => number;
   onSelect: (song: Song) => void;
   sorting?: SortingState;
@@ -165,9 +167,28 @@ export function SongTable({
             </Text>
           );
         }
+      },
+      {
+        id: 'watched',
+        header: t('songs.watched'),
+        accessorFn: (song) => watchedCount?.(song.id) ?? 0,
+        sortDescFirst: true,
+        meta: { w: '24', textAlign: 'right', hideBelow: 'md' } satisfies ColumnMeta,
+        cell: ({ row }) => {
+          const count = watchedCount?.(row.original.id) ?? 0;
+          return count > 0 ? (
+            <Badge size="sm" variant="solid" colorPalette="blue">
+              {t('songs.times', { count })}
+            </Badge>
+          ) : (
+            <Text color="fg.subtle" fontSize="xs">
+              —
+            </Text>
+          );
+        }
       }
     ],
-    [t, i18n.language, artistById, heardCount, performedCount]
+    [t, i18n.language, artistById, heardCount, watchedCount, performedCount]
   );
 
   const table = useReactTable({

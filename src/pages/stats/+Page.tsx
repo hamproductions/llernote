@@ -9,6 +9,7 @@ import { Card } from '~/components/ui/card';
 import { Skeleton } from '~/components/ui/skeleton';
 import { StatsCard } from '~/components/stats/StatsCard';
 import { NativeSelect } from '~/components/events/NativeSelect';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAppSettings } from '~/hooks/useAppSettings';
@@ -405,13 +406,13 @@ export default function Page() {
   const [year, setYear] = useState('');
   const [seriesFilter, setSeriesFilter] = useState('');
   const [category, setCategory] = useState('');
-  const { inPersonOnly } = useAppSettings();
+  const { scope, setAppSettings } = useAppSettings();
   const multiSeries = seriesFilter === MULTI_SERIES_FILTER;
   const seriesId = multiSeries ? '' : seriesFilter;
 
   useEffect(() => {
-    if (inPersonOnly && category) setCategory('');
-  }, [inPersonOnly, category]);
+    if (scope === 'inperson' && category) setCategory('');
+  }, [scope, category]);
 
   const performanceById = useMemo(
     () => new Map(performances.map((p) => [p.id, p])),
@@ -420,8 +421,8 @@ export default function Page() {
 
   const derived = useDerivedDataWorker(
     'stats',
-    { records, year, seriesId, category, multiSeries, inPersonOnly },
-    [records, year, seriesId, category, multiSeries, inPersonOnly]
+    { records, year, seriesId, category, multiSeries, scope },
+    [records, year, seriesId, category, multiSeries, scope]
   );
   const stats = derived.result;
 
@@ -490,6 +491,7 @@ export default function Page() {
         </HStack>
 
         <HStack gap="2" flexWrap="wrap">
+          <ScopeTabs value={scope} onChange={(s) => setAppSettings({ scope: s })} />
           <NativeSelect
             aria-label={t('events.year')}
             value={year}
@@ -507,7 +509,7 @@ export default function Page() {
             ]}
             onChange={setSeriesFilter}
           />
-          {!inPersonOnly && (
+          {scope !== 'inperson' && (
             <NativeSelect
               aria-label={t('events.category')}
               value={category}
@@ -533,9 +535,9 @@ export default function Page() {
         ) : stats ? (
           <>
             <Grid gap="3" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
-              <StatTile label={t('stats.total_attended')} value={stats.attendedCount} />
+              <StatTile label={t('stats.witnessed')} value={stats.witnessedCount} />
+              <StatTile label={t('stats.watched')} value={stats.watchedCount} />
               <StatTile label={t('stats.songs_witnessed')} value={stats.songsWitnessed} />
-              <StatTile label={t('stats.unique_songs')} value={stats.uniqueSongs} />
               <StatTile label={t('stats.venues_visited')} value={stats.venuesVisited} />
               <StatTile label={t('stats.total_interested')} value={stats.interestedCount} />
             </Grid>

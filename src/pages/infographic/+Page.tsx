@@ -34,13 +34,11 @@ export default function Page() {
 }
 
 function Body() {
-  const { d, t, groups, gLabel, typeLabel, includeSpinoff, setIncludeSpinoff } = useInfo();
+  const { d, t, groups, gLabel, typeLabel, cats, toggleCat, liveCats } = useInfo();
   const [stripMode, setStripMode] = useState<StripMode>('flow');
   const m = d.meta;
-  const perfsOf = (g: string) =>
-    (d.flagPerfByGroup[g] ?? []).filter((p: any) => includeSpinoff || !p.spinoff);
-  const livesOf = (g: string) =>
-    (d.flagByGroup[g] ?? []).filter((l: any) => includeSpinoff || !l.spinoff);
+  const perfsOf = (g: string) => (d.flagPerfByGroup[g] ?? []) as any[];
+  const livesOf = (g: string) => (d.flagByGroup[g] ?? []) as any[];
 
   const stripLegend: [string, string][] =
     stripMode === 'flow'
@@ -109,24 +107,33 @@ function Body() {
           ))}
         </Grid>
 
-        <HStack gap="1.5" mt="2" flexWrap="wrap">
-          <Box
-            as="button"
-            onClick={() => setIncludeSpinoff(!includeSpinoff)}
-            cursor="pointer"
-            borderColor={includeSpinoff ? 'accent.default' : 'border.subtle'}
-            borderRadius="l2"
-            borderWidth="1px"
-            py="1.5"
-            px="3"
-            color={includeSpinoff ? 'accent.fg' : 'fg.muted'}
-            fontSize="sm"
-            fontWeight="medium"
-            bg={includeSpinoff ? 'accent.default' : 'bg.default'}
-            _hover={includeSpinoff ? undefined : { borderColor: 'accent.8' }}
-          >
-            {t('infographic.include_spinoff')}
-          </Box>
+        <Text mt="2" color="fg.muted" fontSize="xs">
+          {t('infographic.cat_filter_label')}
+        </Text>
+        <HStack gap="1.5" flexWrap="wrap">
+          {liveCats.map((c) => {
+            const on = cats.has(c);
+            return (
+              <Box
+                as="button"
+                key={c}
+                onClick={() => toggleCat(c)}
+                cursor="pointer"
+                borderColor={on ? 'accent.default' : 'border.subtle'}
+                borderRadius="l2"
+                borderWidth="1px"
+                py="1.5"
+                px="3"
+                color={on ? 'accent.fg' : 'fg.muted'}
+                fontSize="sm"
+                fontWeight="medium"
+                bg={on ? 'accent.default' : 'bg.default'}
+                _hover={on ? undefined : { borderColor: 'accent.8' }}
+              >
+                {t(`infographic.cat_live_${c}` as 'infographic.cat_live_numbered')}
+              </Box>
+            );
+          })}
         </HStack>
 
         <H>{t('infographic.change_title')}</H>
@@ -246,7 +253,7 @@ function Body() {
                       regulars: pi.regulars
                     })}
                   </Text>
-                  <Strip g={g} mode={stripMode} includeSpinoff={includeSpinoff} />
+                  <Strip g={g} mode={stripMode} />
                 </Box>
               );
             })}

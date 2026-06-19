@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaArrowUpRightFromSquare, FaChevronLeft, FaLocationDot, FaXmark } from 'react-icons/fa6';
 import { HStack, Stack, Wrap } from 'styled-system/jsx';
@@ -9,8 +9,10 @@ import { IconButton } from '~/components/ui/icon-button';
 import { Link } from '~/components/ui/link';
 import { Text } from '~/components/ui/text';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { useAttendance } from '~/hooks/useAttendance';
-import { usePerformances } from '~/hooks/useData';
+import { sortedPerformances } from '~/data/core';
+import { isWatched, isWitnessed, scopeMatches, type Scope } from '~/utils/attendance/witness';
 import { venueKey } from '~/utils/venues';
 import type { VenueSummary } from '~/types';
 
@@ -28,12 +30,16 @@ export function VenueDetailDialog({
   onOpenEvent?: (performanceId: string) => void;
 }) {
   const { t } = useTranslation();
-  const performances = usePerformances();
   const attendance = useAttendance();
+  const [scope, setScope] = useState<Scope>('all');
 
   const venuePerformances = useMemo(
-    () => performances.filter((performance) => venueKey(performance) === venue.id),
-    [performances, venue.id]
+    () =>
+      sortedPerformances.filter(
+        (performance) =>
+          venueKey(performance) === venue.id && scopeMatches(scope, performance.category)
+      ),
+    [venue.id, scope]
   );
 
   return (
@@ -66,13 +72,21 @@ export function VenueDetailDialog({
                 <Badge variant="subtle">
                   {t('venues.performance_count', { count: venue.performanceCount })}
                 </Badge>
-                <Badge variant="outline">
-                  {t('venues.attended_count', { count: venue.attendedCount })}
-                </Badge>
+                {venue.witnessedCount > 0 && (
+                  <Badge variant="solid">
+                    {t('venues.witnessed_count', { count: venue.witnessedCount })}
+                  </Badge>
+                )}
+                {venue.watchedCount > 0 && (
+                  <Badge variant="solid" colorPalette="blue">
+                    {t('venues.watched_count', { count: venue.watchedCount })}
+                  </Badge>
+                )}
                 <Badge variant="outline">
                   {venue.firstDate} - {venue.lastDate}
                 </Badge>
               </Wrap>
+              <ScopeTabs value={scope} onChange={setScope} size="xs" />
             </Stack>
 
             <Stack gap="2">
@@ -91,11 +105,15 @@ export function VenueDetailDialog({
                             <Text color="fg.muted" fontSize="xs">
                               {performance.date}
                             </Text>
-                            {record?.status === 'attended' && (
+                            {isWitnessed(record, performance) ? (
                               <Badge size="sm" variant="solid">
                                 {t('events.status_attended')}
                               </Badge>
-                            )}
+                            ) : isWatched(record, performance) ? (
+                              <Badge size="sm" variant="solid" colorPalette="blue">
+                                {t('events.status_watched')}
+                              </Badge>
+                            ) : null}
                           </HStack>
                           <Text fontSize="sm" fontWeight="bold" lineClamp={2}>
                             {performance.tourName}

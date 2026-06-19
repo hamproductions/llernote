@@ -28,6 +28,7 @@ import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useDetail } from '~/components/detail/DetailStack';
 import { todayString } from '~/utils/event-filter';
 import type { AttendanceRecord } from '~/types/attendance';
+import type { Scope } from '~/utils/attendance/witness';
 
 const href = (path: string) => join(import.meta.env.BASE_URL, path);
 const EventernoteImportDialog = lazy(() =>
@@ -72,27 +73,21 @@ function QuickLink({
   );
 }
 
-function HomeStats({
-  records,
-  inPersonOnly
-}: {
-  records: AttendanceRecord[];
-  inPersonOnly: boolean;
-}) {
+function HomeStats({ records, scope }: { records: AttendanceRecord[]; scope: Scope }) {
   const { t } = useTranslation();
   const { result: stats } = useDerivedDataWorker(
     'stats',
-    { records, year: '', seriesId: '', category: '', multiSeries: false, inPersonOnly },
-    [records, inPersonOnly]
+    { records, year: '', seriesId: '', category: '', multiSeries: false, scope },
+    [records, scope]
   );
   if (!stats) return null;
   return (
     <Grid gap="2" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
       {(
         [
-          ['total_attended', stats.attendedCount],
+          ['witnessed', stats.witnessedCount],
+          ['watched', stats.watchedCount],
           ['songs_witnessed', stats.songsWitnessed],
-          ['unique_songs', `${stats.uniqueSongs}/${stats.totalSongs}`],
           ['venues_visited', stats.venuesVisited],
           ['total_interested', stats.interestedCount]
         ] as const
@@ -139,7 +134,7 @@ function HomeStats({
 export default function Page() {
   const { t } = useTranslation();
   const performances = usePerformances();
-  const { inPersonOnly } = useAppSettings();
+  const { scope } = useAppSettings();
   const { records } = useAttendance();
   const { openEvent } = useDetail();
   const [search, setSearch] = useState('');
@@ -257,7 +252,7 @@ export default function Page() {
           )}
         </Stack>
 
-        {hasData && <HomeStats records={records} inPersonOnly={inPersonOnly} />}
+        {hasData && <HomeStats records={records} scope={scope} />}
 
         {nextUp.length > 0 && (
           <Stack gap="2">

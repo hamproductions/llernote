@@ -33,8 +33,13 @@ export function EventFiltersBar({
   const series = useSeries();
   const years = useEventYears();
   const yearOptions = [...years].sort();
-  const { inPersonOnly } = useAppSettings();
-  const categories = inPersonOnly ? CATEGORIES.filter((c) => c === 'live') : CATEGORIES;
+  const { scope } = useAppSettings();
+  const categories =
+    scope === 'inperson'
+      ? CATEGORIES.filter((c) => c === 'live')
+      : scope === 'remote'
+        ? CATEGORIES.filter((c) => c !== 'live')
+        : CATEGORIES;
 
   const toggle = (key: 'seriesIds' | 'categories', value: string) => {
     const list = filters[key] as string[];

@@ -1,5 +1,6 @@
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist } from '~/types';
+import { isWitnessed } from './attendance/witness';
 
 export interface SongTallyEntry {
   songId: string;
@@ -10,15 +11,16 @@ export interface SongTallyEntry {
 export const tallySongs = (
   records: AttendanceRecord[],
   performanceById: Map<string, Performance>,
-  setlists: Record<string, Setlist>
+  setlists: Record<string, Setlist>,
+  keep: (record: AttendanceRecord, performance: Performance) => boolean = isWitnessed
 ): SongTallyEntry[] => {
   const tally = new Map<string, { count: number; performances: Map<string, Performance> }>();
 
   for (const record of records) {
-    if (record.status !== 'attended') continue;
     const performance = performanceById.get(record.performanceId);
     const setlist = setlists[record.performanceId];
     if (!performance || !setlist) continue;
+    if (!keep(record, performance)) continue;
 
     for (const item of setlist.items) {
       if (item.type !== 'song' || !item.songId) continue;

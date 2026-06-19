@@ -140,7 +140,7 @@ const perfNameById = new Map(perfs.map((p) => [p.id, p.performanceName] as const
 const seriesInfo = seriesJson as unknown as { id: string; name: string; color: string }[];
 const extraById = extraJson as unknown as Record<
   string,
-  { performanceName?: string; concertName?: string }
+  { performanceName?: string; concertName?: string; tourType?: string }
 >;
 const perfName = (id: string, date: string) => {
   const e = extraById[id];
@@ -315,12 +315,27 @@ type TourStat = {
   legPairs: number;
   comp: Record<string, number>;
   isFlagship: boolean;
+  liveCat: LiveCat | null;
 };
 
 const tours = new Map<string, Perf[]>();
 for (const p of perfs) {
   if (!tours.has(p.tourName)) tours.set(p.tourName, []);
   tours.get(p.tourName)!.push(p);
+}
+
+// A tour's ll-fans tourType = the most common tourType across its performances.
+const tourTypeByName = new Map<string, string>();
+for (const [tourName, ps] of tours) {
+  const counts = new Map<string, number>();
+  for (const p of ps) {
+    const tt = extraById[p.id]?.tourType;
+    if (tt) counts.set(tt, (counts.get(tt) ?? 0) + 1);
+  }
+  let best: string | undefined;
+  let bestN = 0;
+  for (const [tt, n] of counts) if (n > bestN) ((best = tt), (bestN = n));
+  if (best) tourTypeByName.set(tourName, best);
 }
 
 function jaccard(a: Set<string>, b: Set<string>) {
@@ -334,7 +349,7 @@ let tourStats: TourStat[] = [];
 function computeTourStats(): TourStat[] {
   const out: TourStat[] = [];
   for (const [tourName, ps] of tours) {
-    const withSet = ps.filter((p) => p.hasSetlist && setlistByPerf.has(p.id));
+    const withSet = ps.filter((p) => setlistByPerf.has(p.id));
     if (!withSet.length) continue;
     const sls = withSet.map((p) => setlistByPerf.get(p.id)!);
     const sets = sls.map((sl) => new Set(songKeys(sl)));
@@ -406,7 +421,8 @@ function computeTourStats(): TourStat[] {
       dayPairs: nDay,
       legPairs: nLeg,
       comp,
-      isFlagship: !!flagOf(tourName)
+      isFlagship: !!flagOf(tourName),
+      liveCat: liveCatOf(!!flagOf(tourName), tourTypeByName.get(tourName))
     });
   }
   return out;
@@ -456,8 +472,33 @@ function agg(items: TourStat[]) {
   };
 }
 
-export const SPINOFF = ['Yohane'];
-const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizurai-bu!', ...SPINOFF];
+const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizurai-bu!', 'Yohane'];
+
+// Live categories shown as filters in the infographic. "numbered" is the special
+// flagship subtype of ライブ・ファンミ; the rest map straight from ll-fans tourType.
+export const LIVE_CATS = [
+  'numbered',
+  'fanmeeting',
+  'fes',
+  'release',
+  'external',
+  'virtual'
+] as const;
+export type LiveCat = (typeof LIVE_CATS)[number];
+const TOURTYPE_CAT: Record<string, LiveCat> = {
+  'ライブ・ファンミ': 'fanmeeting',
+  外部のフェス: 'fes',
+  'リリイベ・ミニライブ': 'release',
+  外部イベント内のライブ: 'external',
+  バーチャルライブ: 'virtual',
+  有観客バーチャルライブ: 'virtual',
+  収録配信: 'virtual'
+};
+const liveCatOf = (isFlagship: boolean, tourType?: string): LiveCat | null =>
+  isFlagship ? 'numbered' : tourType ? (TOURTYPE_CAT[tourType] ?? null) : null;
+const belongsToGroup = (t: TourStat, g: string) =>
+  t.seriesIds.length === 1 ? seriesName[t.seriesIds[0]] === g : t.headliner === g;
+
 const REG_QUANTILE = 0.25;
 export type Song2 = { id: string; t: string };
 
@@ -472,14 +513,9 @@ const spinLabel = (tour: string) => {
       .trim() || tour;
   return s.length > 9 ? s.slice(0, 8) + '…' : s;
 };
-const flagshipOf = (g: string) => tourStats.filter((t) => t.isFlagship && t.headliner === g);
-const spinOf = (g: string) =>
-  tourStats.filter(
-    (t) =>
-      !t.isFlagship && t.seriesIds.length === 1 && seriesName[t.seriesIds[0]] === g && t.avgLen > 8
-  );
 
-function build(includeSpin: boolean) {
+function build(cats: string[]) {
+  const catSet = new Set(cats);
   const byGroup: Record<string, ReturnType<typeof agg>> = {};
   const flagByGroup: Record<string, any[]> = {};
   const flagPerfByGroup: Record<string, any[]> = {};
@@ -487,10 +523,10 @@ function build(includeSpin: boolean) {
   const allLives: TourStat[] = [];
 
   for (const g of CANON) {
-    const lives = [
-      ...flagshipOf(g).map((t) => ({ t, spin: false })),
-      ...(includeSpin ? spinOf(g).map((t) => ({ t, spin: true })) : [])
-    ].sort((a, b) => a.t.from.localeCompare(b.t.from));
+    const lives = tourStats
+      .filter((t) => t.liveCat && catSet.has(t.liveCat) && belongsToGroup(t, g))
+      .map((t) => ({ t, spin: !t.isFlagship }))
+      .sort((a, b) => a.t.from.localeCompare(b.t.from));
     if (!lives.length) continue;
     for (const l of lives) allLives.push(l.t);
 
@@ -705,10 +741,10 @@ const GROUP_COLOR: Record<string, string> = {
   'Ikizurai-bu!': seriesColor['8']
 };
 
-export const makeAnalysis = (includeSpin: boolean) => ({
-  ...build(includeSpin),
+export const makeAnalysis = (cats: string[]) => ({
+  ...build(cats),
   canon: CANON,
-  spinoff: SPINOFF,
+  liveCats: LIVE_CATS,
   groupColor: GROUP_COLOR,
   songCensus,
   artistCensus
@@ -717,13 +753,13 @@ export const makeAnalysis = (includeSpin: boolean) => ({
 export type AnalysisResults = ReturnType<typeof makeAnalysis>;
 
 const analysisCache: Record<string, AnalysisResults> = {};
-export const loadAnalysis = async (includeSpin = false): Promise<AnalysisResults> => {
-  const key = String(includeSpin);
+export const loadAnalysis = async (cats: string[] = ['numbered']): Promise<AnalysisResults> => {
+  const key = [...cats].sort().join(',') || 'none';
   if (!analysisCache[key]) {
     populateSongs(await loadSongData());
     const { all } = await loadSetlists();
     populateSetlists(all);
-    analysisCache[key] = makeAnalysis(includeSpin);
+    analysisCache[key] = makeAnalysis(cats);
   }
   return analysisCache[key];
 };

@@ -187,3 +187,58 @@ describe('tallySongs', () => {
     expect(tally).toHaveLength(0);
   });
 });
+
+describe('event-type witness semantics', () => {
+  const live = {
+    ...performance('L', '2024-01-01', 'Live Hall', ['1'], 'live-hall'),
+    category: 'live' as const
+  };
+  const online = {
+    ...performance('O', '2024-02-01', 'Virtual', ['1'], 'virtual'),
+    category: 'online' as const
+  };
+  const tv = {
+    ...performance('T', '2024-03-01', 'TV Studio', ['1'], 'tv-studio'),
+    category: 'tv' as const
+  };
+  const byId = new Map([live, online, tv].map((p) => [p.id, p]));
+  const sls = { L: setlist('L', ['1', '2']), O: setlist('O', ['3', '4']), T: setlist('T', ['5']) };
+  const watched = (
+    performanceId: string,
+    watchType: 'live' | 'stream' | 'delay'
+  ): AttendanceRecord => ({
+    ...record(performanceId, 'attended'),
+    watchType
+  });
+
+  it('counts online/tv as watched but never witnessed', () => {
+    const stats = computeStats(
+      [watched('L', 'live'), watched('O', 'live'), watched('T', 'live')],
+      byId,
+      sls
+    );
+    expect(stats.attendedCount).toBe(3);
+    expect(stats.witnessedCount).toBe(1);
+    expect(stats.watchedCount).toBe(2);
+    expect(stats.songsWitnessed).toBe(2);
+    expect(stats.venuesVisited).toBe(1);
+    expect(stats.byVenue).toEqual([{ venue: 'Live Hall', venueId: 'live-hall', count: 1 }]);
+  });
+
+  it('treats a live event watched via stream as not witnessed', () => {
+    const stats = computeStats([watched('L', 'stream')], byId, sls);
+    expect(stats.attendedCount).toBe(1);
+    expect(stats.witnessedCount).toBe(0);
+    expect(stats.songsWitnessed).toBe(0);
+    expect(stats.venuesVisited).toBe(0);
+  });
+
+  it('tallies songs only from in-person witnessed events', () => {
+    const tally = tallySongs(
+      [watched('L', 'live'), watched('O', 'live'), watched('T', 'live')],
+      byId,
+      sls
+    );
+    expect(tally.map((entry) => entry.songId).sort()).toEqual(['1', '2']);
+  });
+});

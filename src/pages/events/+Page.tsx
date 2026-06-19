@@ -11,6 +11,7 @@ import { Skeleton } from '~/components/ui/skeleton';
 import { TourCard } from '~/components/events/TourCard';
 import { EventTable } from '~/components/events/EventTable';
 import { EventFiltersBar } from '~/components/events/EventFiltersBar';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useDetail } from '~/components/detail/DetailStack';
@@ -25,7 +26,7 @@ const PAGE_SIZE = 24;
 
 export default function Page() {
   const { t } = useTranslation();
-  const { inPersonOnly } = useAppSettings();
+  const { scope, setAppSettings } = useAppSettings();
   const { map } = useAttendance();
   const [filters, setFilters] = useState<EventFilters>(EMPTY_FILTERS);
 
@@ -37,10 +38,10 @@ export default function Page() {
   const [page, setPage] = useState(1);
   const [view, setView] = useLocalStorage<'cards' | 'table'>('llernote-events-view', 'cards');
   const columns = useColumnCount();
-  const derived = useDerivedDataWorker('events', { filters, attendanceMap: map, inPersonOnly }, [
+  const derived = useDerivedDataWorker('events', { filters, attendanceMap: map, scope }, [
     filters,
     map,
-    inPersonOnly
+    scope
   ]);
   const filtered = derived.result?.filtered ?? [];
   const tours = derived.result?.tours ?? [];
@@ -59,6 +60,7 @@ export default function Page() {
             <Text color="fg.muted" fontSize="sm">
               {t('events.results_count', { count: filtered.length })}
             </Text>
+            <ScopeTabs value={scope} onChange={(s) => setAppSettings({ scope: s })} size="xs" />
           </HStack>
           <HStack hideBelow="md" gap="1">
             <IconButton

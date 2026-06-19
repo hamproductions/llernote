@@ -10,6 +10,8 @@ import {
   livePerformances,
   performanceByEventernoteId,
   performanceById,
+  remotePerformanceById,
+  remotePerformances,
   series,
   seriesById,
   sortedPerformances,
@@ -19,10 +21,22 @@ import {
 } from '~/data/core';
 import type { Performance } from '~/types';
 
-export const usePerformances = () =>
-  useAppSettings().inPersonOnly ? livePerformances : sortedPerformances;
-export const usePerformanceById = () =>
-  useAppSettings().inPersonOnly ? livePerformanceById : performanceById;
+export const usePerformances = () => {
+  const { scope } = useAppSettings();
+  return scope === 'inperson'
+    ? livePerformances
+    : scope === 'remote'
+      ? remotePerformances
+      : sortedPerformances;
+};
+export const usePerformanceById = () => {
+  const { scope } = useAppSettings();
+  return scope === 'inperson'
+    ? livePerformanceById
+    : scope === 'remote'
+      ? remotePerformanceById
+      : performanceById;
+};
 export const usePerformance = (id: string | undefined) => {
   const byId = usePerformanceById();
   return id !== undefined ? byId.get(id) : undefined;

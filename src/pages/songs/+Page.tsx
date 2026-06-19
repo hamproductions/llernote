@@ -11,6 +11,7 @@ import { NativeSelect } from '~/components/events/NativeSelect';
 import { SongCard } from '~/components/songs/SongCard';
 import { SongTable } from '~/components/songs/SongTable';
 import { SongFiltersBar } from '~/components/songs/SongFiltersBar';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAttendance } from '~/hooks/useAttendance';
@@ -27,7 +28,7 @@ const PAGE_SIZE = 48;
 export default function Page() {
   const { t } = useTranslation();
   const { records } = useAttendance();
-  const { inPersonOnly } = useAppSettings();
+  const { scope, setAppSettings } = useAppSettings();
   const songs = useSongs();
   const { openSong } = useDetail();
   const [filters, setFilters] = useState<SongFilters>(EMPTY_SONG_FILTERS);
@@ -38,13 +39,18 @@ export default function Page() {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'performed', desc: true }]);
   const sort = sorting[0] ?? { id: 'performed', desc: true };
 
-  const derived = useDerivedDataWorker('songs', { records, filters, inPersonOnly }, [
+  const derived = useDerivedDataWorker('songs', { records, filters, scope }, [
     records,
     filters,
-    inPersonOnly
+    scope
   ]);
   const tally = useMemo(() => derived.result?.tally ?? [], [derived.result]);
   const tallyById = useMemo(() => new Map(tally.map((e) => [e.songId, e])), [tally]);
+  const watchedTally = useMemo(() => derived.result?.watchedTally ?? [], [derived.result]);
+  const watchedById = useMemo(
+    () => new Map(watchedTally.map((e) => [e.songId, e])),
+    [watchedTally]
+  );
   const allPerformanceTally = useMemo(
     () => derived.result?.allPerformanceTally ?? [],
     [derived.result]
@@ -59,6 +65,7 @@ export default function Page() {
   const percent = derived.result?.percent ?? 0;
 
   const heardCount = (id: string) => tallyById.get(id)?.count ?? 0;
+  const watchedCount = (id: string) => watchedById.get(id)?.count ?? 0;
   const performedCount = (id: string) => allPerformanceTallyById.get(id)?.count ?? 0;
   const sorted = useMemo(() => {
     const dir = sort.desc ? -1 : 1;
@@ -127,9 +134,12 @@ export default function Page() {
           }}
         />
         <HStack gap="2" justifyContent="space-between" alignItems="center" flexWrap="wrap">
-          <Text color="fg.muted" fontSize="sm">
-            {t('songs.results_count', { count: filtered.length })}
-          </Text>
+          <HStack gap="2" alignItems="center" flexWrap="wrap">
+            <Text color="fg.muted" fontSize="sm">
+              {t('songs.results_count', { count: filtered.length })}
+            </Text>
+            <ScopeTabs value={scope} onChange={(s) => setAppSettings({ scope: s })} size="xs" />
+          </HStack>
           {effectiveView === 'cards' && (
             <HStack gap="1" alignItems="center">
               <NativeSelect
@@ -181,6 +191,7 @@ export default function Page() {
             songs={filtered}
             pageSize={PAGE_SIZE}
             heardCount={heardCount}
+            watchedCount={watchedCount}
             performedCount={performedCount}
             onSelect={(s) => openSong(s.id)}
             sorting={sorting}
@@ -202,6 +213,7 @@ export default function Page() {
                 key={song.id}
                 song={song}
                 heardCount={heardCount(song.id)}
+                watchedCount={watchedCount(song.id)}
                 performedCount={performedCount(song.id)}
                 onClick={() => openSong(song.id)}
               />

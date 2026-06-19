@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vike build",
-    "ci:build": "NODE_ENV=production vike build",
+    "reconcile:setlists": "bun scripts/reconcile-setlist-flags.ts",
+    "build": "bun reconcile:setlists && tsc && vike build",
+    "ci:build": "bun reconcile:setlists && NODE_ENV=production vike build",
     "type-check": "tsc",
     "check": "bun lint && bun type-check",
     "format": "prettier --write ./src",

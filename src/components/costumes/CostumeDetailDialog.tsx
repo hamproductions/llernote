@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaChevronLeft, FaXmark } from 'react-icons/fa6';
+import { FaCheck, FaChevronLeft, FaEye, FaXmark } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useDetail } from '~/components/detail/DetailStack';
-import { usePerformanceById } from '~/hooks/useData';
+import { performanceById as allPerformanceById } from '~/data/core';
 import { useSongById, useSongByName } from '~/hooks/useSongData';
 import { useAttendance } from '~/hooks/useAttendance';
+import { isWatched, isWitnessed, scopeMatches, type Scope } from '~/utils/attendance/witness';
 import { localizedName } from '~/utils/names';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import { legLabel } from '~/components/events/TourCard';
@@ -44,10 +46,10 @@ export function CostumeDetailDialog({
   const { t, i18n } = useTranslation();
   const songById = useSongById();
   const songByName = useSongByName();
-  const performanceById = usePerformanceById();
   const { get } = useAttendance();
   const { openSong, openEvent } = useDetail();
   const [songSort, setSongSort] = useState<'worn' | 'rate'>('worn');
+  const [scope, setScope] = useState<Scope>('all');
 
   if (!costume) return null;
 
@@ -62,8 +64,8 @@ export function CostumeDetailDialog({
   );
 
   const lives = costume.performanceIds
-    .map((id) => performanceById.get(id))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((id) => allPerformanceById.get(id))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p) && scopeMatches(scope, p!.category))
     .sort((a, b) => b.date.localeCompare(a.date));
 
   return (
@@ -97,8 +99,8 @@ export function CostumeDetailDialog({
               <StatBlock label={t('costumes.stat_lives')} value={costume.liveCount} />
               <StatBlock label={t('costumes.stat_events')} value={costume.eventCount} />
               <StatBlock label={t('costumes.stat_unique_songs')} value={costume.uniqueSongCount} />
-              <StatBlock label={t('costumes.stat_witnessed')} value={costume.attendedCount} />
-              <StatBlock label={t('costumes.stat_years')} value={costume.yearCount} />
+              <StatBlock label={t('costumes.stat_witnessed')} value={costume.witnessedCount} />
+              <StatBlock label={t('costumes.stat_watched')} value={costume.watchedCount} />
               <StatBlock label={t('costumes.stat_venues')} value={costume.venueCount} />
             </Grid>
 
@@ -179,12 +181,15 @@ export function CostumeDetailDialog({
             </Stack>
 
             <Stack gap="2">
-              <Text fontWeight="semibold">
-                {t('costumes.worn_in_lives', { count: costume.liveCount })}
-              </Text>
+              <HStack gap="2" justifyContent="space-between" flexWrap="wrap">
+                <Text fontWeight="semibold">
+                  {t('costumes.worn_in_lives', { count: costume.liveCount })}
+                </Text>
+                <ScopeTabs value={scope} onChange={setScope} size="xs" />
+              </HStack>
               <Stack gap="1">
                 {lives.map((p) => {
-                  const attended = get(p.id)?.status === 'attended';
+                  const record = get(p.id);
                   const label = legLabel(p);
                   return (
                     <HStack
@@ -208,11 +213,15 @@ export function CostumeDetailDialog({
                           {p.venue ? ` · ${p.venue}` : ''}
                         </Text>
                       </Stack>
-                      {attended && (
+                      {isWitnessed(record, p) ? (
                         <Box title={t('costumes.witnessed')} flexShrink={0} color="accent.default">
                           <FaCheck />
                         </Box>
-                      )}
+                      ) : isWatched(record, p) ? (
+                        <Box title={t('events.status_watched')} flexShrink={0} color="blue.9">
+                          <FaEye />
+                        </Box>
+                      ) : null}
                     </HStack>
                   );
                 })}

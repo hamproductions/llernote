@@ -22,9 +22,13 @@ import { NativeSelect } from '~/components/events/NativeSelect';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { usePerformances, useSeries, useVenueById } from '~/hooks/useData';
+import { useSeries, useVenueById } from '~/hooks/useData';
+import { useAppSettings } from '~/hooks/useAppSettings';
+import { performanceById, sortedPerformances } from '~/data/core';
 import { useAttendance } from '~/hooks/useAttendance';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { buildVenueSummaries } from '~/utils/venues';
+import { partitionAttendance, scopeMatches } from '~/utils/attendance/witness';
 import { foldKana } from '~/utils/event-filter';
 import { useColumnCount } from '~/hooks/useColumnCount';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
@@ -37,10 +41,10 @@ type SortKey = 'performances' | 'attended' | 'name' | 'first' | 'latest';
 
 export default function Page() {
   const { t } = useTranslation();
-  const performances = usePerformances();
   const series = useSeries();
   const venueById = useVenueById();
   const { records } = useAttendance();
+  const { scope, setAppSettings } = useAppSettings();
   const [search, setSearch] = useState('');
   const [seriesId, setSeriesId] = useState('');
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('');
@@ -63,19 +67,19 @@ export default function Page() {
     if (venueParam) openVenue(venueParam);
   }, []);
 
-  const attendedIds = useMemo(
-    () =>
-      new Set(
-        records
-          .filter((record) => record.status === 'attended' && !record.deleted)
-          .map((record) => record.performanceId)
-      ),
+  const { witnessed, watched } = useMemo(
+    () => partitionAttendance(records, performanceById),
     [records]
   );
 
+  const scopedPerformances = useMemo(
+    () => sortedPerformances.filter((performance) => scopeMatches(scope, performance.category)),
+    [scope]
+  );
+
   const venues = useMemo(
-    () => buildVenueSummaries(performances, venueById, attendedIds),
-    [performances, venueById, attendedIds]
+    () => buildVenueSummaries(scopedPerformances, venueById, witnessed, watched),
+    [scopedPerformances, venueById, witnessed, watched]
   );
 
   const filtered = useMemo(() => {
@@ -173,14 +177,26 @@ export default function Page() {
         header: t('venues.col_attended'),
         sortDescFirst: true,
         cell: ({ row }) => (
-          <Text
-            color={row.original.attendedCount > 0 ? 'accent.default' : 'fg.muted'}
-            fontSize="sm"
-            fontWeight={row.original.attendedCount > 0 ? 'semibold' : undefined}
-            fontVariantNumeric="tabular-nums"
-          >
-            {row.original.attendedCount}
-          </Text>
+          <HStack gap="1.5" justifyContent="flex-end" fontVariantNumeric="tabular-nums">
+            <Text
+              title={t('common.scope_inperson')}
+              color={row.original.witnessedCount > 0 ? 'accent.default' : 'fg.subtle'}
+              fontSize="sm"
+              fontWeight={row.original.witnessedCount > 0 ? 'semibold' : undefined}
+            >
+              {row.original.witnessedCount}
+            </Text>
+            <Text color="fg.subtle" fontSize="xs">
+              ·
+            </Text>
+            <Text
+              title={t('common.scope_remote')}
+              color={row.original.watchedCount > 0 ? 'blue.9' : 'fg.subtle'}
+              fontSize="sm"
+            >
+              {row.original.watchedCount}
+            </Text>
+          </HStack>
         ),
         meta: { textAlign: 'right', width: '24' }
       }
@@ -220,6 +236,7 @@ export default function Page() {
             <Text color="fg.muted" fontSize="sm">
               {t('venues.results_count', { count: filtered.length })}
             </Text>
+            <ScopeTabs value={scope} onChange={(s) => setAppSettings({ scope: s })} size="xs" />
           </HStack>
           {selectedVenueId && (
             <Button
@@ -385,9 +402,16 @@ export default function Page() {
                     <Badge variant="subtle">
                       {t('venues.performance_count', { count: venue.performanceCount })}
                     </Badge>
-                    <Badge variant="outline">
-                      {t('venues.attended_count', { count: venue.attendedCount })}
-                    </Badge>
+                    {venue.witnessedCount > 0 && (
+                      <Badge variant="solid">
+                        {t('venues.witnessed_count', { count: venue.witnessedCount })}
+                      </Badge>
+                    )}
+                    {venue.watchedCount > 0 && (
+                      <Badge variant="solid" colorPalette="blue">
+                        {t('venues.watched_count', { count: venue.watchedCount })}
+                      </Badge>
+                    )}
                     <Badge variant="outline">
                       {venue.firstDate} - {venue.lastDate}
                     </Badge>

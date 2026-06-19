@@ -3,11 +3,13 @@ import { SongDetailDialog } from '~/components/songs/SongDetailDialog';
 import { EventDetailDialog } from '~/components/events/EventDetailDialog';
 import { VenueDetailDialog } from '~/components/venues/VenueDetailDialog';
 import { CostumeDetailDialog } from '~/components/costumes/CostumeDetailDialog';
-import { usePerformanceById, usePerformances, useVenueById } from '~/hooks/useData';
+import { useVenueById } from '~/hooks/useData';
+import { performanceById as allPerformanceById, sortedPerformances } from '~/data/core';
 import { useSongById } from '~/hooks/useSongData';
-import { useSetlists } from '~/hooks/useSetlists';
+import { useAllSetlists } from '~/hooks/useSetlists';
 import { useAttendance } from '~/hooks/useAttendance';
 import { getSongDebutPerformance, getSongFirstWitnessPerformance } from '~/utils/setlist-insights';
+import { isWatched, isWitnessed, partitionAttendance } from '~/utils/attendance/witness';
 import { buildVenueSummaries } from '~/utils/venues';
 import { getCostumeSummaries } from '~/utils/costumes';
 import type { Performance } from '~/types';
@@ -59,7 +61,7 @@ function EventHost({
   onOpenSong: (id: string) => void;
   onNavigate: (id: string) => void;
 }) {
-  const performance = usePerformanceById().get(id);
+  const performance = allPerformanceById.get(id);
   if (!performance) return null;
   return (
     <EventDetailDialog
@@ -85,38 +87,40 @@ function SongHost({
   onOpenEvent: (id: string) => void;
 }) {
   const songById = useSongById();
-  const performances = usePerformances();
-  const performanceById = usePerformanceById();
-  const setlists = useSetlists();
+  const setlists = useAllSetlists();
   const { records } = useAttendance();
   const data = useMemo(() => {
     const song = songById.get(id);
     const has = (pid: string) =>
       setlists[pid]?.items.some((it) => it.type === 'song' && it.songId === id) ?? false;
-    const performedAt = performances.filter((p) => has(p.id));
+    const performedAt = sortedPerformances.filter((p) => has(p.id));
     const heardAt = records
-      .filter((r) => r.status === 'attended')
-      .map((r) => performanceById.get(r.performanceId))
-      .filter((p): p is Performance => Boolean(p) && has((p as Performance).id));
+      .map((r) => allPerformanceById.get(r.performanceId))
+      .filter((p, i): p is Performance => isWitnessed(records[i], p) && has(p!.id));
+    const watchedAt = records
+      .map((r) => allPerformanceById.get(r.performanceId))
+      .filter((p, i): p is Performance => isWatched(records[i], p) && has(p!.id));
     return {
       song,
       heardAt,
+      watchedAt,
       performedAt,
-      debutPerformance: getSongDebutPerformance(id, performanceById, setlists),
+      debutPerformance: getSongDebutPerformance(id, allPerformanceById, setlists),
       firstWitnessPerformance: getSongFirstWitnessPerformance(
         id,
         records,
-        performanceById,
+        allPerformanceById,
         setlists
       ),
       performanceCount: performedAt.length
     };
-  }, [id, songById, performances, performanceById, setlists, records]);
+  }, [id, songById, setlists, records]);
   if (!data.song) return null;
   return (
     <SongDetailDialog
       song={data.song}
       heardAt={data.heardAt}
+      watchedAt={data.watchedAt}
       performedAt={data.performedAt}
       debutPerformance={data.debutPerformance}
       firstWitnessPerformance={data.firstWitnessPerformance}
@@ -140,15 +144,14 @@ function VenueHost({
   onClose: () => void;
   onOpenEvent: (id: string) => void;
 }) {
-  const performances = usePerformances();
   const venueById = useVenueById();
   const { records } = useAttendance();
   const venue = useMemo(() => {
-    const attendedIds = new Set(
-      records.filter((r) => r.status === 'attended').map((r) => r.performanceId)
+    const { witnessed, watched } = partitionAttendance(records, allPerformanceById);
+    return buildVenueSummaries(sortedPerformances, venueById, witnessed, watched).find(
+      (v) => v.id === id
     );
-    return buildVenueSummaries(performances, venueById, attendedIds).find((v) => v.id === id);
-  }, [performances, venueById, records, id]);
+  }, [venueById, records, id]);
   if (!venue) return null;
   return (
     <VenueDetailDialog
@@ -170,14 +173,11 @@ function CostumeHost({
   onBack?: () => void;
   onClose: () => void;
 }) {
-  const performanceById = usePerformanceById();
   const { records } = useAttendance();
   const costume = useMemo(() => {
-    const attendedIds = new Set(
-      records.filter((r) => r.status === 'attended').map((r) => r.performanceId)
-    );
-    return getCostumeSummaries(performanceById, attendedIds).find((c) => c.id === id);
-  }, [performanceById, records, id]);
+    const { witnessed, watched } = partitionAttendance(records, allPerformanceById);
+    return getCostumeSummaries(allPerformanceById, witnessed, watched).find((c) => c.id === id);
+  }, [records, id]);
   if (!costume) return null;
   return <CostumeDetailDialog costume={costume} open onClose={onClose} onBack={onBack} />;
 }

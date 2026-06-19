@@ -9,11 +9,14 @@ import {
   livePerformanceById,
   livePerformances,
   performanceById,
+  remotePerformanceById,
+  remotePerformances,
   sortedPerformances,
   venueById
 } from '~/data/core';
 import { loadSongData } from '~/data/songs';
 import { loadSetlists } from '~/data/setlists';
+import { isWatched, type Scope } from '~/utils/attendance/witness';
 import type { Performance, Song } from '~/types';
 import type { AttendanceMap } from '~/utils/attendance/storage';
 import type { AttendanceRecord } from '~/types/attendance';
@@ -25,7 +28,7 @@ type WorkerRequest =
       payload: {
         filters: EventFilters;
         attendanceMap: AttendanceMap;
-        inPersonOnly: boolean;
+        scope: Scope;
       };
     }
   | {
@@ -37,7 +40,7 @@ type WorkerRequest =
         seriesId: string;
         category: string;
         multiSeries: boolean;
-        inPersonOnly: boolean;
+        scope: Scope;
       };
     }
   | {
@@ -46,7 +49,7 @@ type WorkerRequest =
       payload: {
         records: AttendanceRecord[];
         filters: SongFilters;
-        inPersonOnly: boolean;
+        scope: Scope;
       };
     };
 
@@ -58,6 +61,7 @@ type WorkerResponse =
       type: 'songs';
       result: {
         tally: SongTallyEntry[];
+        watchedTally: SongTallyEntry[];
         allPerformanceTally: SongTallyEntry[];
         filtered: Song[];
         heardInScope: number;
@@ -66,10 +70,18 @@ type WorkerResponse =
       };
     };
 
-const performancesFor = (inPersonOnly: boolean) =>
-  inPersonOnly ? livePerformances : sortedPerformances;
-const performanceByIdFor = (inPersonOnly: boolean) =>
-  inPersonOnly ? livePerformanceById : performanceById;
+const performancesForScope = (scope: Scope) =>
+  scope === 'inperson'
+    ? livePerformances
+    : scope === 'remote'
+      ? remotePerformances
+      : sortedPerformances;
+const performanceByIdForScope = (scope: Scope) =>
+  scope === 'inperson'
+    ? livePerformanceById
+    : scope === 'remote'
+      ? remotePerformanceById
+      : performanceById;
 
 const statsPerformanceFilter = (
   performance: Performance,
@@ -92,18 +104,22 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
   const setlistData = await loadSetlists();
   const { songById } = await loadSongData();
-  const setlistsFor = (inPersonOnly: boolean) =>
-    inPersonOnly ? setlistData.live : setlistData.all;
+  const setlistsForScope = (scope: Scope) =>
+    scope === 'inperson'
+      ? setlistData.live
+      : scope === 'remote'
+        ? setlistData.remote
+        : setlistData.all;
 
   if (request.type === 'events') {
-    const { filters, attendanceMap, inPersonOnly } = request.payload;
+    const { filters, attendanceMap, scope } = request.payload;
     const performanceCharacters = buildPerformanceCharacterMap(
-      setlistsFor(inPersonOnly),
+      setlistsForScope(scope),
       songById,
       artistById
     );
     const filtered = filterEvents(
-      performancesFor(inPersonOnly),
+      performancesForScope(scope),
       filters,
       attendanceMap,
       performanceCharacters
@@ -118,15 +134,15 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   }
 
   if (request.type === 'stats') {
-    const { records, year, seriesId, category, multiSeries, inPersonOnly } = request.payload;
-    const perfById = performanceByIdFor(inPersonOnly);
+    const { records, year, seriesId, category, multiSeries, scope } = request.payload;
+    const perfById = performanceByIdForScope(scope);
     const filteredRecords = records.filter((record) => {
       const performance = perfById.get(record.performanceId);
       return performance
         ? statsPerformanceFilter(performance, { year, seriesId, category, multiSeries })
         : false;
     });
-    const filteredPerformances = performancesFor(inPersonOnly).filter((performance) =>
+    const filteredPerformances = performancesForScope(scope).filter((performance) =>
       statsPerformanceFilter(performance, { year, seriesId, category, multiSeries })
     );
     const response: WorkerResponse = {
@@ -136,7 +152,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         ...computeStats(
           filteredRecords,
           perfById,
-          setlistsFor(inPersonOnly),
+          setlistsForScope(scope),
           filteredPerformances,
           venueById
         ),
@@ -147,10 +163,13 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     return;
   }
 
-  const { records, filters, inPersonOnly } = request.payload;
-  const perfById = performanceByIdFor(inPersonOnly);
-  const sls = setlistsFor(inPersonOnly);
-  const tally = tallySongs(records, perfById, sls);
+  const { records, filters, scope } = request.payload;
+  const perfById = performanceByIdForScope(scope);
+  const sls = setlistsForScope(scope);
+  // Personal tallies span ALL performances and split into witnessed (in-person) vs
+  // watched (remote), so both counts show independent of the performed-population scope.
+  const tally = tallySongs(records, performanceById, setlistData.all);
+  const watchedTally = tallySongs(records, performanceById, setlistData.all, isWatched);
   const tallyById = new Map(tally.map((entry) => [entry.songId, entry]));
   const allPerformanceTally = tallyAllSongPerformances(perfById, sls);
   const performedById = new Map(allPerformanceTally.map((entry) => [entry.songId, entry]));
@@ -174,6 +193,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     type: request.type,
     result: {
       tally,
+      watchedTally,
       allPerformanceTally,
       filtered,
       heardInScope,

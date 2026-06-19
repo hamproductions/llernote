@@ -17,6 +17,7 @@ import { usePerformances, useSeriesById } from '~/hooks/useData';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useDetail } from '~/components/detail/DetailStack';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
+import { isWatched, isWitnessed } from '~/utils/attendance/witness';
 import { legLabel } from '~/components/events/TourCard';
 import { getSeriesShortName } from '~/utils/series-short';
 import { clickable } from '~/utils/clickable';
@@ -247,11 +248,13 @@ function MonthView({
                 borderWidth="1px"
                 p="2"
                 bgColor={
-                  record?.status === 'attended'
+                  isWitnessed(record, p)
                     ? 'accent.a2'
-                    : record?.status === 'interested'
-                      ? 'amber.a2'
-                      : 'bg.default'
+                    : isWatched(record, p)
+                      ? 'blue.a2'
+                      : record?.status === 'interested'
+                        ? 'amber.a2'
+                        : 'bg.default'
                 }
                 _hover={{ borderColor: 'accent.8' }}
               >
@@ -278,7 +281,12 @@ function MonthView({
                   ))}
                 </HStack>
                 <HStack onClick={(e) => e.stopPropagation()} gap="1" flexShrink={0}>
-                  <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} iconOnly />
+                  <AttendanceButtons
+                    performanceId={p.id}
+                    category={p.category}
+                    future={isFutureEvent(p)}
+                    iconOnly
+                  />
                 </HStack>
               </HStack>
             );
@@ -378,7 +386,12 @@ function Upcoming({
               flexShrink={0}
               alignItems="flex-end"
             >
-              <AttendanceButtons performanceId={p.id} future={isFutureEvent(p)} iconOnly />
+              <AttendanceButtons
+                performanceId={p.id}
+                category={p.category}
+                future={isFutureEvent(p)}
+                iconOnly
+              />
             </Stack>
           </HStack>
         );
@@ -451,7 +464,7 @@ function Timeline({
                     borderRadius="full"
                     w="2"
                     h="2"
-                    bgColor="accent.default"
+                    bgColor={isWatched(record, p) ? 'blue.9' : 'accent.default'}
                   />
                   <Text
                     flexShrink={0}

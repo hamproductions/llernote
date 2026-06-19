@@ -76,7 +76,7 @@ describe('buildCostumeSummaries', () => {
       ['song-other', { performances: 2, events: 2 }],
       ['song-once', { performances: 1, events: 1 }]
     ]);
-    const c = buildCostumeSummaries(map, performanceById, new Set(), stats)[0]!;
+    const c = buildCostumeSummaries(map, performanceById, new Set(), new Set(), stats)[0]!;
 
     // song-snow is worn most by raw count (volume), but...
     expect(c.topSongId).toBe('song-snow');
@@ -93,7 +93,7 @@ describe('buildCostumeSummaries', () => {
     };
     // Performed at 2 shows but only 1 event — must NOT qualify as a signature song.
     const stats = new Map([['multi-show-one-event', { performances: 2, events: 1 }]]);
-    const c = buildCostumeSummaries(map, performanceById, new Set(), stats)[0]!;
+    const c = buildCostumeSummaries(map, performanceById, new Set(), new Set(), stats)[0]!;
     expect(c.topSongByRateId).toBeUndefined();
   });
 

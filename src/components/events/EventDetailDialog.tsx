@@ -25,9 +25,10 @@ import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useArtistById, usePerformanceById, usePerformances } from '~/hooks/useData';
+import { useArtistById } from '~/hooks/useData';
+import { performanceById as allPerformanceById, sortedPerformances } from '~/data/core';
 import { useSongById } from '~/hooks/useSongData';
-import { useSetlist, useSetlists } from '~/hooks/useSetlists';
+import { useAllSetlists } from '~/hooks/useSetlists';
 import { useToaster } from '~/context/ToasterContext';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
@@ -45,6 +46,7 @@ import {
   isPerformanceAtOrBefore,
   type SongSetlistInsight
 } from '~/utils/setlist-insights';
+import { isWitnessed } from '~/utils/attendance/witness';
 import type { Performance, SetlistItem } from '~/types';
 import type { WatchType } from '~/types/attendance';
 
@@ -321,10 +323,10 @@ export function EventDetailDialog({
   const { t, i18n } = useTranslation();
   const { toast } = useToaster();
   const { get, records, updateAttendance } = useAttendance();
-  const setlists = useSetlists();
-  const performances = usePerformances();
-  const performanceById = usePerformanceById();
-  const setlist = useSetlist(performance?.id);
+  const setlists = useAllSetlists();
+  const performances = sortedPerformances;
+  const performanceById = allPerformanceById;
+  const setlist = performance ? setlists[performance.id] : undefined;
   const songById = useSongById();
   const record = performance ? get(performance.id) : undefined;
   const [memo, setMemo] = useState('');
@@ -366,16 +368,16 @@ export function EventDetailDialog({
     }
   }
   const witnessBySong = (() => {
-    if (record?.status !== 'attended' || !setlist) return null;
+    if (!isWitnessed(record, performance) || !setlist) return null;
     const map = new Map<
       string,
       { count: number; firstPerformanceId: string; prevSeenDate?: string }
     >();
     for (const r of records) {
-      if (r.status !== 'attended') continue;
       const perf = performanceById.get(r.performanceId);
       const sl = setlists[r.performanceId];
       if (!perf || !sl) continue;
+      if (!isWitnessed(r, perf)) continue;
       if (!isPerformanceAtOrBefore(perf, performance)) continue;
       const songIdsInPerformance = new Set(
         sl.items.filter((it) => it.type === 'song' && it.songId).map((it) => it.songId!)
@@ -580,6 +582,7 @@ export function EventDetailDialog({
               <Wrap gap="2">
                 <AttendanceButtons
                   performanceId={performance.id}
+                  category={performance.category}
                   future={isFutureEvent(performance)}
                   size="sm"
                 />

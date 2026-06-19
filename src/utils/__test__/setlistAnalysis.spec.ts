@@ -7,7 +7,7 @@ import songsJson from '../../../data/song-info.json';
 
 populateSongs({ songs: songsJson as unknown as Song[] } as SongData);
 populateSetlists(setlistsJson as unknown as Record<string, Setlist>);
-const ANALYSIS = makeAnalysis(false);
+const ANALYSIS = makeAnalysis(['numbered']);
 
 const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizurai-bu!'];
 const JUNK = /^(告知|ENCORE|W-ENCORE|AFTER|OP|MC|選手MC|M\d+)$|^実況席/;
@@ -57,6 +57,24 @@ describe('setlist analysis integrity', () => {
       const regCount = pi.ranked.filter((r: any) => r.regular).length;
       expect(regCount).toBe(pi.regulars);
     }
+  });
+
+  it('includes Hasunosora 6th numbered live (regression: stale hasSetlist flag)', () => {
+    const labels = ANALYSIS.flagByGroup['Hasunosora']
+      .filter((l: any) => !l.spinoff)
+      .map((l: any) => l.label);
+    expect(labels).toContain('6th');
+  });
+
+  it('filters lives by ll-fans tourType category', () => {
+    const numbered = makeAnalysis(['numbered']);
+    const fanmeeting = makeAnalysis(['fanmeeting']);
+    for (const g of Object.keys(numbered.flagByGroup))
+      for (const l of numbered.flagByGroup[g]) expect(l.spinoff).toBe(false);
+    for (const g of Object.keys(fanmeeting.flagByGroup))
+      for (const l of fanmeeting.flagByGroup[g]) expect(l.spinoff).toBe(true);
+    expect((fanmeeting.flagByGroup['Hasunosora'] ?? []).length).toBeGreaterThan(0);
+    expect(Object.keys(makeAnalysis([]).flagByGroup)).toHaveLength(0);
   });
 
   it('change/core shares are within [0,1]', () => {

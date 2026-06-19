@@ -13,11 +13,13 @@ import type { Song } from '~/types';
 export function SongCard({
   song,
   heardCount,
+  watchedCount = 0,
   performedCount,
   onClick
 }: {
   song: Song;
   heardCount: number;
+  watchedCount?: number;
   performedCount: number;
   onClick: () => void;
 }) {
@@ -81,6 +83,11 @@ export function SongCard({
             <Text flex="1" minW="0" color="fg.muted" fontSize="2xs" lineClamp={1}>
               {artistNames}
             </Text>
+          )}
+          {watchedCount > 0 && (
+            <Badge size="sm" variant="solid" colorPalette="blue" flexShrink={0}>
+              {t('songs.watched_times', { count: watchedCount })}
+            </Badge>
           )}
           {performedCount > 0 && (
             <Text flexShrink={0} color="fg.subtle" fontSize="2xs">

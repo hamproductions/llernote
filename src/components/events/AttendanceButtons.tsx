@@ -1,16 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaPlus, FaStar } from 'react-icons/fa6';
+import { FaCheck, FaEye, FaPlus, FaStar } from 'react-icons/fa6';
 import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
 import { useAttendance } from '~/hooks/useAttendance';
+import type { EventCategory } from '~/types';
 
 export function AttendanceButtons({
   performanceId,
+  category = 'live',
   future = false,
   size = 'xs',
   iconOnly = false
 }: {
   performanceId: string;
+  category?: EventCategory;
   future?: boolean;
   size?: 'xs' | 'sm' | 'md';
   iconOnly?: boolean;
@@ -18,16 +21,35 @@ export function AttendanceButtons({
   const { t } = useTranslation();
   const { get, setAttendance, removeAttendance } = useAttendance();
   const record = get(performanceId);
+  const remote = category !== 'live';
 
   const active = future ? record?.status === 'interested' : record?.status === 'attended';
   const label = future
     ? active
       ? t('events.status_going')
       : t('events.mark_interested')
-    : active
-      ? t('events.status_attended')
-      : t('events.mark_attended');
-  const icon = future ? active ? <FaStar /> : <FaPlus /> : active ? <FaCheck /> : <FaPlus />;
+    : remote
+      ? active
+        ? t('events.status_watched')
+        : t('events.mark_watched')
+      : active
+        ? t('events.status_attended')
+        : t('events.mark_attended');
+  const icon = future ? (
+    active ? (
+      <FaStar />
+    ) : (
+      <FaPlus />
+    )
+  ) : active ? (
+    remote ? (
+      <FaEye />
+    ) : (
+      <FaCheck />
+    )
+  ) : (
+    <FaPlus />
+  );
   const onClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (active) removeAttendance(performanceId);

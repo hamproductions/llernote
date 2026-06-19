@@ -48,9 +48,9 @@ type InfoCtx = {
   t: (k: string, o?: any) => string;
   lang: 'en' | 'ja';
   groups: string[];
-  spinoff: string[];
-  includeSpinoff: boolean;
-  setIncludeSpinoff: (v: boolean) => void;
+  cats: Set<string>;
+  toggleCat: (c: string) => void;
+  liveCats: readonly string[];
   gLabel: (g: string) => string;
   typeLabel: (k: string) => string;
   songName: (id: string) => string;
@@ -73,8 +73,16 @@ export const useInfo = () => useContext(Ctx) as InfoCtx;
 
 export function InfographicProvider({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
-  const [includeSpinoff, setIncludeSpinoff] = useState(false);
-  const d = useAnalysis(includeSpinoff) as any;
+  const [cats, setCats] = useState<Set<string>>(() => new Set(['numbered']));
+  const catsKey = [...cats].sort().join(',');
+  const toggleCat = (c: string) =>
+    setCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+  const d = useAnalysis(catsKey) as any;
   const { openSong, openEvent } = useDetail();
   const songById = useSongById();
   const [tip, setTip] = useState<Tip>(null);
@@ -91,17 +99,16 @@ export function InfographicProvider({ children }: { children: React.ReactNode })
     onMouseLeave: () => setTip(null),
     style: { cursor: 'default' as const }
   });
-  const spinoff: string[] = d.spinoff ?? [];
-  const allGroups = d.canon.filter((g: string) => d.byGroup[g]);
-  const groups = includeSpinoff ? allGroups : allGroups.filter((g: string) => !spinoff.includes(g));
+  const groups = d.canon.filter((g: string) => d.byGroup[g]);
+  const liveCats: readonly string[] = d.liveCats ?? [];
   const value: InfoCtx = {
     d,
     t,
     lang,
     groups,
-    spinoff,
-    includeSpinoff,
-    setIncludeSpinoff,
+    cats,
+    toggleCat,
+    liveCats,
     gLabel,
     typeLabel,
     songName,
