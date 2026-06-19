@@ -15,7 +15,7 @@ import { Text } from '~/components/ui/text';
 import { Kbd } from '~/components/ui/kbd';
 import { useDetail } from '~/components/detail/DetailStack';
 import { getLiveThumb, usePerformanceById, usePerformances, useVenues } from '~/hooks/useData';
-import { useSongs } from '~/hooks/useSongData';
+import { useSongs, useSongById } from '~/hooks/useSongData';
 import { getCostumeSummaries } from '~/utils/costumes';
 import { fuzzySearch, getSearchScore, type SearchableItem } from '~/utils/search';
 import { displayVenueLocation } from '~/utils/venues';
@@ -84,6 +84,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const performanceById = usePerformanceById();
   const venues = useVenues();
   const songs = useSongs();
+  const songById = useSongById();
   const { openEvent, openSong, openVenue, openCostume } = useDetail();
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -91,8 +92,15 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   const listRef = useRef<HTMLDivElement>(null);
 
   const costumes = useMemo(
-    () => getCostumeSummaries(performanceById, new Set<string>()),
-    [performanceById]
+    () =>
+      getCostumeSummaries(
+        performanceById,
+        new Set<string>(),
+        new Set<string>(),
+        undefined,
+        songById
+      ),
+    [performanceById, songById]
   );
 
   useEffect(() => {

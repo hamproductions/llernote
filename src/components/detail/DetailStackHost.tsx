@@ -174,10 +174,13 @@ function CostumeHost({
   onClose: () => void;
 }) {
   const { records } = useAttendance();
+  const songById = useSongById();
   const costume = useMemo(() => {
     const { witnessed, watched } = partitionAttendance(records, allPerformanceById);
-    return getCostumeSummaries(allPerformanceById, witnessed, watched).find((c) => c.id === id);
-  }, [records, id]);
+    return getCostumeSummaries(allPerformanceById, witnessed, watched, undefined, songById).find(
+      (c) => c.id === id
+    );
+  }, [records, id, songById]);
   if (!costume) return null;
   return <CostumeDetailDialog costume={costume} open onClose={onClose} onBack={onBack} />;
 }

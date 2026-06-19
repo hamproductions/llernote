@@ -214,11 +214,15 @@ export function CostumeDetailDialog({
                         </Text>
                       </Stack>
                       {isWitnessed(record, p) ? (
-                        <Box title={t('costumes.witnessed')} flexShrink={0} color="accent.default">
+                        <Box
+                          title={t('common.scope_inperson')}
+                          flexShrink={0}
+                          color="accent.default"
+                        >
                           <FaCheck />
                         </Box>
                       ) : isWatched(record, p) ? (
-                        <Box title={t('events.status_watched')} flexShrink={0} color="blue.9">
+                        <Box title={t('common.scope_remote')} flexShrink={0} color="blue.9">
                           <FaEye />
                         </Box>
                       ) : null}

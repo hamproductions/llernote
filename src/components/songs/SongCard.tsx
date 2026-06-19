@@ -8,16 +8,21 @@ import { clickable } from '~/utils/clickable';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
+import type { Scope } from '~/utils/attendance/witness';
 import type { Song } from '~/types';
+
+type CountBadge = { key: 'inperson_count' | 'remote_count'; n: number; palette?: 'blue' };
 
 export function SongCard({
   song,
+  scope,
   heardCount,
   watchedCount = 0,
   performedCount,
   onClick
 }: {
   song: Song;
+  scope: Scope;
   heardCount: number;
   watchedCount?: number;
   performedCount: number;
@@ -25,7 +30,18 @@ export function SongCard({
 }) {
   const { t, i18n } = useTranslation();
   const artistById = useArtistById();
-  const heard = heardCount > 0;
+  // Only surface the attendance counts the selected scope is asking about, so the
+  // lead badge reflects the active In-person / Remote / All mode.
+  const counts = [
+    scope !== 'remote' && heardCount > 0
+      ? ({ key: 'inperson_count', n: heardCount } as CountBadge)
+      : null,
+    scope !== 'inperson' && watchedCount > 0
+      ? ({ key: 'remote_count', n: watchedCount, palette: 'blue' } as CountBadge)
+      : null
+  ].filter((c): c is CountBadge => c != null);
+  const [primary, secondary] = counts;
+  const seen = counts.length > 0;
   const artistNames = [
     ...new Set(
       (song.artists ?? [])
@@ -41,33 +57,33 @@ export function SongCard({
       cursor="pointer"
       gap="2.5"
       gridTemplateColumns={hasSongThumb(song.id) ? 'auto minmax(0, 1fr)' : 'minmax(0, 1fr)'}
-      borderColor={heard ? 'accent.7' : 'border.subtle'}
+      borderColor={seen ? 'accent.7' : 'border.subtle'}
       borderRadius="l2"
       borderWidth="1px"
       h="full"
       minH="16"
       p="2"
-      bgColor={heard ? 'accent.a2' : 'bg.default'}
+      bgColor={seen ? 'accent.a2' : 'bg.default'}
       transition="colors"
       _hover={{ borderColor: 'accent.8' }}
     >
-      {hasSongThumb(song.id) && <SongThumb songId={song.id} dim={!heard} />}
+      {hasSongThumb(song.id) && <SongThumb songId={song.id} dim={!seen} />}
       <Stack flex="1" gap="0.5" minW="0">
         <HStack gap="2" alignItems="flex-start" minW="0">
           <Text
             title={song.name}
             flex="1"
             minW="0"
-            color={heard ? 'fg.default' : 'fg.muted'}
+            color={seen ? 'fg.default' : 'fg.muted'}
             fontSize="sm"
             fontWeight="medium"
             lineClamp={2}
           >
             {localizedName(i18n.language, song.name, song.englishName)}
           </Text>
-          {heard ? (
-            <Badge size="sm" variant="solid" flexShrink={0}>
-              {t('songs.times', { count: heardCount })}
+          {primary ? (
+            <Badge size="sm" variant="solid" colorPalette={primary.palette} flexShrink={0}>
+              {t(`songs.${primary.key}`, { count: primary.n })}
             </Badge>
           ) : (
             <Badge size="sm" variant="outline" flexShrink={0} color="fg.subtle">
@@ -84,9 +100,9 @@ export function SongCard({
               {artistNames}
             </Text>
           )}
-          {watchedCount > 0 && (
-            <Badge size="sm" variant="solid" colorPalette="blue" flexShrink={0}>
-              {t('songs.watched_times', { count: watchedCount })}
+          {secondary && (
+            <Badge size="sm" variant="solid" colorPalette={secondary.palette} flexShrink={0}>
+              {t(`songs.${secondary.key}`, { count: secondary.n })}
             </Badge>
           )}
           {performedCount > 0 && (

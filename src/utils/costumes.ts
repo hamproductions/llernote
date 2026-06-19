@@ -121,7 +121,9 @@ export function buildCostumeSummaries(
   witnessedIds: Set<string> = new Set(),
   watchedIds: Set<string> = new Set(),
   /** Per-song reach (performances + events) used for the rate and signature floor. */
-  songStats?: Map<string, SongPerformanceStat>
+  songStats?: Map<string, SongPerformanceStat>,
+  /** Songs by id, used to derive the costume's series from the songs it was worn for. */
+  songById: Map<string, Song> = new Map()
 ): CostumeSummary[] {
   const accumulators = new Map<string, CostumeAccumulator>();
 
@@ -188,6 +190,16 @@ export function buildCostumeSummaries(
           .filter((song) => (songStats.get(song.songId)?.events ?? 0) >= MIN_SIGNATURE_EVENTS)
           .sort((a, b) => b.rate - a.rate || b.worn - a.worn || a.songId.localeCompare(b.songId))[0]
       : undefined;
+    // The costume belongs to whatever series its songs belong to. Derive series from
+    // the songs it was worn for (a Hasunosora costume worn at a multi-series fes must
+    // stay Hasunosora, not inherit every series on the bill). Fall back to the
+    // performances' series only when none of the worn songs are known.
+    const songSeries = new Set<string>();
+    for (const songId of entry.songCounts.keys()) {
+      const song = songById.get(songId);
+      if (song) for (const seriesId of song.seriesIds) songSeries.add(String(seriesId));
+    }
+    const seriesIds = songSeries.size > 0 ? [...songSeries] : [...entry.seriesIds];
     return {
       id: entry.id,
       name: entry.name,
@@ -203,7 +215,7 @@ export function buildCostumeSummaries(
       lastDate: entry.lastDate,
       yearCount: entry.years.size,
       venueCount: entry.venues.size,
-      seriesIds: [...entry.seriesIds],
+      seriesIds,
       songIds: songIdsByCount,
       songs,
       performanceIds,
@@ -218,14 +230,16 @@ export function getCostumeSummaries(
   performanceById: Map<string, Performance>,
   witnessedIds: Set<string> = new Set(),
   watchedIds: Set<string> = new Set(),
-  songStats?: Map<string, SongPerformanceStat>
+  songStats?: Map<string, SongPerformanceStat>,
+  songById: Map<string, Song> = new Map()
 ): CostumeSummary[] {
   return buildCostumeSummaries(
     performanceCostumes as PerformanceCostumes,
     performanceById,
     witnessedIds,
     watchedIds,
-    songStats
+    songStats,
+    songById
   );
 }
 

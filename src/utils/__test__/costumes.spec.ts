@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildCostumeSummaries, type PerformanceCostumes } from '../costumes';
-import type { Performance } from '~/types';
+import type { Performance, Song } from '~/types';
 
 const perf = (id: string, overrides: Partial<Performance> = {}): Performance => ({
   id,
@@ -100,6 +100,30 @@ describe('buildCostumeSummaries', () => {
   it('leaves the signature song unset when no song stats are provided', () => {
     const c = buildCostumeSummaries(costumeMap, performanceById)[0]!;
     expect(c.topSongByRateId).toBeUndefined();
+  });
+
+  it('derives series from the songs worn, not the multi-series performances', () => {
+    // p3 is a two-series bill (s1 + s2), but both songs belong to series 6, so the
+    // costume must read as series 6 only (the AWOKE-at-a-fes case).
+    const song = (id: string, seriesIds: number[]): Song => ({ id, name: id, seriesIds });
+    const songById = new Map([
+      ['song-snow', song('song-snow', [6])],
+      ['song-other', song('song-other', [6])]
+    ]);
+    const c = buildCostumeSummaries(
+      costumeMap,
+      performanceById,
+      new Set(),
+      new Set(),
+      undefined,
+      songById
+    )[0]!;
+    expect(c.seriesIds).toEqual(['6']);
+  });
+
+  it('falls back to the performance series when no worn song is known', () => {
+    const c = buildCostumeSummaries(costumeMap, performanceById)[0]!;
+    expect(c.seriesIds.sort()).toEqual(['s1', 's2']);
   });
 
   it('uses the namesake song for the thumbnail even when another song is worn more', () => {

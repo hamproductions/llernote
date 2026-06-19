@@ -212,6 +212,7 @@ export default function Page() {
               <SongCard
                 key={song.id}
                 song={song}
+                scope={scope}
                 heardCount={heardCount(song.id)}
                 watchedCount={watchedCount(song.id)}
                 performedCount={performedCount(song.id)}

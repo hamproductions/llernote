@@ -159,7 +159,7 @@ export function SongTable({
           const count = heardCount(row.original.id);
           return count > 0 ? (
             <Badge size="sm" variant="solid">
-              {t('songs.times', { count })}
+              {count}
             </Badge>
           ) : (
             <Text color="fg.subtle" fontSize="xs">
@@ -178,7 +178,7 @@ export function SongTable({
           const count = watchedCount?.(row.original.id) ?? 0;
           return count > 0 ? (
             <Badge size="sm" variant="solid" colorPalette="blue">
-              {t('songs.times', { count })}
+              {count}
             </Badge>
           ) : (
             <Text color="fg.subtle" fontSize="xs">
