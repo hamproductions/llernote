@@ -95,7 +95,21 @@
     "core_venue": "Venue-unique",
     "core_day": "Day-unique",
     "core_perf": "One show only",
-    "binding_title": "Rotation breakdown"
+    "binding_title": "Rotation breakdown",
+    "cast_title": "Songs per cast",
+    "cast_sub": "How much each performer sings: credited shows, home-show appearance rate, and group · unit · solo · collaboration mix. Guest credits can be included or removed from every row.",
+    "cast_avg_all": "Avg songs / cast-show",
+    "cast_avg_no_guests": "Avg without guest credits",
+    "cast_guest_shows": "Shows with guest credits",
+    "cast_include_guests": "With guests",
+    "cast_exclude_guests": "Without guests",
+    "cast_guest_badge": "Guest in {{count}}",
+    "cast_songs": "song credits",
+    "cast_credited_shows": "credited shows",
+    "cast_home_appearance": "home shows {{shows}} / {{total}}",
+    "cast_show_all": "Show {{count}} more cast members",
+    "cast_empty": "Select at least one live category to analyze cast credits.",
+    "cast_method": "A cast appearance means at least one credited song, not MC-only attendance. Every credited member receives one full song credit; medley/short versions count as 0.5. Generation/year variants follow the song's credited lineup. “Without guests” removes characters outside the show's headlining group. {{count}} credits with ambiguous historical/W-cast or missing source cast data are excluded."
   },
   "common": {
     "menu": "Menu",
