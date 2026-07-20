@@ -4,9 +4,19 @@ import perfsJson from '../../data/performance-info.json';
 import { loadSetlists } from '~/data/setlists';
 import seriesJson from '../../data/series-info.json';
 import extraJson from '../../data/event-extra.json';
+import charactersJson from '../../data/character-info.json';
 
-type Artist = { id: string; characters: string[]; seriesIds: number[] };
-type SongRec = { id: string; name: string; englishName?: string; artists?: { id: string }[] };
+type Artist = { id: string; characters: (string | null)[]; seriesIds: number[] };
+type Character = {
+  id: string;
+  seriesId: string;
+  fullName: string;
+  englishName?: string;
+  casts: { seiyuu: string; englishName?: string; castTitle: string }[];
+  units?: { id: string; additionalInfo?: string | null }[];
+};
+type SongArtist = { id: string; variant?: string | null };
+type SongRec = { id: string; name: string; englishName?: string; artists?: SongArtist[] };
 type Perf = {
   id: string;
   tourName: string;
@@ -134,6 +144,53 @@ function bindCategories(rows: { keys: Set<string>; date: string; venue: string }
 }
 
 const artists = artistsJson as unknown as Artist[];
+const characters = charactersJson as unknown as Character[];
+const artistById = new Map(artists.map((a) => [a.id, a] as const));
+const sourceCharacterById = new Map(characters.map((c) => [c.id, c] as const));
+
+// Genjitsu no Yohane reuses nine Aqours cast members, but ll-fans currently exposes its
+// artist character IDs without corresponding character rows. Reuse the canonical cast data
+// while preserving the alter-ego names and Yohane as the home series. Lailaps (id 70) stays
+// unresolved because there is no cast record in the bundled source data.
+const YOHANE_ALIASES: [string, string, string, string][] = [
+  ['69', 'ヨハネ', 'Yohane', '18'],
+  ['71', 'ハナマル', 'Hanamaru', '19'],
+  ['72', 'ダイヤ', 'Dia', '16'],
+  ['73', 'ルビィ', 'Ruby', '21'],
+  ['74', 'チカ', 'Chika', '13'],
+  ['75', 'ヨウ', 'You', '17'],
+  ['76', 'カナン', 'Kanan', '15'],
+  ['77', 'リコ', 'Riko', '14'],
+  ['78', 'マリ', 'Mari', '20']
+];
+const yohaneCharacters: Character[] = YOHANE_ALIASES.flatMap(
+  ([id, fullName, englishName, sourceId]) => {
+    const source = sourceCharacterById.get(sourceId);
+    return source ? [{ id, seriesId: '7', fullName, englishName, casts: source.casts }] : [];
+  }
+);
+const resolvedCharacters = [...characters, ...yohaneCharacters];
+const characterById = new Map(resolvedCharacters.map((c) => [c.id, c] as const));
+const variantCharacterIds = new Map<string, string[]>();
+for (const character of resolvedCharacters)
+  for (const unit of character.units ?? []) {
+    if (!unit.additionalInfo) continue;
+    const key = `${unit.id}\u0000${unit.additionalInfo}`;
+    const ids = variantCharacterIds.get(key) ?? [];
+    ids.push(character.id);
+    variantCharacterIds.set(key, ids);
+  }
+
+export function resolveArtistCharacterIds(
+  artistId: string,
+  variant?: string | null
+): (string | null)[] {
+  if (variant) {
+    const variantIds = variantCharacterIds.get(`${artistId}\u0000${variant}`);
+    if (variantIds?.length) return variantIds;
+  }
+  return artistById.get(artistId)?.characters ?? [];
+}
 let songs: SongRec[] = [];
 const perfs = perfsJson as unknown as Perf[];
 const perfNameById = new Map(perfs.map((p) => [p.id, p.performanceName] as const));
@@ -169,6 +226,21 @@ const seriesName: Record<string, string> = {
   '7': 'Yohane',
   '8': 'Ikizurai-bu!'
 };
+const castAffiliations = new Map<
+  string,
+  { characters: Map<string, Character>; homeGroups: Set<string> }
+>();
+for (const character of resolvedCharacters)
+  for (const cast of character.casts) {
+    let affiliation = castAffiliations.get(cast.seiyuu);
+    if (!affiliation) {
+      affiliation = { characters: new Map(), homeGroups: new Set() };
+      castAffiliations.set(cast.seiyuu, affiliation);
+    }
+    affiliation.characters.set(character.id, character);
+    const homeGroup = seriesName[character.seriesId];
+    if (homeGroup) affiliation.homeGroups.add(homeGroup);
+  }
 const seriesColor: Record<string, string> = Object.fromEntries(
   seriesInfo.map((s) => [s.id, s.color])
 );
@@ -191,6 +263,89 @@ function songArtistType(songId: string): ArtistType | 'unknown' {
   for (const r of ['group', 'collab', 'subunit', 'solo'] as ArtistType[])
     if (types.includes(r)) return r;
   return 'unknown';
+}
+
+export type CastBreakdown = Record<ArtistType | 'unknown', number>;
+export type SongsPerCastRow = {
+  cast: string;
+  castEnglishName?: string;
+  characterIds: string[];
+  characterNames: string[];
+  characterEnglishNames: string[];
+  homeGroups: string[];
+  songs: number;
+  homeSongs: number;
+  guestSongs: number;
+  creditedShows: number;
+  homeShows: number;
+  guestShows: number;
+  eligibleHomeShows: number;
+  appearanceRate: number | null;
+  songsPerCreditedShow: number;
+  breakdown: CastBreakdown;
+  homeBreakdown: CastBreakdown;
+};
+
+export const orderSongsPerCastRows = (rows: SongsPerCastRow[], includeGuests: boolean) =>
+  [...rows]
+    .filter((row) => (includeGuests ? row.songs : row.homeSongs) > 0)
+    .sort(
+      (a, b) =>
+        (includeGuests ? b.songs - a.songs : b.homeSongs - a.homeSongs) ||
+        a.cast.localeCompare(b.cast)
+    );
+
+const typePriority: (ArtistType | 'unknown')[] = ['collab', 'group', 'subunit', 'solo', 'unknown'];
+const emptyBreakdown = (): CastBreakdown => ({
+  group: 0,
+  subunit: 0,
+  solo: 0,
+  collab: 0,
+  unknown: 0
+});
+const round1 = (n: number) => +n.toFixed(1);
+
+function castCredits(songId: string) {
+  const song = songById.get(songId);
+  const byCast = new Map<
+    string,
+    {
+      cast: string;
+      castEnglishName?: string;
+      characters: Character[];
+      types: Set<ArtistType | 'unknown'>;
+    }
+  >();
+  for (const songArtist of song?.artists ?? []) {
+    const artist = artistById.get(songArtist.id);
+    if (!artist) continue;
+    const type = artistType.get(artist.id) ?? 'unknown';
+    for (const characterId of new Set(
+      resolveArtistCharacterIds(songArtist.id, songArtist.variant)
+    )) {
+      if (typeof characterId !== 'string') continue;
+      const character = characterById.get(characterId);
+      // Historical/W-cast assignments cannot be resolved from the current performance data.
+      if (!character || character.casts.length !== 1) continue;
+      const cast = character.casts[0];
+      let credit = byCast.get(cast.seiyuu);
+      if (!credit) {
+        credit = {
+          cast: cast.seiyuu,
+          castEnglishName: cast.englishName,
+          characters: [],
+          types: new Set()
+        };
+        byCast.set(cast.seiyuu, credit);
+      }
+      if (!credit.characters.some((c) => c.id === character.id)) credit.characters.push(character);
+      credit.types.add(type);
+    }
+  }
+  return [...byCast.values()].map((credit) => ({
+    ...credit,
+    type: typePriority.find((type) => credit.types.has(type)) ?? 'unknown'
+  }));
 }
 
 type Occ = { key: string; w: number; t: string; sec: 'main' | 'encore' };
@@ -521,6 +676,26 @@ function build(cats: string[]) {
   const flagPerfByGroup: Record<string, any[]> = {};
   const poolInfo: Record<string, any> = {};
   const allLives: TourStat[] = [];
+  const groupShowCounts: Record<string, number> = {};
+  const guestPerformanceIds = new Set<string>();
+  const castStats = new Map<
+    string,
+    {
+      cast: string;
+      castEnglishName?: string;
+      characters: Map<string, Character>;
+      homeGroups: Set<string>;
+      songs: number;
+      homeSongs: number;
+      guestSongs: number;
+      shows: Set<string>;
+      homeShows: Set<string>;
+      guestShows: Set<string>;
+      breakdown: CastBreakdown;
+      homeBreakdown: CastBreakdown;
+    }
+  >();
+  let unresolvedCastCredits = 0;
 
   for (const g of CANON) {
     const lives = tourStats
@@ -582,6 +757,67 @@ function build(cats: string[]) {
         });
       });
     });
+
+    groupShowCounts[g] = perfRows.length;
+    for (const row of perfRows) {
+      for (const occ of row.occs) {
+        const songId = songIdOf(occ.key);
+        const unresolved = new Set<string>();
+        for (const songArtist of songById.get(songId)?.artists ?? [])
+          for (const [index, characterId] of resolveArtistCharacterIds(
+            songArtist.id,
+            songArtist.variant
+          ).entries()) {
+            if (typeof characterId !== 'string') {
+              unresolved.add(`${songArtist.id}:missing:${index}`);
+              continue;
+            }
+            const character = characterById.get(characterId);
+            if (!character || character.casts.length !== 1) unresolved.add(characterId);
+          }
+        unresolvedCastCredits += unresolved.size * occ.w;
+
+        for (const credit of castCredits(songId)) {
+          let stat = castStats.get(credit.cast);
+          if (!stat) {
+            const affiliation = castAffiliations.get(credit.cast);
+            stat = {
+              cast: credit.cast,
+              castEnglishName: credit.castEnglishName,
+              characters: new Map(affiliation?.characters),
+              homeGroups: new Set(affiliation?.homeGroups),
+              songs: 0,
+              homeSongs: 0,
+              guestSongs: 0,
+              shows: new Set(),
+              homeShows: new Set(),
+              guestShows: new Set(),
+              breakdown: emptyBreakdown(),
+              homeBreakdown: emptyBreakdown()
+            };
+            castStats.set(credit.cast, stat);
+          }
+          const homeGroups = credit.characters
+            .map((character) => seriesName[character.seriesId])
+            .filter(Boolean);
+          const guest = !homeGroups.includes(g);
+          for (const character of credit.characters) stat.characters.set(character.id, character);
+          for (const homeGroup of homeGroups) stat.homeGroups.add(homeGroup);
+          stat.songs += occ.w;
+          stat.shows.add(row.pid);
+          stat.breakdown[credit.type] += occ.w;
+          if (guest) {
+            stat.guestSongs += occ.w;
+            stat.guestShows.add(row.pid);
+            guestPerformanceIds.add(row.pid);
+          } else {
+            stat.homeSongs += occ.w;
+            stat.homeShows.add(row.pid);
+            stat.homeBreakdown[credit.type] += occ.w;
+          }
+        }
+      }
+    }
 
     const legsOf = new Map<string, Set<string>>();
     for (const r of perfRows)
@@ -722,8 +958,59 @@ function build(cats: string[]) {
     numberedAnalyzed: allLives.filter((t) => t.nShows >= 2).length,
     totalSongs: songs.length
   };
+  const castRows: SongsPerCastRow[] = [...castStats.values()]
+    .map((stat) => {
+      const charactersForCast = [...stat.characters.values()].sort((a, b) =>
+        a.id.localeCompare(b.id)
+      );
+      const homeGroups = [...stat.homeGroups].sort();
+      const eligibleHomeShows = homeGroups.reduce(
+        (sum, group) => sum + (groupShowCounts[group] ?? 0),
+        0
+      );
+      return {
+        cast: stat.cast,
+        castEnglishName: stat.castEnglishName,
+        characterIds: charactersForCast.map((character) => character.id),
+        characterNames: charactersForCast.map((character) => character.fullName),
+        characterEnglishNames: charactersForCast.map(
+          (character) => character.englishName ?? character.fullName
+        ),
+        homeGroups,
+        songs: round1(stat.songs),
+        homeSongs: round1(stat.homeSongs),
+        guestSongs: round1(stat.guestSongs),
+        creditedShows: stat.shows.size,
+        homeShows: stat.homeShows.size,
+        guestShows: stat.guestShows.size,
+        eligibleHomeShows,
+        appearanceRate: eligibleHomeShows ? stat.homeShows.size / eligibleHomeShows : null,
+        songsPerCreditedShow: stat.shows.size ? round1(stat.songs / stat.shows.size) : 0,
+        breakdown: Object.fromEntries(
+          Object.entries(stat.breakdown).map(([key, value]) => [key, round1(value)])
+        ) as CastBreakdown,
+        homeBreakdown: Object.fromEntries(
+          Object.entries(stat.homeBreakdown).map(([key, value]) => [key, round1(value)])
+        ) as CastBreakdown
+      };
+    })
+    .sort((a, b) => b.songs - a.songs || a.cast.localeCompare(b.cast));
+  const totalCastShowCredits = castRows.reduce((sum, row) => sum + row.creditedShows, 0);
+  const totalHomeCastShowCredits = castRows.reduce((sum, row) => sum + row.homeShows, 0);
+  const castAnalysis = {
+    rows: castRows,
+    selectedShows: Object.values(groupShowCounts).reduce((sum, count) => sum + count, 0),
+    showsWithGuests: guestPerformanceIds.size,
+    avgSongsPerCastShow: totalCastShowCredits
+      ? round1(castRows.reduce((sum, row) => sum + row.songs, 0) / totalCastShowCredits)
+      : null,
+    avgSongsPerCastShowWithoutGuests: totalHomeCastShowCredits
+      ? round1(castRows.reduce((sum, row) => sum + row.homeSongs, 0) / totalHomeCastShowCredits)
+      : null,
+    unresolvedCastCredits: round1(unresolvedCastCredits)
+  };
   const numberedTours = allLives.slice().sort((a, b) => a.from.localeCompare(b.from));
-  return { meta, byGroup, poolInfo, flagByGroup, flagPerfByGroup, numberedTours };
+  return { meta, byGroup, poolInfo, flagByGroup, flagPerfByGroup, numberedTours, castAnalysis };
 }
 
 const artistCensus: Record<string, number> = { solo: 0, subunit: 0, group: 0, collab: 0 };

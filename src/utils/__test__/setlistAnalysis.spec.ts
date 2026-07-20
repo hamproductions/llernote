@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import type { Setlist, Song } from '~/types';
-import { makeAnalysis, populateSetlists, populateSongs } from '~/utils/setlistAnalysis';
+import {
+  makeAnalysis,
+  orderSongsPerCastRows,
+  populateSetlists,
+  populateSongs,
+  resolveArtistCharacterIds
+} from '~/utils/setlistAnalysis';
 import type { SongData } from '~/data/songs';
 import setlistsJson from '../../../data/performance-setlists.json';
 import songsJson from '../../../data/song-info.json';
@@ -90,5 +96,98 @@ describe('setlist analysis integrity', () => {
         }
       }
     }
+  });
+
+  it('builds internally consistent songs-per-cast analytics', () => {
+    const { rows } = ANALYSIS.castAnalysis;
+    expect(rows.length).toBeGreaterThan(50);
+    for (const row of rows) {
+      expect(row.songs).toBeGreaterThan(0);
+      expect(row.creditedShows).toBeGreaterThan(0);
+      expect(row.songsPerCreditedShow).toBeCloseTo(row.songs / row.creditedShows, 1);
+      expect(row.homeSongs + row.guestSongs).toBeCloseTo(row.songs, 5);
+      expect(Object.values(row.breakdown).reduce((sum, value) => sum + value, 0)).toBeCloseTo(
+        row.songs,
+        5
+      );
+      expect(
+        row.appearanceRate === null || (row.appearanceRate >= 0 && row.appearanceRate <= 1)
+      ).toBe(true);
+    }
+    expect(rows.map((row) => row.songs)).toEqual(
+      rows.map((row) => row.songs).sort((a, b) => b - a)
+    );
+  });
+
+  it('credits generation variants to every member in that lineup', () => {
+    expect(resolveArtistCharacterIds('91', '1期生+2期生')).toEqual([
+      '37',
+      '38',
+      '39',
+      '40',
+      '41',
+      '42',
+      '43',
+      '44',
+      '45'
+    ]);
+    const nozomi = ANALYSIS.castAnalysis.rows.find((row) => row.cast === '鈴原希実');
+    expect(nozomi).toBeDefined();
+    expect(nozomi?.breakdown.group).toBeGreaterThan(0);
+  });
+
+  it('maps all nine Yohane alter-egos while preserving Yohane as the home group', () => {
+    const fanmeeting = makeAnalysis(['fanmeeting']);
+    const yohane = fanmeeting.castAnalysis.rows.find((row) => row.cast === '小林愛香');
+    expect(yohane).toBeDefined();
+    expect(yohane?.homeGroups).toContain('Yohane');
+    expect(yohane?.characterNames).toContain('ヨハネ');
+    expect(
+      fanmeeting.castAnalysis.rows.filter((row) => row.homeGroups.includes('Yohane')).length
+    ).toBe(9);
+  });
+
+  it('builds home-show denominators from cast affiliations, not observed credits', () => {
+    const analysis = makeAnalysis(['numbered', 'fanmeeting']);
+    const kobayashi = analysis.castAnalysis.rows.find((row) => row.cast === '小林愛香');
+    expect(kobayashi?.homeGroups).toEqual(['Aqours', 'Yohane']);
+    expect(kobayashi?.eligibleHomeShows).toBe(
+      analysis.flagPerfByGroup.Aqours.length + analysis.flagPerfByGroup.Yohane.length
+    );
+  });
+
+  it('reorders and removes zero-home rows when guests are excluded', () => {
+    const withoutGuests = orderSongsPerCastRows(makeAnalysis(['fes']).castAnalysis.rows, false);
+    expect(withoutGuests.every((row) => row.homeSongs > 0)).toBe(true);
+    expect(withoutGuests.map((row) => row.homeSongs)).toEqual(
+      withoutGuests.map((row) => row.homeSongs).sort((a, b) => b - a)
+    );
+  });
+
+  it('removes guest credits from both the adjusted numerator and denominator', () => {
+    const analysis = makeAnalysis(['numbered', 'fes']);
+    const rows = analysis.castAnalysis.rows;
+    const guestSongs = rows.reduce((sum, row) => sum + row.guestSongs, 0);
+    const guestShows = rows.reduce((sum, row) => sum + row.guestShows, 0);
+    const homeSongs = rows.reduce((sum, row) => sum + row.homeSongs, 0);
+    const homeShows = rows.reduce((sum, row) => sum + row.homeShows, 0);
+
+    expect(analysis.castAnalysis.showsWithGuests).toBeGreaterThan(0);
+    expect(guestSongs).toBeGreaterThan(0);
+    expect(guestShows).toBeGreaterThan(0);
+    expect(analysis.castAnalysis.avgSongsPerCastShowWithoutGuests).toBeCloseTo(
+      homeSongs / homeShows,
+      1
+    );
+  });
+
+  it('returns no cast rows when no live categories are selected', () => {
+    expect(makeAnalysis([]).castAnalysis).toMatchObject({
+      rows: [],
+      selectedShows: 0,
+      showsWithGuests: 0,
+      avgSongsPerCastShow: null,
+      avgSongsPerCastShowWithoutGuests: null
+    });
   });
 });

@@ -95,7 +95,21 @@
     "core_venue": "会場固定",
     "core_day": "日程固定",
     "core_perf": "単発",
-    "binding_title": "定着の内訳"
+    "binding_title": "定着の内訳",
+    "cast_title": "キャスト別の歌唱分析",
+    "cast_sub": "各キャストが何曲・何公演で歌ったか、ホーム公演への登場率、グループ・ユニット・ソロ・コラボの内訳。ゲスト歌唱を含む／除くで比較できます。",
+    "cast_avg_all": "1キャスト×1公演の平均曲数",
+    "cast_avg_no_guests": "ゲスト歌唱を除く平均",
+    "cast_guest_shows": "ゲスト歌唱ありの公演",
+    "cast_include_guests": "ゲスト込み",
+    "cast_exclude_guests": "ゲスト除外",
+    "cast_guest_badge": "ゲスト{{count}}公演",
+    "cast_songs": "歌唱クレジット",
+    "cast_credited_shows": "歌唱公演",
+    "cast_home_appearance": "ホーム {{shows}} / {{total}}公演",
+    "cast_show_all": "残り{{count}}名を表示",
+    "cast_empty": "分析するライブ種別を1つ以上選択してください。",
+    "cast_method": "登場＝1曲以上の歌唱クレジットがある公演（MCのみの出演は含みません）。参加メンバー全員に1曲を加算し、メドレー／ショート版は0.5曲。期生・年度などの派生は楽曲のクレジット編成に従います。ゲスト除外では公演の主催グループ外のキャラクターを除きます。歴代・Wキャストまたは元データのキャスト不足で判定できない{{count}}件は除外しています。"
   },
   "common": {
     "menu": "メニュー",
