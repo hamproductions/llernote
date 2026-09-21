@@ -292,7 +292,8 @@ const NUMBERED_LIVES: { group: string; match: string; label: string }[] = [
   { group: 'Hasunosora', match: '4th Live Dream', label: '4th' },
   { group: 'Hasunosora', match: '5th Live Tour', label: '5th' },
   { group: 'Hasunosora', match: '6th Live Dream', label: '6th' },
-  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 1st LIVE', label: '1st' }
+  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 1st LIVE', label: '1st' },
+  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 2nd LIVE', label: '2nd' }
 ];
 const flagOf = (tourName: string) => NUMBERED_LIVES.find((e) => tourName.includes(e.match)) ?? null;
 const liveLabel = (tour: string): string => flagOf(tour)?.label ?? '?';
@@ -349,18 +350,20 @@ let tourStats: TourStat[] = [];
 function computeTourStats(): TourStat[] {
   const out: TourStat[] = [];
   for (const [tourName, ps] of tours) {
-    const withSet = ps.filter((p) => setlistByPerf.has(p.id));
-    if (!withSet.length) continue;
-    const sls = withSet.map((p) => setlistByPerf.get(p.id)!);
+    const flagged = !!flagOf(tourName);
+    const analysisPerfs = flagged ? ps : ps.filter((p) => setlistByPerf.has(p.id));
+    if (!analysisPerfs.length) continue;
+    const sls = analysisPerfs.map(
+      (p) => setlistByPerf.get(p.id) ?? { performanceId: p.id, items: [] }
+    );
     const sets = sls.map((sl) => new Set(songKeys(sl)));
-    const lens = sets.map((s) => s.size).filter((n) => n > 0);
-    if (!lens.length) continue;
-
+    const activeSets = sets.filter((s) => s.size > 0);
+    if (!activeSets.length && !flagged) continue;
     const counts = new Map<string, number>();
     for (const s of sets) for (const x of s) counts.set(x, (counts.get(x) || 0) + 1);
-    const nShows = sets.filter((s) => s.size > 0).length;
+    const nShows = flagged ? sets.length : activeSets.length;
     const core = [...counts.values()].filter((c) => c === nShows).length;
-    const avgLen = lens.reduce((a, b) => a + b, 0) / lens.length;
+    const avgLen = nShows ? activeSets.reduce((a, s) => a + s.size, 0) / nShows : 0;
 
     const idx: number[] = [];
     for (let i = 0; i < sets.length; i++) if (sets[i].size > 0) idx.push(i);
@@ -375,7 +378,7 @@ function computeTourStats(): TourStat[] {
 
     const venueGroups = new Map<string, number[]>();
     for (const i of idx) {
-      const v = withSet[i].venue || '?';
+      const v = analysisPerfs[i].venue || '?';
       if (!venueGroups.has(v)) venueGroups.set(v, []);
       venueGroups.get(v)!.push(i);
     }
@@ -413,7 +416,7 @@ function computeTourStats(): TourStat[] {
       nShows,
       legs: venueGroups.size,
       avgLen: +avgLen.toFixed(1),
-      coreShare: +(core / avgLen).toFixed(3),
+      coreShare: avgLen ? +(core / avgLen).toFixed(3) : 0,
       meanJaccard: +meanJaccard.toFixed(3),
       changeRate: +(1 - meanJaccard).toFixed(3),
       changeDays: simDays === null ? null : +(1 - simDays).toFixed(3),
@@ -553,10 +556,10 @@ function build(cats: string[]) {
     lives.forEach(({ t: live, spin }, li) => {
       const lbl = spin ? spinLabel(live.tour) : liveLabel(live.tour);
       const ps = (tours.get(live.tour) || [])
-        .filter((p) => setlistByPerf.has(p.id))
+        .filter((p) => live.isFlagship || setlistByPerf.has(p.id))
         .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
       ps.forEach((p, si) => {
-        const sl = setlistByPerf.get(p.id)!;
+        const sl = setlistByPerf.get(p.id) ?? { performanceId: p.id, items: [] };
         const occs = songOccs(sl);
         let mainW = 0,
           encW = 0;
@@ -645,7 +648,7 @@ function build(cats: string[]) {
         name: r.name,
         liveIdx: r.liveIdx,
         showInLive: r.showInLive,
-        flow: buildFlow(setlistByPerf.get(r.pid)!),
+        flow: buildFlow(setlistByPerf.get(r.pid) ?? { performanceId: r.pid, items: [] }),
         performed: nw + reg + ret,
         new: nw,
         regular: reg,

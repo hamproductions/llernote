@@ -66,6 +66,13 @@ describe('setlist analysis integrity', () => {
     expect(labels).toContain('6th');
   });
 
+  it('includes Ikizurai-bu! 2nd numbered live', () => {
+    const labels = ANALYSIS.flagByGroup['Ikizurai-bu!']
+      .filter((l: any) => !l.spinoff)
+      .map((l: any) => l.label);
+    expect(labels).toContain('2nd');
+  });
+
   it('filters lives by ll-fans tourType category', () => {
     const numbered = makeAnalysis(['numbered']);
     const fanmeeting = makeAnalysis(['fanmeeting']);
