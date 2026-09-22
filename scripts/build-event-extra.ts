@@ -22,15 +22,38 @@ interface RawEntry {
   tour?: { tourType?: { name?: string | null } | null } | null;
 }
 
+const INFO_PATH = join(here, '../data/performance-info.json');
+
 const raw: RawEntry[] = JSON.parse(readFileSync(RAW_PATH, 'utf-8'));
+
+// `data/raw/` is gitignored, so CI starts every run with an empty cache and the
+// incremental LLFans fetch only writes back the handful of performances it re-fetched.
+// Replacing the output wholesale would therefore shrink it to those few entries (it did:
+// 744 -> 26 -> 21 across successive automated commits). Merge over what is already
+// committed instead, so a full local regeneration survives the next CI run.
+const existing: Record<string, Record<string, unknown>> = existsSync(OUT_PATH)
+  ? JSON.parse(readFileSync(OUT_PATH, 'utf-8'))
+  : {};
+
+// `performanceName` has since migrated into performance-info.json, where it holds a
+// richer composed label ("名古屋公演 (6/12＜1回目＞)") than the raw dump's bare
+// "6/12＜1回目＞". useData merges extra *over* performance-info, so re-emitting the raw
+// name here would regress those labels.
+const infoPerformanceNames = new Map<string, string>(
+  (JSON.parse(readFileSync(INFO_PATH, 'utf-8')) as { id: string; performanceName?: string }[])
+    .filter((p) => Boolean(p.performanceName))
+    .map((p) => [p.id, p.performanceName!])
+);
 
 const trimTime = (time?: string | null) => (time ? time.slice(0, 5) : undefined);
 
-const extra = Object.fromEntries(
+const derived = Object.fromEntries(
   raw.map((entry) => [
     entry.performance.id,
     {
-      performanceName: entry.performance.name ?? undefined,
+      performanceName: infoPerformanceNames.has(entry.performance.id)
+        ? undefined
+        : (entry.performance.name ?? undefined),
       concertName: entry.concert?.name ?? undefined,
       venueId: entry.concert?.venue?.id ?? undefined,
       openTime: trimTime(entry.performance.openTime),
@@ -43,5 +66,11 @@ const extra = Object.fromEntries(
   ])
 );
 
+const extra = { ...existing, ...derived };
+
 writeFileSync(OUT_PATH, JSON.stringify(extra));
-console.log(`Wrote ${Object.keys(extra).length} entries to ${OUT_PATH}`);
+const noteCount = Object.values(extra).filter((e) => e.note).length;
+console.log(
+  `Wrote ${Object.keys(extra).length} entries (${Object.keys(derived).length} from raw, ` +
+    `${noteCount} with notes) to ${OUT_PATH}`
+);
