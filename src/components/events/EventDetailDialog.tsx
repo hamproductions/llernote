@@ -46,8 +46,9 @@ import {
 import { hasSongThumb } from '~/utils/song-thumbs';
 import {
   buildSetlistInsights,
+  buildWitnessBySong,
   compareSetlists,
-  isPerformanceAtOrBefore,
+  songWitnessInfo,
   type SongSetlistInsight
 } from '~/utils/setlist-insights';
 import type { Performance, SetlistItem } from '~/types';
@@ -185,6 +186,7 @@ export function SetlistItemRow({
   showArtists,
   witnessInfo,
   setlistInsight,
+  performedBeforeCount,
   onSelectSong
 }: {
   item: SetlistItem;
@@ -192,6 +194,8 @@ export function SetlistItemRow({
   showArtists: boolean;
   witnessInfo?: { count: number; isFirst: boolean; daysSinceSeen?: number };
   setlistInsight?: SongSetlistInsight;
+  /** How many earlier performances played this song (global, not viewer-specific). */
+  performedBeforeCount?: number;
   onSelectSong?: (songId: string) => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -227,6 +231,7 @@ export function SetlistItemRow({
   const hasLine2 =
     Boolean(item.remarks) ||
     setlistInsight?.daysSincePreviousPerformance !== undefined ||
+    performedBeforeCount !== undefined ||
     (showArtists && Boolean(artistNames));
   return (
     <HStack gap="2.5" alignItems="center" py="1.5">
@@ -281,6 +286,11 @@ export function SetlistItemRow({
         {hasLine2 && (
           <HStack gap="2" minW="0" color="fg.subtle" fontSize="2xs" flexWrap="wrap">
             {item.remarks && <Text lineClamp={1}>{item.remarks}</Text>}
+            {performedBeforeCount !== undefined && (
+              <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
+                {t('sort.performed_before', { count: performedBeforeCount })}
+              </Text>
+            )}
             {setlistInsight?.daysSincePreviousPerformance !== undefined && (
               <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
                 {t('events.song_days_since_previous', {
@@ -370,41 +380,10 @@ export function EventDetailDialog({
       }
     }
   }
-  const witnessBySong = (() => {
-    if (record?.status !== 'attended' || !setlist) return null;
-    const map = new Map<
-      string,
-      { count: number; firstPerformanceId: string; prevSeenDate?: string }
-    >();
-    for (const r of records) {
-      if (r.status !== 'attended') continue;
-      const perf = performanceById.get(r.performanceId);
-      const sl = setlists[r.performanceId];
-      if (!perf || !sl) continue;
-      if (!isPerformanceAtOrBefore(perf, performance)) continue;
-      const songIdsInPerformance = new Set(
-        sl.items.filter((it) => it.type === 'song' && it.songId).map((it) => it.songId!)
-      );
-      for (const songId of songIdsInPerformance) {
-        const prev = map.get(songId);
-        if (!prev) map.set(songId, { count: 1, firstPerformanceId: perf.id });
-        else {
-          prev.count += 1;
-          const firstPerformance = performanceById.get(prev.firstPerformanceId);
-          if (!firstPerformance || isPerformanceAtOrBefore(perf, firstPerformance)) {
-            prev.firstPerformanceId = perf.id;
-          }
-          if (perf.id !== performance.id && perf.date < performance.date) {
-            if (!prev.prevSeenDate || perf.date > prev.prevSeenDate) prev.prevSeenDate = perf.date;
-          }
-        }
-      }
-    }
-    return map;
-  })();
-  const daysBetween = (from: string, to: string) =>
-    Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
-
+  const witnessBySong =
+    record?.status === 'attended' && setlist
+      ? buildWitnessBySong(performance, records, performanceById, setlists)
+      : null;
   const sections =
     setlist && setlist.sections.length > 0
       ? setlist.sections
@@ -831,19 +810,8 @@ export function EventDetailDialog({
                               index={songNumbers.get(item.id) ?? 0}
                               showArtists={showArtists}
                               witnessInfo={
-                                item.type === 'song' && item.songId && witnessBySong
-                                  ? {
-                                      count: witnessBySong.get(item.songId)?.count ?? 0,
-                                      isFirst:
-                                        witnessBySong.get(item.songId)?.firstPerformanceId ===
-                                        performance.id,
-                                      daysSinceSeen: witnessBySong.get(item.songId)?.prevSeenDate
-                                        ? daysBetween(
-                                            witnessBySong.get(item.songId)!.prevSeenDate!,
-                                            performance.date
-                                          )
-                                        : undefined
-                                    }
+                                item.type === 'song'
+                                  ? songWitnessInfo(witnessBySong, item.songId, performance)
                                   : undefined
                               }
                               setlistInsight={

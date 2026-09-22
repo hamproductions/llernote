@@ -190,6 +190,111 @@ export const getSongFirstWitnessPerformance = (
 export const isPerformanceAtOrBefore = (candidate: Performance, current: Performance) =>
   comparePerformancesChronologically(candidate, current) <= 0;
 
+export interface SongWitness {
+  /** How many attended performances up to and including this one played the song. */
+  count: number;
+  /** The earliest attended performance that played it — drives the "first witness" badge. */
+  firstPerformanceId: string;
+  /** Date of the most recent earlier attended performance that played it. */
+  prevSeenDate?: string;
+}
+
+/**
+ * Per-song witness tally as of `performance`: how many times the viewer had seen each of
+ * its songs live, counting only performances they attended at or before this one.
+ *
+ * Distinct from `buildSongPerformanceOrdinals`, which counts every performance by anyone.
+ */
+export const buildWitnessBySong = (
+  performance: Performance,
+  records: AttendanceRecord[],
+  performanceById: Map<string, Performance>,
+  setlists: Record<string, Setlist>
+): Map<string, SongWitness> => {
+  const map = new Map<string, SongWitness>();
+
+  for (const record of records) {
+    if (record.status !== 'attended' || record.deleted) continue;
+    const attended = performanceById.get(record.performanceId);
+    const setlist = setlists[record.performanceId];
+    if (!attended || !setlist) continue;
+    if (!isPerformanceAtOrBefore(attended, performance)) continue;
+
+    // A song played twice in one show still counts as one witnessing of that show.
+    for (const songId of new Set(songIdsForSetlist(setlist))) {
+      const previous = map.get(songId);
+      if (!previous) {
+        map.set(songId, { count: 1, firstPerformanceId: attended.id });
+        continue;
+      }
+      previous.count += 1;
+      const firstPerformance = performanceById.get(previous.firstPerformanceId);
+      if (!firstPerformance || isPerformanceAtOrBefore(attended, firstPerformance)) {
+        previous.firstPerformanceId = attended.id;
+      }
+      if (attended.id !== performance.id && attended.date < performance.date) {
+        if (!previous.prevSeenDate || attended.date > previous.prevSeenDate) {
+          previous.prevSeenDate = attended.date;
+        }
+      }
+    }
+  }
+
+  return map;
+};
+
+/** Shape `buildWitnessBySong` output into the badge props `SetlistItemRow` expects. */
+export const songWitnessInfo = (
+  witnessBySong: Map<string, SongWitness> | null | undefined,
+  songId: string | undefined,
+  performance: Performance
+) => {
+  if (!witnessBySong || !songId) return undefined;
+  const witness = witnessBySong.get(songId);
+  return {
+    count: witness?.count ?? 0,
+    isFirst: witness?.firstPerformanceId === performance.id,
+    daysSinceSeen: witness?.prevSeenDate
+      ? daysBetween(witness.prevSeenDate, performance.date)
+      : undefined
+  };
+};
+
+/**
+ * For every performance, how many *earlier* performances had already played each song.
+ *
+ * This is a global "performed N times before" figure, distinct from
+ * `getSongWitnessCountAtPerformance`, which counts only performances the user attended.
+ * Pass the unfiltered performance list so the count stays a property of the live itself
+ * rather than of the viewer's `inPersonOnly` setting.
+ *
+ * Single chronological pass over every setlist item (~11.6k), so a caller can memoise
+ * the result once per dataset rather than recomputing per render.
+ */
+export const buildSongPerformanceOrdinals = (
+  performances: Performance[],
+  setlists: Record<string, Setlist>
+): Map<string, Map<string, number>> => {
+  const ordinals = new Map<string, Map<string, number>>();
+  const runningCount = new Map<string, number>();
+
+  for (const performance of datedPerformancesWithSetlists(performances, setlists)) {
+    const songIds = songIdsForSetlist(setlists[performance.id]);
+    const forPerformance = new Map<string, number>();
+    for (const songId of songIds) {
+      forPerformance.set(songId, runningCount.get(songId) ?? 0);
+    }
+    // Bump only after the whole setlist is recorded, so two plays of the same song
+    // within one performance both report the same "before this live" count.
+    for (const songId of songIds) {
+      runningCount.set(songId, (runningCount.get(songId) ?? 0) + 1);
+    }
+    ordinals.set(performance.id, forPerformance);
+  }
+
+  return ordinals;
+};
+
 export const getSongWitnessCountAtPerformance = (
   songId: string,
   performance: Performance,

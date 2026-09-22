@@ -43,3 +43,45 @@ export const brightenForDark = (hex: string): string => {
 
 export const seriesTextColor = (hex: string, colorMode: string | null | undefined) =>
   colorMode === 'light' ? darkenForLight(hex) : brightenForDark(hex);
+
+/** Accent used when a live has no resolvable series colour — LoveLive!'s own pink. */
+export const DEFAULT_SERIES_COLOR = '#e4007f';
+
+/**
+ * CSS background for a series colour bar, the way ll-fans renders them: one flat colour,
+ * or equal hard-stop segments top-to-bottom when a live spans several series. Hard stops
+ * rather than a gradient so each series stays individually readable.
+ */
+export const colorBarBackground = (colors: string[]): string => {
+  if (colors.length <= 1) return colors[0] ?? DEFAULT_SERIES_COLOR;
+  const stops = colors
+    .map(
+      (color, index) =>
+        `${color} ${((index * 100) / colors.length).toFixed(2)}% ${(((index + 1) * 100) / colors.length).toFixed(2)}%`
+    )
+    .join(', ');
+  return `linear-gradient(to bottom, ${stops})`;
+};
+
+/**
+ * Diagonal blend of a live's series colours, for the hero panel shown when there is
+ * neither a poster nor album art. Blended rather than hard-stopped: this is a backdrop
+ * for text, not a legend, so it should read as one surface.
+ */
+export const seriesGradient = (colors: string[]): string => {
+  if (colors.length === 1) return `linear-gradient(135deg, ${colors[0]}, ${colors[0]}99)`;
+  return `linear-gradient(135deg, ${colors.join(', ')})`;
+};
+
+/** Ordered, de-duped series colours for a set of series ids. */
+export const seriesColors = (
+  seriesIds: readonly string[],
+  seriesById: Map<string, { color: string }>
+): string[] => {
+  const colors: string[] = [];
+  for (const id of seriesIds) {
+    const color = seriesById.get(String(id))?.color;
+    if (color && !colors.includes(color)) colors.push(color);
+  }
+  return colors.length > 0 ? colors : [DEFAULT_SERIES_COLOR];
+};

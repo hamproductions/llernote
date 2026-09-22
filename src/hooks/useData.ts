@@ -90,6 +90,13 @@ const performanceByEventernoteId = new Map(
 
 export const usePerformances = () =>
   useAppSettings().inPersonOnly ? livePerformances : sortedPerformances;
+/**
+ * Every performance / setlist, ignoring the `inPersonOnly` setting. Use only for figures
+ * that are a property of the data itself (e.g. how many times a song has ever been
+ * performed) rather than of what the viewer chose to see.
+ */
+export const useAllPerformances = () => sortedPerformances;
+export const useAllSetlists = () => setlists;
 export const usePerformanceById = () =>
   useAppSettings().inPersonOnly ? livePerformanceById : performanceById;
 export const usePerformance = (id: string | undefined) => {
