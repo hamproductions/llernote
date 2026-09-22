@@ -17,6 +17,7 @@
     "enrich:venues": "bun scripts/enrich-venues.ts",
     "enrich:live-thumbs": "bun scripts/enrich-live-thumbs.ts",
     "enrich:costumes": "bun scripts/fetch-live-costumes.ts",
+    "dev:eventernote": "bun scripts/eventernote-server.ts",
     "preview": "vite preview",
     "prepare": "panda codegen",
     "test": "vitest",
