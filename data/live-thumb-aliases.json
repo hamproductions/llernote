@@ -1,0 +1,7 @@
+{
+  "_comment": "tourName -> Love Live! Fandom page title. Hand-curated escape hatch for lives the matcher cannot reach: 11 concert pages carry no {{Nihongo}} template, so they expose no Japanese title, and their romanised page names share too little with a Japanese tour name to match on. Applied before fuzzy matching by scripts/enrich-live-thumbs.ts.",
+  "ラブライブ！スーパースター!! Liella! ライブ＆ファンミーティングツアー ～Welcome to Yuigaoka!!～": "Liella! LIVE & FAN MEETING TOUR ~Welcome to Yuigaoka!!~",
+  "ラブライブ！虹ヶ咲学園スクールアイドル同好会 5th Live! 虹が咲く場所": "Nijigasaki High School Idol Club 5th Live! Nijigasaku Basho",
+  "ラブライブ！蓮ノ空女学院スクールアイドルクラブ 3rd Live Tour": "Hasunosora Girls' High School Idol Club 3rd Live Tour TRY TRI UNITY!!!",
+  "ラブライブ！フェス": "Love Live! Fest"
+}

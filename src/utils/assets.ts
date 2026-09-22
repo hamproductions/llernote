@@ -8,7 +8,7 @@ export const getAssetUrl = (path: string) => {
 };
 export const getPicUrl = (
   id: string,
-  type: 'seiyuu' | 'icons' | 'character' | 'thumbnail' | string = 'character'
+  type: 'seiyuu' | 'icons' | 'character' | 'thumbnail' | 'live' | string = 'character'
 ) => {
   const prefix = (() => {
     switch (type) {
@@ -20,12 +20,19 @@ export const getPicUrl = (
         return 'assets/character';
       case 'thumbnail':
         return 'assets/songs/thumbnails';
+      case 'live':
+        return 'assets/lives';
       default:
         return 'assets/';
     }
   })();
   const photoId =
-    type === 'thumbnail' ? (getSongThumbId(id) ?? id) : type !== 'seiyuu' ? id.split('-')[0] : id;
+    type === 'thumbnail'
+      ? (getSongThumbId(id) ?? id)
+      : // Live poster filenames are content hashes that legitimately contain '-'.
+        type !== 'seiyuu' && type !== 'live'
+        ? id.split('-')[0]
+        : id;
 
   return getAssetUrl(join(prefix, `${photoId}.webp`));
 };

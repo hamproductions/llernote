@@ -1,5 +1,7 @@
+import { execFileSync } from 'child_process';
 import { createHash } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { dirname, join } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
@@ -8,6 +10,8 @@ const performancesPath = join(here, '../data/performance-info.json');
 const eventExtraPath = join(here, '../data/event-extra.json');
 const cacheRoot = join(here, '../data/enrichment-cache/live-thumbs');
 const outputPath = join(here, '../data/live-thumb-info.json');
+const aliasPath = join(here, '../data/live-thumb-aliases.json');
+const posterDir = join(here, '../public/assets/lives');
 const wikiApi = 'https://love-live.fandom.com/api.php';
 const rootCategory = 'Category:Live Concerts';
 const thumbWidth = 400;
@@ -17,6 +21,8 @@ export interface WikiThumbPage {
   pageid: number;
   title: string;
   imageUrl?: string;
+  /** Japanese title from the page's `{{Nihongo}}` lead, when it has one. */
+  japaneseTitle?: string;
 }
 
 export interface TitleMatch {
@@ -30,6 +36,8 @@ export interface LiveThumbEntry {
   image: string;
   source: string;
   confidence: number;
+  /** Basename of the local copy under public/assets/lives. */
+  file?: string;
 }
 
 interface RawPerformance {
@@ -41,6 +49,12 @@ interface RawPerformance {
 interface CategoryMembersResponse {
   continue?: { cmcontinue?: string };
   query?: { categorymembers?: { pageid: number; ns: number; title: string }[] };
+}
+
+interface PageContentResponse {
+  query?: {
+    pages?: { title: string; revisions?: { slots?: { main?: { content?: string } } }[] }[];
+  };
 }
 
 interface PageImagesResponse {
@@ -97,6 +111,94 @@ const sameYears = (a: string, b: string) => {
   return yearsA.size === yearsB.size && [...yearsA].every((year) => yearsB.has(year));
 };
 
+/**
+ * Normalisation that keeps Japanese, unlike `normalizeTitle` which strips it to compare
+ * against romanised wiki page names. A tour named mostly in Japanese collapses to a
+ * useless stub under the latter — 蓮ノ空 3rd Live Tour becomes just "3rdlivetour".
+ */
+export function normalizeJapanese(value: string) {
+  return value
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[～〜~]/g, '')
+    .replace(/[\s\p{P}\p{S}]/gu, '');
+}
+
+/**
+ * Pull the Japanese name out of a page's `{{Nihongo|English|日本語}}` lead.
+ *
+ * Pages use the same template for song titles further down, so the English argument has
+ * to resemble the page title — otherwise "Aqours World LoveLive! ASIA TOUR 2019" picks up
+ * 青空Jumping Heart from its tracklist.
+ */
+export function extractNihongoTitle(wikitext: string, pageTitle: string): string | undefined {
+  const clean = (value: string) => value.replace(/'''|\[\[|\]\]/g, '').trim();
+  const target = normalizeTitle(pageTitle);
+
+  for (const match of wikitext.matchAll(/\{\{Nihongo\|([^|{}]*)\|([^|{}]*)/g)) {
+    const english = clean(match[1] ?? '');
+    const japanese = clean(match[2] ?? '');
+    if (!japanese) continue;
+    const normalizedEnglish = normalizeTitle(english);
+    if (!normalizedEnglish || !target) continue;
+    const similar =
+      normalizedEnglish === target ||
+      normalizedEnglish.includes(target) ||
+      target.includes(normalizedEnglish) ||
+      diceSimilarity(normalizedEnglish, target) >= 0.6;
+    if (similar) return japanese;
+  }
+  return undefined;
+}
+
+/** Match a Japanese tour name against pages' Japanese titles. */
+export function matchJapaneseTitle(
+  name: string,
+  pages: WikiThumbPage[],
+  threshold = 0.85
+): TitleMatch | undefined {
+  const normalized = normalizeJapanese(name);
+  if (normalized.length < 8) return undefined;
+
+  let best: TitleMatch | undefined;
+  let bestTitleLength = Infinity;
+  for (const page of pages) {
+    if (!page.japaneseTitle) continue;
+    const candidate = normalizeJapanese(page.japaneseTitle);
+    if (candidate.length < 8) continue;
+    // An annual event differs from the next year's only by the year, and the bigrams are
+    // otherwise near-identical — without this, 沼津地元愛まつり 2023 matches the 2024 page.
+    if (!sameYears(normalized, candidate)) continue;
+
+    let confidence = 0;
+    let method: TitleMatch['method'] = 'similar';
+    if (candidate === normalized) {
+      confidence = 0.95;
+      method = 'exact';
+    } else if (
+      Math.min(candidate.length, normalized.length) >= 10 &&
+      (candidate.includes(normalized) || normalized.includes(candidate))
+    ) {
+      confidence = 0.9;
+      method = 'contain';
+    } else {
+      confidence = diceSimilarity(normalized, candidate);
+    }
+
+    // On a tie prefer the shorter page title: a live and its release share a name, and
+    // the release is the one carrying the extra words ("… Uta Gassen LIVE CD").
+    const better =
+      !best ||
+      confidence > best.confidence ||
+      (confidence === best.confidence && page.title.length < bestTitleLength);
+    if (confidence >= threshold && better) {
+      best = { title: page.title, confidence: Math.round(confidence * 1000) / 1000, method };
+      bestTitleLength = page.title.length;
+    }
+  }
+  return best;
+}
+
 export function matchWikiTitle(name: string, wikiTitles: string[]): TitleMatch | undefined {
   const normalized = normalizeTitle(name);
   if (normalized.length < 8) return undefined;
@@ -111,13 +213,20 @@ export function matchWikiTitle(name: string, wikiTitles: string[]): TitleMatch |
     }
     if (!sameYears(normalized, normalizedTitle)) continue;
     const shorter = Math.min(normalized.length, normalizedTitle.length);
-    if (shorter >= 12 && (normalized.includes(normalizedTitle) || normalizedTitle.includes(normalized))) {
+    if (
+      shorter >= 12 &&
+      (normalized.includes(normalizedTitle) || normalizedTitle.includes(normalized))
+    ) {
       candidates.push({ title, confidence: 0.88, method: 'contain' });
       continue;
     }
     const similarity = diceSimilarity(normalized, normalizedTitle);
     if (similarity >= 0.85) {
-      candidates.push({ title, confidence: Math.round(similarity * 1000) / 1000, method: 'similar' });
+      candidates.push({
+        title,
+        confidence: Math.round(similarity * 1000) / 1000,
+        method: 'similar'
+      });
     }
   }
 
@@ -125,15 +234,25 @@ export function matchWikiTitle(name: string, wikiTitles: string[]): TitleMatch |
   const best = sorted[0];
   if (!best) return undefined;
   const second = sorted[1];
-  if (best.method !== 'exact' && second && second.title !== best.title && best.confidence - second.confidence < 0.05) {
+  if (
+    best.method !== 'exact' &&
+    second &&
+    second.title !== best.title &&
+    best.confidence - second.confidence < 0.05
+  ) {
     return undefined;
   }
   return best;
 }
 
-export function buildThumbEntries(performances: RawPerformance[], pages: WikiThumbPage[]) {
+export function buildThumbEntries(
+  performances: RawPerformance[],
+  pages: WikiThumbPage[],
+  aliases: Record<string, string> = {}
+) {
   const pagesByTitle = new Map(pages.map((page) => [page.title, page]));
-  const titles = pages.filter((page) => page.imageUrl).map((page) => page.title);
+  const pagesWithImages = pages.filter((page) => page.imageUrl);
+  const titles = pagesWithImages.map((page) => page.title);
   const entries: Record<string, LiveThumbEntry> = {};
   const tourMatches = new Map<string, TitleMatch | undefined>();
   const stats = { tours: 0, tourMatched: 0, performanceMatched: 0, skipped: [] as string[] };
@@ -141,7 +260,13 @@ export function buildThumbEntries(performances: RawPerformance[], pages: WikiThu
   for (const performance of performances) {
     if (!tourMatches.has(performance.tourName)) {
       stats.tours += 1;
-      const match = matchWikiTitle(performance.tourName, titles);
+      const aliased = aliases[performance.tourName];
+      const match: TitleMatch | undefined = aliased
+        ? pagesByTitle.get(aliased)?.imageUrl
+          ? { title: aliased, confidence: 1, method: 'exact' }
+          : undefined
+        : (matchWikiTitle(performance.tourName, titles) ??
+          matchJapaneseTitle(performance.tourName, pagesWithImages));
       tourMatches.set(performance.tourName, match);
       if (match) {
         stats.tourMatched += 1;
@@ -151,7 +276,7 @@ export function buildThumbEntries(performances: RawPerformance[], pages: WikiThu
           source: match.title,
           confidence: match.confidence
         };
-      } else if (normalizeTitle(performance.tourName).length >= 8) {
+      } else if (normalizeJapanese(performance.tourName).length >= 8) {
         stats.skipped.push(performance.tourName);
       }
     }
@@ -159,7 +284,8 @@ export function buildThumbEntries(performances: RawPerformance[], pages: WikiThu
     const concertName = performance.concertName;
     if (!concertName) continue;
     const tourMatch = tourMatches.get(performance.tourName);
-    const match = matchWikiTitle(concertName, titles);
+    const match =
+      matchWikiTitle(concertName, titles) ?? matchJapaneseTitle(concertName, pagesWithImages);
     if (!match || match.title === tourMatch?.title) continue;
     stats.performanceMatched += 1;
     entries[performance.id] = {
@@ -263,6 +389,96 @@ async function fetchPageImages(titles: string[], force: boolean) {
   return pages;
 }
 
+/**
+ * Fetch each page's wikitext so its `{{Nihongo}}` Japanese title can be matched against
+ * our Japanese tour names. Wiki page names are romanised, which leaves a Japanese-named
+ * tour nothing to match on.
+ */
+async function fetchJapaneseTitles(titles: string[], force: boolean) {
+  const byTitle = new Map<string, string>();
+  for (let i = 0; i < titles.length; i += 40) {
+    const batch = titles.slice(i, i + 40);
+    const data = await fetchWikiJson<PageContentResponse>(
+      'wikitext',
+      {
+        action: 'query',
+        titles: batch.join('|'),
+        prop: 'revisions',
+        rvprop: 'content',
+        rvslots: 'main',
+        formatversion: '2',
+        redirects: '1'
+      },
+      force
+    );
+    for (const page of data.query?.pages ?? []) {
+      const content = page.revisions?.[0]?.slots?.main?.content;
+      if (!content) continue;
+      const japanese = extractNihongoTitle(content, page.title);
+      if (japanese) byTitle.set(page.title, japanese);
+    }
+  }
+  return byTitle;
+}
+
+/** Stable filename for a poster, derived from the image URL it came from. */
+export const posterFileName = (imageUrl: string) =>
+  createHash('sha1').update(imageUrl).digest('hex').slice(0, 16);
+
+/**
+ * Download every matched poster into `public/assets/lives`.
+ *
+ * Fandom serves these fine to a bare request but answers 404 when a `Referer` is present,
+ * so hotlinking them from the app is at the mercy of whatever referrer policy the browser
+ * applies — and a single blocked response gets cached. Song art is already downloaded for
+ * the same reason; this brings posters in line.
+ */
+async function downloadPosters(entries: Record<string, LiveThumbEntry>, force: boolean) {
+  mkdirSync(posterDir, { recursive: true });
+  const seen = new Set<string>();
+  let downloaded = 0;
+  let failed = 0;
+
+  for (const entry of Object.values(entries)) {
+    const name = posterFileName(entry.image);
+    const outPath = join(posterDir, `${name}.webp`);
+
+    // Only claim the local copy once it is actually on disk — a dangling `file` would
+    // point the app at a 404 and suppress the remote fallback.
+    if (existsSync(outPath) && !force) {
+      entry.file = name;
+      seen.add(name);
+      continue;
+    }
+    if (seen.has(name)) {
+      if (existsSync(outPath)) entry.file = name;
+      continue;
+    }
+    seen.add(name);
+
+    const tmpPath = join(tmpdir(), `llernote-poster-${name}`);
+    try {
+      // No Referer: Fandom 404s hotlinked requests that carry one.
+      const response = await fetch(entry.image, { headers: { 'user-agent': userAgent } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      writeFileSync(tmpPath, new Uint8Array(await response.arrayBuffer()));
+      execFileSync('cwebp', ['-quiet', '-resize', '480', '0', tmpPath, '-o', outPath]);
+      entry.file = name;
+      downloaded += 1;
+      await sleep(250);
+    } catch (error) {
+      failed += 1;
+      console.warn(`  ! ${entry.source}: ${error instanceof Error ? error.message : error}`);
+    } finally {
+      rmSync(tmpPath, { force: true });
+    }
+  }
+
+  console.log(
+    `Posters downloaded: ${downloaded} (cached ${seen.size - downloaded - failed}, failed ${failed})`
+  );
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const force = args.includes('--force');
@@ -281,7 +497,19 @@ async function main() {
   const pages = await fetchPageImages(titles, force);
   console.log(`Pages with image: ${pages.filter((page) => page.imageUrl).length}`);
 
-  const { entries, stats } = buildThumbEntries(performances, pages);
+  const japaneseTitles = await fetchJapaneseTitles(titles, force);
+  for (const page of pages) page.japaneseTitle = japaneseTitles.get(page.title);
+  console.log(`Pages with a Japanese title: ${japaneseTitles.size}`);
+
+  const aliases = existsSync(aliasPath)
+    ? (Object.fromEntries(
+        Object.entries(
+          JSON.parse(readFileSync(aliasPath, 'utf-8')) as Record<string, string>
+        ).filter(([key]) => !key.startsWith('_'))
+      ) as Record<string, string>)
+    : {};
+  const { entries, stats } = buildThumbEntries(performances, pages, aliases);
+  await downloadPosters(entries, force);
   writeFileSync(outputPath, JSON.stringify(entries, null, 2));
 
   const coveredPerformances = performances.filter(

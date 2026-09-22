@@ -104,6 +104,8 @@ export interface LiveThumb {
   image: string;
   source: string;
   confidence: number;
+  /** Basename of the downloaded copy under public/assets/lives, when present. */
+  file?: string;
 }
 
 export interface VenueSummary {
