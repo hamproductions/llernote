@@ -121,13 +121,13 @@ export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(fun
           </Text>
         </HStack>
         <Grid gap="2" gridTemplateColumns="repeat(3, 1fr)">
-          <StatNumber label={t('stats.total_attended')} value={stats.attendedCount} />
+          <StatNumber label={t('stats.witnessed')} value={stats.witnessedCount} />
+          <StatNumber label={t('stats.watched')} value={stats.watchedCount} />
           <StatNumber label={t('stats.songs_witnessed')} value={stats.songsWitnessed} />
-          <StatNumber label={t('stats.unique_songs')} value={stats.uniqueSongs} />
         </Grid>
         <Grid gap="2" gridTemplateColumns="repeat(2, 1fr)">
+          <StatNumber label={t('stats.unique_songs')} value={stats.uniqueSongs} />
           <StatNumber label={t('stats.venues_visited')} value={stats.venuesVisited} />
-          <StatNumber label={t('stats.total_interested')} value={stats.interestedCount} />
         </Grid>
         {(
           [

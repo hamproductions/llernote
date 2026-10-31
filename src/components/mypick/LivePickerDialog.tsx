@@ -9,7 +9,9 @@ import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { legLabel } from '~/components/events/TourCard';
-import { usePerformances, useSetlists, useSongById } from '~/hooks/useData';
+import { usePerformances } from '~/hooks/useData';
+import { useSetlists } from '~/hooks/useSetlists';
+import { useSongById } from '~/hooks/useSongData';
 import { groupByTour } from '~/utils/tour';
 import { localizedName } from '~/utils/names';
 import { getLiveSongEntriesForPerformances } from '~/utils/mypick-live';
@@ -42,32 +44,40 @@ export function LivePickerDialog({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
 
+  const setlisted = useMemo(() => performances.filter((p) => p.hasSetlist), [performances]);
+  const allGroups = useMemo(() => groupByTour(setlisted), [setlisted]);
+
+  const groups = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return allGroups;
+    return allGroups.filter((group) =>
+      [
+        group.tourName,
+        ...group.legs.flatMap((performance) => [
+          performance.concertName ?? '',
+          performance.performanceName ?? '',
+          performance.venue ?? ''
+        ])
+      ].some((value) => value.toLowerCase().includes(query))
+    );
+  }, [allGroups, search]);
+
+  const isSearching = search.trim().length > 0;
+
   useEffect(() => {
     if (open) {
-      setSelectedIds(new Set(initialSelectedIds ?? []));
+      const initialIds = new Set(initialSelectedIds ?? []);
+      const initialGroup = allGroups.find((group) =>
+        group.legs.some((leg) => initialIds.has(leg.id))
+      );
+      setSelectedIds(
+        new Set(initialGroup?.legs.filter((leg) => initialIds.has(leg.id)).map((leg) => leg.id))
+      );
       setSearch('');
       setExpanded(new Set());
     }
     // oxlint-disable-next-line exhaustive-deps
   }, [open]);
-
-  const setlisted = useMemo(() => performances.filter((p) => p.hasSetlist), [performances]);
-
-  const groups = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const matched = query
-      ? setlisted.filter(
-          (p) =>
-            p.tourName.toLowerCase().includes(query) ||
-            (p.concertName ?? '').toLowerCase().includes(query) ||
-            (p.performanceName ?? '').toLowerCase().includes(query) ||
-            (p.venue ?? '').toLowerCase().includes(query)
-        )
-      : setlisted;
-    return groupByTour(matched);
-  }, [setlisted, search]);
-
-  const isSearching = search.trim().length > 0;
 
   const selectedPerformanceIds = useMemo(
     () =>
@@ -77,6 +87,11 @@ export function LivePickerDialog({
         .map((p) => p.id),
     [performances, selectedIds]
   );
+
+  const selectedGroupKey = useMemo(() => {
+    const group = allGroups.find((group) => group.legs.some((leg) => selectedIds.has(leg.id)));
+    return group ? groupKey(group.tourName, group.startDate) : undefined;
+  }, [allGroups, selectedIds]);
 
   const previewEntries = useMemo(
     () => getLiveSongEntriesForPerformances(selectedPerformanceIds, setlists, songById),
@@ -91,10 +106,11 @@ export function LivePickerDialog({
       return next;
     });
 
-  const toggleIds = (ids: string[]) =>
+  const toggleIds = (ids: string[], key: string) =>
     setSelectedIds((current) => {
       const next = new Set(current);
       const remove = ids.every((id) => next.has(id));
+      if (!remove && selectedGroupKey && selectedGroupKey !== key) return current;
       for (const id of ids) {
         if (remove) next.delete(id);
         else next.add(id);
@@ -171,6 +187,7 @@ export function LivePickerDialog({
                   <Stack gap="2">
                     {groups.map((group) => {
                       const key = groupKey(group.tourName, group.startDate);
+                      const disabled = Boolean(selectedGroupKey && selectedGroupKey !== key);
                       const ids = group.legs.map((leg) => leg.id);
                       const multi = group.legs.length > 1;
                       const isExpanded = isSearching || expanded.has(key) || !multi;
@@ -185,8 +202,9 @@ export function LivePickerDialog({
                         >
                           <HStack gap="2" justifyContent="space-between" alignItems="flex-start">
                             <Checkbox
+                              disabled={disabled}
                               checked={checkState(ids)}
-                              onCheckedChange={() => toggleIds(ids)}
+                              onCheckedChange={() => toggleIds(ids, key)}
                               aria-label={group.tourName}
                               flex="1"
                               minW="0"
@@ -229,9 +247,10 @@ export function LivePickerDialog({
                               {group.legs.map((leg) => (
                                 <Checkbox
                                   key={leg.id}
+                                  disabled={disabled}
                                   size="sm"
                                   checked={selectedIds.has(leg.id)}
-                                  onCheckedChange={() => toggleIds([leg.id])}
+                                  onCheckedChange={() => toggleIds([leg.id], key)}
                                   aria-label={legRowLabel(leg)}
                                 >
                                   <Stack gap="0" minW="0">

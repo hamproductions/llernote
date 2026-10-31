@@ -111,6 +111,8 @@ export interface VenueSummary {
   name: string;
   performanceCount: number;
   attendedCount: number;
+  witnessedCount: number;
+  watchedCount: number;
   firstDate: string;
   lastDate: string;
   seriesIds: string[];

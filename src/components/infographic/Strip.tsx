@@ -4,17 +4,9 @@ type Seg = { px: number; c: string; op: number };
 
 const MARKER_W = 0.8;
 
-export function Strip({
-  g,
-  mode,
-  includeSpinoff
-}: {
-  g: string;
-  mode: string;
-  includeSpinoff: boolean;
-}) {
+export function Strip({ g, mode }: { g: string; mode: string }) {
   const { d, gLabel, openEvent, hover } = useInfo();
-  const perfs = (d.flagPerfByGroup[g] as any[]).filter((p) => includeSpinoff || !p.spinoff);
+  const perfs = (d.flagPerfByGroup[g] ?? []) as any[];
   const unitsOf = (p: any) =>
     mode === 'flow'
       ? p.performed +

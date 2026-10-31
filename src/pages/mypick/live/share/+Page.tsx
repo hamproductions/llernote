@@ -6,13 +6,9 @@ import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { Metadata } from '~/components/layout/Metadata';
 import { LiveMyPickBoard, type BoardCard } from '~/components/mypick/LiveMyPickBoard';
-import {
-  useArtistById,
-  usePerformanceById,
-  useSeriesById,
-  useSetlists,
-  useSongById
-} from '~/hooks/useData';
+import { useArtistById, usePerformanceById, useSeriesById } from '~/hooks/useData';
+import { useSetlists } from '~/hooks/useSetlists';
+import { useSongById } from '~/hooks/useSongData';
 import { LocalStorage } from '~/hooks/useLocalStorage';
 import { localizedName } from '~/utils/names';
 import { getPicUrl } from '~/utils/assets';

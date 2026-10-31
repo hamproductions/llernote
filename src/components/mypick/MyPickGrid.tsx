@@ -15,14 +15,9 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
 import { Menu } from '~/components/ui/menu';
-import {
-  getLiveThumb,
-  useArtistById,
-  useCharacters,
-  usePerformanceById,
-  useSeriesById,
-  useSongById
-} from '~/hooks/useData';
+import { getLiveThumb, useArtistById, usePerformanceById, useSeriesById } from '~/hooks/useData';
+import { useSongById } from '~/hooks/useSongData';
+import { useCharacters } from '~/hooks/useCharacterData';
 import { getPicUrl } from '~/utils/assets';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';

@@ -10,6 +10,7 @@ import { EventThumb } from './EventThumb';
 import { VenueText } from './VenueText';
 import { useAttendance } from '~/hooks/useAttendance';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
+import { isWatched, isWitnessed } from '~/utils/attendance/witness';
 import { clickable } from '~/utils/clickable';
 import type { Performance } from '~/types';
 
@@ -23,6 +24,8 @@ export function EventCard({
   const { t } = useTranslation();
   const { get } = useAttendance();
   const record = get(performance.id);
+  const witnessed = isWitnessed(record, performance);
+  const watched = isWatched(record, performance);
   const future = isFutureEvent(performance);
   const days = daysFromToday(performance.date);
   const relativeDate =
@@ -38,18 +41,22 @@ export function EventCard({
       cursor={onClick ? 'pointer' : undefined}
       borderLeftWidth="4px"
       borderLeftColor={
-        record?.status === 'attended'
+        witnessed
           ? 'accent.default'
-          : record?.status === 'interested'
-            ? 'amber.9'
-            : 'transparent'
+          : watched
+            ? 'blue.9'
+            : record?.status === 'interested'
+              ? 'amber.9'
+              : 'transparent'
       }
       bgColor={
-        record?.status === 'attended'
+        witnessed
           ? 'accent.a2'
-          : record?.status === 'interested'
-            ? 'amber.a2'
-            : undefined
+          : watched
+            ? 'blue.a2'
+            : record?.status === 'interested'
+              ? 'amber.a2'
+              : undefined
       }
       transition="colors"
       _hover={onClick ? { borderColor: 'accent.8' } : undefined}
@@ -94,7 +101,11 @@ export function EventCard({
             <EventThumb performance={performance} />
           </HStack>
           <Wrap gap="2" mt="auto">
-            <AttendanceButtons performanceId={performance.id} future={future} />
+            <AttendanceButtons
+              performanceId={performance.id}
+              category={performance.category}
+              future={future}
+            />
           </Wrap>
         </Stack>
       </Card.Body>

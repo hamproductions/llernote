@@ -10,13 +10,9 @@ import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
 import { LivePickerDialog } from '~/components/mypick/LivePickerDialog';
 import { LiveMyPickBoard, type BoardCard } from '~/components/mypick/LiveMyPickBoard';
 import { EXPORT_BG } from '~/components/mypick/MyPickGrid';
-import {
-  useArtistById,
-  usePerformanceById,
-  useSeriesById,
-  useSetlists,
-  useSongById
-} from '~/hooks/useData';
+import { useArtistById, usePerformanceById, useSeriesById } from '~/hooks/useData';
+import { useSetlists } from '~/hooks/useSetlists';
+import { useSongById } from '~/hooks/useSongData';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
 import { useToaster } from '~/context/ToasterContext';
 import { localizedName } from '~/utils/names';

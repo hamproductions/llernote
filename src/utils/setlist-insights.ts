@@ -1,5 +1,16 @@
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist } from '~/types';
+import { isWitnessed } from './attendance/witness';
+
+const witnessedPerformances = (
+  records: AttendanceRecord[],
+  performanceById: Map<string, Performance>
+) =>
+  records
+    .map((record) => performanceById.get(record.performanceId))
+    .filter((performance, index): performance is Performance =>
+      isWitnessed(records[index], performance)
+    );
 
 export interface SongSetlistInsight {
   isDebut: boolean;
@@ -180,10 +191,7 @@ export const getSongFirstWitnessPerformance = (
   performanceById: Map<string, Performance>,
   setlists: Record<string, Setlist>
 ) =>
-  records
-    .filter((record) => record.status === 'attended' && !record.deleted)
-    .map((record) => performanceById.get(record.performanceId))
-    .filter((performance): performance is Performance => performance !== undefined)
+  witnessedPerformances(records, performanceById)
     .filter((performance) => songIdsForSetlist(setlists[performance.id]).includes(songId))
     .sort(comparePerformancesChronologically)[0];
 
@@ -197,10 +205,7 @@ export const getSongWitnessCountAtPerformance = (
   performanceById: Map<string, Performance>,
   setlists: Record<string, Setlist>
 ) =>
-  records
-    .filter((record) => record.status === 'attended' && !record.deleted)
-    .map((record) => performanceById.get(record.performanceId))
-    .filter((candidate): candidate is Performance => candidate !== undefined)
+  witnessedPerformances(records, performanceById)
     .filter((candidate) => isPerformanceAtOrBefore(candidate, performance))
     .reduce(
       (count, candidate) =>

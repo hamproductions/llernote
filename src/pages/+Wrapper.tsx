@@ -5,6 +5,8 @@ import { SentryProvider } from '~/components/utils/SentryContext';
 import { ColorModeProvider } from '~/context/ColorModeContext';
 import { ToasterProvider } from '~/context/ToasterContext';
 import { getAssetUrl } from '~/utils/assets';
+import { loadAnalytics } from '~/utils/analytics';
+import { whenIdle } from '~/utils/idle';
 
 import i18n from '../i18n';
 
@@ -15,6 +17,7 @@ export function Wrapper({ children }: { children: React.ReactNode }) {
     if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       void navigator.serviceWorker.register(getAssetUrl('/sw.js'));
     }
+    if (import.meta.env.PROD) whenIdle(loadAnalytics);
     const saved =
       localStorage.getItem('i18nextLng') ?? (navigator.language.startsWith('ja') ? 'ja' : 'en');
     if (saved !== i18n.language) {

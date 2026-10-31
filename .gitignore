@@ -26,6 +26,8 @@ dist-ssr
 styled-system
  
 **/raw/*
+!data/raw/
+!data/raw/llfans-detailed-tours.json
 
 scripts/internal/
 

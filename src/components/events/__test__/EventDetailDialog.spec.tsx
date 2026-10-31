@@ -6,6 +6,10 @@ import { SetlistItemRow } from '../EventDetailDialog';
 import type { Song } from '~/types';
 
 vi.mock('~/hooks/useData', () => ({
+  useArtistById: () => new Map()
+}));
+
+vi.mock('~/hooks/useSongData', () => ({
   useSongById: () =>
     new Map<string, Song>([
       [
@@ -18,8 +22,7 @@ vi.mock('~/hooks/useData', () => ({
           seriesIds: []
         }
       ]
-    ]),
-  useArtistById: () => new Map()
+    ])
 }));
 
 vi.mock('~/utils/song-thumbs', () => ({

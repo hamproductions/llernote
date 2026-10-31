@@ -23,7 +23,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import type { LiveCostume, PerformanceCostumes } from '../src/types/mypick-live';
+import type { LiveCostume, PerformanceCostumes } from '../src/utils/costumes';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const localRawPath = join(here, '../data/raw/llfans-performances.json');

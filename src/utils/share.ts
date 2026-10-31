@@ -1,5 +1,3 @@
-import { domToBlob } from 'modern-screenshot';
-import { saveAs } from 'file-saver';
 import type { Performance } from '~/types';
 
 export const eventernoteSearchUrl = (performance: Performance) => {
@@ -26,6 +24,10 @@ export const downloadElementAsImage = async (
   filename: string,
   backgroundColor?: string
 ) => {
+  const [{ domToBlob }, { saveAs }] = await Promise.all([
+    import('modern-screenshot'),
+    import('file-saver')
+  ]);
   const blob = await domToBlob(element, {
     scale: 2,
     width: element.scrollWidth,

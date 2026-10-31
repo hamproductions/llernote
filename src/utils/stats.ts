@@ -1,9 +1,12 @@
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist, VenueInfo } from '~/types';
 import { hasUsableVenueInfo, venueKey } from './venues';
+import { isWitnessed } from './attendance/witness';
 
 export interface StatsSummary {
   attendedCount: number;
+  witnessedCount: number;
+  watchedCount: number;
   interestedCount: number;
   songsWitnessed: number;
   uniqueSongs: number;
@@ -68,6 +71,7 @@ export const computeStats = (
     { month: string; total: number; attended: number; going: number }
   >();
   const songIds: string[] = [];
+  let witnessedCount = 0;
 
   for (const performance of performances) {
     const month = performance.date.slice(0, 7);
@@ -92,12 +96,14 @@ export const computeStats = (
   ).length;
 
   for (const { record, performance } of attended) {
+    const witnessed = isWitnessed(record, performance);
+    if (witnessed) witnessedCount += 1;
     const year = performance.date.slice(0, 4);
     byYear.set(year, (byYear.get(year) ?? 0) + 1);
     for (const seriesId of performance.seriesIds) {
       bySeries.set(seriesId, (bySeries.get(seriesId) ?? 0) + 1);
     }
-    if (performance.venue) {
+    if (witnessed && performance.venue) {
       const key = venueKey(performance);
       const venue = byVenue.get(key);
       byVenue.set(key, {
@@ -111,13 +117,15 @@ export const computeStats = (
         : undefined;
       if (city) byCity.set(city, (byCity.get(city) ?? 0) + 1);
     }
-    const watchType = record.watchType ?? 'live';
-    byWatchType.set(watchType, (byWatchType.get(watchType) ?? 0) + 1);
+    if (performance.category === 'live') {
+      const watchType = record.watchType ?? 'live';
+      byWatchType.set(watchType, (byWatchType.get(watchType) ?? 0) + 1);
+    }
     byCategory.set(performance.category, (byCategory.get(performance.category) ?? 0) + 1);
     const month = performance.date.slice(0, 7);
     byMonth.set(month, (byMonth.get(month) ?? 0) + 1);
 
-    const setlist = setlists[performance.id];
+    const setlist = witnessed ? setlists[performance.id] : undefined;
     if (setlist) {
       for (const item of setlist.items) {
         if (item.type === 'song' && item.songId) songIds.push(item.songId);
@@ -127,6 +135,8 @@ export const computeStats = (
 
   return {
     attendedCount: attended.length,
+    witnessedCount,
+    watchedCount: attended.length - witnessedCount,
     interestedCount,
     songsWitnessed: songIds.length,
     uniqueSongs: new Set(songIds).size,
