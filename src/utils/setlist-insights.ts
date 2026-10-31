@@ -1,5 +1,16 @@
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist } from '~/types';
+import { isWitnessed } from './attendance/witness';
+
+const witnessedPerformances = (
+  records: AttendanceRecord[],
+  performanceById: Map<string, Performance>
+) =>
+  records
+    .map((record) => performanceById.get(record.performanceId))
+    .filter((performance, index): performance is Performance =>
+      isWitnessed(records[index], performance)
+    );
 
 export interface SongSetlistInsight {
   isDebut: boolean;
@@ -180,10 +191,7 @@ export const getSongFirstWitnessPerformance = (
   performanceById: Map<string, Performance>,
   setlists: Record<string, Setlist>
 ) =>
-  records
-    .filter((record) => record.status === 'attended' && !record.deleted)
-    .map((record) => performanceById.get(record.performanceId))
-    .filter((performance): performance is Performance => performance !== undefined)
+  witnessedPerformances(records, performanceById)
     .filter((performance) => songIdsForSetlist(setlists[performance.id]).includes(songId))
     .sort(comparePerformancesChronologically)[0];
 
@@ -214,10 +222,9 @@ export const buildWitnessBySong = (
   const map = new Map<string, SongWitness>();
 
   for (const record of records) {
-    if (record.status !== 'attended' || record.deleted) continue;
     const attended = performanceById.get(record.performanceId);
     const setlist = setlists[record.performanceId];
-    if (!attended || !setlist) continue;
+    if (!attended || !setlist || !isWitnessed(record, attended)) continue;
     if (!isPerformanceAtOrBefore(attended, performance)) continue;
 
     // A song played twice in one show still counts as one witnessing of that show.
@@ -302,10 +309,7 @@ export const getSongWitnessCountAtPerformance = (
   performanceById: Map<string, Performance>,
   setlists: Record<string, Setlist>
 ) =>
-  records
-    .filter((record) => record.status === 'attended' && !record.deleted)
-    .map((record) => performanceById.get(record.performanceId))
-    .filter((candidate): candidate is Performance => candidate !== undefined)
+  witnessedPerformances(records, performanceById)
     .filter((candidate) => isPerformanceAtOrBefore(candidate, performance))
     .reduce(
       (count, candidate) =>

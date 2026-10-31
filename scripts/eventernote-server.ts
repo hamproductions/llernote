@@ -245,7 +245,7 @@ if (isEntrypoint) {
     });
   });
 
-  server.listen(PORT, () => {
+  server.listen(PORT, '127.0.0.1', () => {
     console.log(`eventernote-report stand-in listening on http://localhost:${PORT}`);
     console.log(`  GET /api/events/user/:userId`);
     console.log(`  GET /api/events/search?q=<keyword>`);

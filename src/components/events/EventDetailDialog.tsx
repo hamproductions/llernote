@@ -25,14 +25,10 @@ import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
 import { SongThumb } from '~/components/songs/SongThumb';
 import { useAttendance } from '~/hooks/useAttendance';
-import {
-  useArtistById,
-  usePerformanceById,
-  usePerformances,
-  useSetlist,
-  useSetlists,
-  useSongById
-} from '~/hooks/useData';
+import { useArtistById } from '~/hooks/useData';
+import { performanceById as allPerformanceById, sortedPerformances } from '~/data/core';
+import { useSongById } from '~/hooks/useSongData';
+import { useAllSetlists } from '~/hooks/useSetlists';
 import { useToaster } from '~/context/ToasterContext';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
@@ -45,12 +41,13 @@ import {
 } from '~/utils/share';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import {
-  buildSetlistInsights,
   buildWitnessBySong,
+  buildSetlistInsights,
   compareSetlists,
   songWitnessInfo,
   type SongSetlistInsight
 } from '~/utils/setlist-insights';
+import { isWitnessed } from '~/utils/attendance/witness';
 import type { Performance, SetlistItem } from '~/types';
 import type { WatchType } from '~/types/attendance';
 
@@ -194,7 +191,6 @@ export function SetlistItemRow({
   showArtists: boolean;
   witnessInfo?: { count: number; isFirst: boolean; daysSinceSeen?: number };
   setlistInsight?: SongSetlistInsight;
-  /** How many earlier performances played this song (global, not viewer-specific). */
   performedBeforeCount?: number;
   onSelectSong?: (songId: string) => void;
 }) {
@@ -286,16 +282,16 @@ export function SetlistItemRow({
         {hasLine2 && (
           <HStack gap="2" minW="0" color="fg.subtle" fontSize="2xs" flexWrap="wrap">
             {item.remarks && <Text lineClamp={1}>{item.remarks}</Text>}
-            {performedBeforeCount !== undefined && (
-              <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
-                {t('sort.performed_before', { count: performedBeforeCount })}
-              </Text>
-            )}
             {setlistInsight?.daysSincePreviousPerformance !== undefined && (
               <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
                 {t('events.song_days_since_previous', {
                   count: setlistInsight.daysSincePreviousPerformance
                 })}
+              </Text>
+            )}
+            {performedBeforeCount !== undefined && (
+              <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
+                {t('sort.performed_before', { count: performedBeforeCount })}
               </Text>
             )}
             {showArtists && artistNames && <Text lineClamp={1}>{artistNames}</Text>}
@@ -336,10 +332,10 @@ export function EventDetailDialog({
   const { t, i18n } = useTranslation();
   const { toast } = useToaster();
   const { get, records, updateAttendance } = useAttendance();
-  const setlists = useSetlists();
-  const performances = usePerformances();
-  const performanceById = usePerformanceById();
-  const setlist = useSetlist(performance?.id);
+  const setlists = useAllSetlists();
+  const performances = sortedPerformances;
+  const performanceById = allPerformanceById;
+  const setlist = performance ? setlists[performance.id] : undefined;
   const songById = useSongById();
   const record = performance ? get(performance.id) : undefined;
   const [memo, setMemo] = useState('');
@@ -380,10 +376,11 @@ export function EventDetailDialog({
       }
     }
   }
-  const witnessBySong =
-    record?.status === 'attended' && setlist
-      ? buildWitnessBySong(performance, records, performanceById, setlists)
-      : null;
+  const witnessBySong = (() => {
+    if (!isWitnessed(record, performance) || !setlist) return null;
+    return buildWitnessBySong(performance, records, allPerformanceById, setlists);
+  })();
+
   const sections =
     setlist && setlist.sections.length > 0
       ? setlist.sections
@@ -564,6 +561,7 @@ export function EventDetailDialog({
               <Wrap gap="2">
                 <AttendanceButtons
                   performanceId={performance.id}
+                  category={performance.category}
                   future={isFutureEvent(performance)}
                   size="sm"
                 />

@@ -5,7 +5,7 @@ import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
-import { useCharacters } from '~/hooks/useData';
+import { useCharacters } from '~/hooks/useCharacterData';
 import { foldKana } from '~/utils/event-filter';
 import { getPicUrl } from '~/utils/assets';
 import { castName, localizedName } from '~/utils/names';

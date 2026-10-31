@@ -1,0 +1,80 @@
+import performanceInfo from '../../data/performance-info.json';
+import eventExtra from '../../data/event-extra.json';
+import artistsInfo from '../../data/artists-info.json';
+import seriesInfo from '../../data/series-info.json';
+import unitsInfo from '../../data/units.json';
+import venueInfo from '../../data/venue-info.json';
+import eventernoteMap from '../../data/eventernote-map.json';
+import liveThumbInfo from '../../data/live-thumb-info.json';
+import type { Artist, LiveThumb, Performance, Series, Unit, VenueInfo } from '~/types';
+
+const extraById = eventExtra as Record<string, Partial<Performance>>;
+
+export const TOUR_TYPE_CATEGORY: Record<string, Performance['category']> = {
+  'ライブ・ファンミ': 'live',
+  外部のフェス: 'live',
+  外部イベント内のライブ: 'live',
+  'リリイベ・ミニライブ': 'live',
+  有観客バーチャルライブ: 'live',
+  バーチャルライブ: 'online',
+  収録配信: 'online',
+  TV出演: 'tv'
+};
+
+const deriveCategory = (p: Partial<Performance>): Performance['category'] => {
+  const base = p.tourType ? TOUR_TYPE_CATEGORY[p.tourType] : undefined;
+  if (base === 'tv' || base === 'online') return base;
+  if (p.audience === false) return 'online';
+  return base ?? 'live';
+};
+
+const tourTypeByName = new Map<string, string>();
+for (const p of performanceInfo as Omit<Performance, 'category'>[]) {
+  const extra = extraById[p.id];
+  if (extra?.tourType && !tourTypeByName.has(p.tourName)) {
+    tourTypeByName.set(p.tourName, extra.tourType);
+  }
+}
+
+export const performances: Performance[] = (performanceInfo as Omit<Performance, 'category'>[]).map(
+  (p) => {
+    const merged = { ...p, ...extraById[p.id] };
+    if (!merged.tourType && tourTypeByName.has(p.tourName)) {
+      merged.tourType = tourTypeByName.get(p.tourName);
+      if (merged.audience === undefined) merged.audience = true;
+    }
+    return { ...merged, category: deriveCategory(merged) };
+  }
+);
+export const artists = artistsInfo as unknown as Artist[];
+export const series = seriesInfo as Series[];
+export const units = unitsInfo as unknown as Unit[];
+export const venues = venueInfo as VenueInfo[];
+
+export const sortedPerformances = [...performances].sort((a, b) => b.date.localeCompare(a.date));
+export const performanceById = new Map(performances.map((p) => [p.id, p]));
+export const livePerformances = sortedPerformances.filter((p) => p.category === 'live');
+export const livePerformanceById = new Map(livePerformances.map((p) => [p.id, p]));
+export const remotePerformances = sortedPerformances.filter((p) => p.category !== 'live');
+export const remotePerformanceById = new Map(remotePerformances.map((p) => [p.id, p]));
+export const artistById = new Map(artists.map((a) => [a.id, a]));
+export const seriesById = new Map(series.map((s) => [s.id, s]));
+export const venueById = new Map(venues.map((v) => [v.id, v]));
+
+const liveThumbs = Object.entries(liveThumbInfo as Record<string, LiveThumb>);
+export const liveThumbByPerformanceId = new Map(
+  liveThumbs.filter(([key]) => !key.startsWith('tour:'))
+);
+export const liveThumbByTourName = new Map(
+  liveThumbs
+    .filter(([key]) => key.startsWith('tour:'))
+    .map(([key, thumb]) => [key.slice('tour:'.length), thumb])
+);
+export const eventernoteIdByPerformanceId = new Map(
+  Object.entries(eventernoteMap as Record<string, string>)
+);
+export const performanceByEventernoteId = new Map(
+  [...eventernoteIdByPerformanceId]
+    .map(([performanceId, eventernoteId]) => [eventernoteId, performanceById.get(performanceId)])
+    .filter((entry): entry is [string, Performance] => entry[1] !== undefined)
+);

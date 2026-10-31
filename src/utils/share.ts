@@ -1,5 +1,3 @@
-import { domToBlob } from 'modern-screenshot';
-import { saveAs } from 'file-saver';
 import type { Performance } from '~/types';
 
 export const eventernoteSearchUrl = (performance: Performance) => {
@@ -21,43 +19,23 @@ export const xShareUrl = (text: string, url?: string) => {
   return `https://x.com/intent/post?${params.toString()}`;
 };
 
-const elementToPng = (element: HTMLElement, backgroundColor?: string) =>
-  domToBlob(element, {
+export const downloadElementAsImage = async (
+  element: HTMLElement,
+  filename: string,
+  backgroundColor?: string
+) => {
+  const [{ domToBlob }, { saveAs }] = await Promise.all([
+    import('modern-screenshot'),
+    import('file-saver')
+  ]);
+  const blob = await domToBlob(element, {
     scale: 2,
     width: element.scrollWidth,
     height: element.scrollHeight,
     backgroundColor: backgroundColor ?? getComputedStyle(document.body).backgroundColor,
     style: { overflow: 'visible' }
   });
-
-export const downloadElementAsImage = async (
-  element: HTMLElement,
-  filename: string,
-  backgroundColor?: string
-) => {
-  const blob = await elementToPng(element, backgroundColor);
   if (blob) saveAs(blob, filename);
-};
-
-export const canCopyImageToClipboard = () =>
-  typeof ClipboardItem !== 'undefined' && typeof navigator?.clipboard?.write === 'function';
-
-/**
- * Copy a rendered element to the clipboard as a PNG.
- *
- * `ClipboardItem` is handed the *pending* blob rather than an awaited one: Safari voids
- * the user-gesture permission if `clipboard.write` is reached after an await, so the
- * promise has to be passed through synchronously.
- */
-export const copyElementImageToClipboard = async (
-  element: HTMLElement,
-  backgroundColor?: string
-) => {
-  const png = elementToPng(element, backgroundColor).then((blob) => {
-    if (!blob) throw new Error('Failed to render element to an image');
-    return blob;
-  });
-  await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
 };
 
 export const copyTextToClipboard = async (text: string) => {

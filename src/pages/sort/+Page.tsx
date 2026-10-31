@@ -19,7 +19,7 @@ import {
   useLiveSortData,
   type LiveSortFilters
 } from '~/hooks/useLiveSortData';
-import { usePerformances } from '~/hooks/useData';
+import { sortedPerformances } from '~/data/core';
 import { buildSortCandidates, type SortCandidate, type SortUnit } from '~/utils/live-sort';
 import { decodeLiveSortResults } from '~/utils/live-sort-share';
 
@@ -38,7 +38,6 @@ export default function Page() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
-  const performances = usePerformances();
   const {
     state,
     isEnded,
@@ -67,7 +66,7 @@ export default function Page() {
     const decoded = decodeLiveSortResults(encoded);
     if (!decoded) return;
     const byId = new Map(
-      buildSortCandidates(performances, decoded.unit).map((candidate) => [candidate.id, candidate])
+      buildSortCandidates(sortedPerformances, decoded.unit).map((candidate) => [candidate.id, candidate])
     );
     const resolved = decoded.results
       .map((bucket) =>
@@ -77,7 +76,7 @@ export default function Page() {
       )
       .filter((bucket) => bucket.length > 0);
     if (resolved.length > 0) setShared({ unit: decoded.unit, ranking: resolved });
-  }, [performances]);
+  }, []);
 
   const unitOptions = useMemo(
     () => UNITS.map((value) => ({ value, label: t(`sort.unit_${value}`) })),
@@ -119,7 +118,7 @@ export default function Page() {
           </Text>
         </Stack>
 
-        {!started && (
+        {hydrated && !started && (
           <Stack gap="4">
             <HStack gap="3" alignItems="flex-end" flexWrap="wrap">
               <Stack gap="1">

@@ -1,40 +1,41 @@
-import { createContext, lazy, Suspense, useContext, useMemo, useState } from 'react';
+import { createContext, lazy, Suspense, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import {
-  usePerformanceById,
-  usePerformances,
-  useSetlists,
-  useSongById,
-  useVenueById
-} from '~/hooks/useData';
-import { useAttendance } from '~/hooks/useAttendance';
-import { getSongDebutPerformance, getSongFirstWitnessPerformance } from '~/utils/setlist-insights';
-import { buildVenueSummaries } from '~/utils/venues';
-import type { Performance } from '~/types';
 
-const SongDetailDialog = lazy(() =>
-  import('~/components/songs/SongDetailDialog').then((m) => ({ default: m.SongDetailDialog }))
-);
-const EventDetailDialog = lazy(() =>
-  import('~/components/events/EventDetailDialog').then((m) => ({ default: m.EventDetailDialog }))
-);
-const VenueDetailDialog = lazy(() =>
-  import('~/components/venues/VenueDetailDialog').then((m) => ({ default: m.VenueDetailDialog }))
-);
+const DetailStackHost = lazy(() => import('./DetailStackHost'));
 
-type Kind = 'song' | 'event' | 'venue';
+type Kind = 'song' | 'event' | 'venue' | 'costume';
 type Item = { kind: Kind; id: string };
 type DetailApi = {
   openSong: (id: string) => void;
   openEvent: (id: string) => void;
   openVenue: (id: string) => void;
+  openCostume: (id: string) => void;
 };
 
 const Ctx = createContext<DetailApi | null>(null);
-const NOOP: DetailApi = { openSong() {}, openEvent() {}, openVenue() {} };
+const NOOP: DetailApi = { openSong() {}, openEvent() {}, openVenue() {}, openCostume() {} };
 export const useDetail = () => useContext(Ctx) ?? NOOP;
 
 const MAX_DEPTH = 30;
+const KINDS: Kind[] = ['song', 'event', 'venue', 'costume'];
+
+const parseView = (search: string): Item | null => {
+  const view = new URLSearchParams(search).get('view');
+  if (!view) return null;
+  const sep = view.indexOf('-');
+  if (sep < 0) return null;
+  const kind = view.slice(0, sep) as Kind;
+  const id = view.slice(sep + 1);
+  return KINDS.includes(kind) && id ? { kind, id } : null;
+};
+
+const syncUrl = (top: Item | undefined) => {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  if (top) url.searchParams.set('view', `${top.kind}-${top.id}`);
+  else url.searchParams.delete('view');
+  window.history.replaceState(window.history.state, '', url);
+};
 
 export function DetailStackProvider({ children }: { children: ReactNode }) {
   const [stack, setStack] = useState<Item[]>([]);
@@ -48,7 +49,8 @@ export function DetailStackProvider({ children }: { children: ReactNode }) {
     return {
       openSong: (id) => push({ kind: 'song', id }),
       openEvent: (id) => push({ kind: 'event', id }),
-      openVenue: (id) => push({ kind: 'venue', id })
+      openVenue: (id) => push({ kind: 'venue', id }),
+      openCostume: (id) => push({ kind: 'costume', id })
     };
   }, []);
   const back = () => setStack((s) => s.slice(0, -1));
@@ -57,141 +59,30 @@ export function DetailStackProvider({ children }: { children: ReactNode }) {
   const top = stack[stack.length - 1];
   const onBack = stack.length > 1 ? back : undefined;
 
+  useEffect(() => {
+    const item = parseView(window.location.search);
+    if (item) setStack([item]);
+  }, []);
+
+  useEffect(() => {
+    syncUrl(top);
+  }, [top]);
+
   return (
     <Ctx.Provider value={api}>
       {children}
       {top && (
         <Suspense fallback={null}>
-          {top.kind === 'song' ? (
-            <SongHost id={top.id} onBack={onBack} onClose={close} onOpenEvent={api.openEvent} />
-          ) : top.kind === 'venue' ? (
-            <VenueHost id={top.id} onBack={onBack} onClose={close} onOpenEvent={api.openEvent} />
-          ) : (
-            <EventHost
-              id={top.id}
-              onBack={onBack}
-              onClose={close}
-              onOpenSong={api.openSong}
-              onNavigate={replaceEvent}
-            />
-          )}
+          <DetailStackHost
+            item={top}
+            onBack={onBack}
+            onClose={close}
+            openSong={api.openSong}
+            openEvent={api.openEvent}
+            replaceEvent={replaceEvent}
+          />
         </Suspense>
       )}
     </Ctx.Provider>
-  );
-}
-
-function EventHost({
-  id,
-  onBack,
-  onClose,
-  onOpenSong,
-  onNavigate
-}: {
-  id: string;
-  onBack?: () => void;
-  onClose: () => void;
-  onOpenSong: (id: string) => void;
-  onNavigate: (id: string) => void;
-}) {
-  const performance = usePerformanceById().get(id);
-  if (!performance) return null;
-  return (
-    <EventDetailDialog
-      performance={performance}
-      open
-      onClose={onClose}
-      onBack={onBack}
-      onOpenSong={onOpenSong}
-      onNavigate={(p) => onNavigate(p.id)}
-    />
-  );
-}
-
-function SongHost({
-  id,
-  onBack,
-  onClose,
-  onOpenEvent
-}: {
-  id: string;
-  onBack?: () => void;
-  onClose: () => void;
-  onOpenEvent: (id: string) => void;
-}) {
-  const songById = useSongById();
-  const performances = usePerformances();
-  const performanceById = usePerformanceById();
-  const setlists = useSetlists();
-  const { records } = useAttendance();
-  const data = useMemo(() => {
-    const song = songById.get(id);
-    const has = (pid: string) =>
-      setlists[pid]?.items.some((it) => it.type === 'song' && it.songId === id) ?? false;
-    const performedAt = performances.filter((p) => has(p.id));
-    const heardAt = records
-      .filter((r) => r.status === 'attended')
-      .map((r) => performanceById.get(r.performanceId))
-      .filter((p): p is Performance => Boolean(p) && has((p as Performance).id));
-    return {
-      song,
-      heardAt,
-      performedAt,
-      debutPerformance: getSongDebutPerformance(id, performanceById, setlists),
-      firstWitnessPerformance: getSongFirstWitnessPerformance(
-        id,
-        records,
-        performanceById,
-        setlists
-      ),
-      performanceCount: performedAt.length
-    };
-  }, [id, songById, performances, performanceById, setlists, records]);
-  if (!data.song) return null;
-  return (
-    <SongDetailDialog
-      song={data.song}
-      heardAt={data.heardAt}
-      performedAt={data.performedAt}
-      debutPerformance={data.debutPerformance}
-      firstWitnessPerformance={data.firstWitnessPerformance}
-      performanceCount={data.performanceCount}
-      open
-      onClose={onClose}
-      onBack={onBack}
-      onSelectEvent={(p) => onOpenEvent(p.id)}
-    />
-  );
-}
-
-function VenueHost({
-  id,
-  onBack,
-  onClose,
-  onOpenEvent
-}: {
-  id: string;
-  onBack?: () => void;
-  onClose: () => void;
-  onOpenEvent: (id: string) => void;
-}) {
-  const performances = usePerformances();
-  const venueById = useVenueById();
-  const { records } = useAttendance();
-  const venue = useMemo(() => {
-    const attendedIds = new Set(
-      records.filter((r) => r.status === 'attended').map((r) => r.performanceId)
-    );
-    return buildVenueSummaries(performances, venueById, attendedIds).find((v) => v.id === id);
-  }, [performances, venueById, records, id]);
-  if (!venue) return null;
-  return (
-    <VenueDetailDialog
-      venue={venue}
-      open
-      onClose={onClose}
-      onBack={onBack}
-      onOpenEvent={onOpenEvent}
-    />
   );
 }

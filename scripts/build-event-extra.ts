@@ -3,70 +3,76 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const localRawPath = join(here, '../data/raw/llfans-performances.json');
-const sorterRawPath = join(here, '../../the-sorter/data/raw/llfans-performances.json');
-const RAW_PATH = existsSync(localRawPath) ? localRawPath : sorterRawPath;
+const localToursPath = join(here, '../data/raw/llfans-detailed-tours.json');
+const sorterToursPath = join(here, '../../the-sorter/data/raw/llfans-detailed-tours.json');
+const TOURS_PATH = existsSync(localToursPath) ? localToursPath : sorterToursPath;
 const OUT_PATH = join(here, '../data/event-extra.json');
-
-interface RawEntry {
-  performance: {
-    id: string;
-    name?: string | null;
-    canceled: boolean;
-    audience: boolean;
-    openTime?: string | null;
-    startTime?: string | null;
-    note?: string | null;
-  };
-  concert?: { name?: string | null; venue?: { id: string; name: string } | null } | null;
-  tour?: { tourType?: { name?: string | null } | null } | null;
-}
-
 const INFO_PATH = join(here, '../data/performance-info.json');
 
-const raw: RawEntry[] = JSON.parse(readFileSync(RAW_PATH, 'utf-8'));
+interface PerformanceStub {
+  id: string;
+  name?: string | null;
+  canceled?: boolean;
+  audience?: boolean;
+  openTime?: string | null;
+  startTime?: string | null;
+  note?: string | null;
+}
 
-// `data/raw/` is gitignored, so CI starts every run with an empty cache and the
-// incremental LLFans fetch only writes back the handful of performances it re-fetched.
-// Replacing the output wholesale would therefore shrink it to those few entries (it did:
-// 744 -> 26 -> 21 across successive automated commits). Merge over what is already
-// committed instead, so a full local regeneration survives the next CI run.
+interface Concert {
+  name?: string | null;
+  venue?: { id: string; name: string } | null;
+  performances?: PerformanceStub[] | null;
+}
+
+interface DetailedTour {
+  tourType?: { name?: string | null } | null;
+  concerts?: Concert[] | null;
+}
+
+const tours: DetailedTour[] = JSON.parse(readFileSync(TOURS_PATH, 'utf-8'));
 const existing: Record<string, Record<string, unknown>> = existsSync(OUT_PATH)
   ? JSON.parse(readFileSync(OUT_PATH, 'utf-8'))
   : {};
-
-// `performanceName` has since migrated into performance-info.json, where it holds a
-// richer composed label ("名古屋公演 (6/12＜1回目＞)") than the raw dump's bare
-// "6/12＜1回目＞". useData merges extra *over* performance-info, so re-emitting the raw
-// name here would regress those labels.
-const infoPerformanceNames = new Map<string, string>(
+const infoPerformanceNames = new Set(
   (JSON.parse(readFileSync(INFO_PATH, 'utf-8')) as { id: string; performanceName?: string }[])
     .filter((p) => Boolean(p.performanceName))
-    .map((p) => [p.id, p.performanceName!])
+    .map((p) => p.id)
 );
 
 const trimTime = (time?: string | null) => (time ? time.slice(0, 5) : undefined);
 
-const derived = Object.fromEntries(
-  raw.map((entry) => [
-    entry.performance.id,
-    {
-      performanceName: infoPerformanceNames.has(entry.performance.id)
-        ? undefined
-        : (entry.performance.name ?? undefined),
-      concertName: entry.concert?.name ?? undefined,
-      venueId: entry.concert?.venue?.id ?? undefined,
-      openTime: trimTime(entry.performance.openTime),
-      startTime: trimTime(entry.performance.startTime),
-      tourType: entry.tour?.tourType?.name ?? undefined,
-      audience: entry.performance.audience,
-      canceled: entry.performance.canceled || undefined,
-      note: entry.performance.note ?? undefined
+const derived: Record<string, Record<string, unknown>> = {};
+for (const tour of tours) {
+  const tourType = tour.tourType?.name ?? undefined;
+  for (const concert of tour.concerts ?? []) {
+    for (const performance of concert.performances ?? []) {
+      derived[performance.id] = {
+        performanceName: infoPerformanceNames.has(performance.id)
+          ? undefined
+          : (performance.name ?? undefined),
+        concertName: concert.name ?? undefined,
+        venueId: concert.venue?.id ?? undefined,
+        openTime: trimTime(performance.openTime),
+        startTime: trimTime(performance.startTime),
+        tourType,
+        audience: performance.audience,
+        canceled: performance.canceled || undefined,
+        note: performance.note ?? undefined
+      };
     }
-  ])
-);
+  }
+}
 
-const extra = { ...existing, ...derived };
+const extra = { ...existing };
+for (const [id, values] of Object.entries(derived)) {
+  const merged = { ...existing[id] };
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined) merged[key] = value;
+  }
+  if (infoPerformanceNames.has(id)) delete merged.performanceName;
+  extra[id] = merged;
+}
 
 writeFileSync(OUT_PATH, JSON.stringify(extra));
 const noteCount = Object.values(extra).filter((e) => e.note).length;

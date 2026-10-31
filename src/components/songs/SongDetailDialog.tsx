@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaXmark } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
@@ -8,6 +9,8 @@ import { IconButton } from '~/components/ui/icon-button';
 import { Text } from '~/components/ui/text';
 import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
+import { ScopeTabs } from '~/components/events/ScopeTabs';
+import { scopeMatches, type Scope } from '~/utils/attendance/witness';
 import { useArtistById } from '~/hooks/useData';
 import { daysFromToday } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
@@ -21,10 +24,10 @@ interface SongWithVideo extends Song {
 export function SongDetailDialog({
   song,
   heardAt,
+  watchedAt = [],
   performedAt,
   debutPerformance,
   firstWitnessPerformance,
-  performanceCount,
   open,
   layer = 50,
   onClose,
@@ -33,6 +36,7 @@ export function SongDetailDialog({
 }: {
   song?: Song;
   heardAt: Performance[];
+  watchedAt?: Performance[];
   performedAt: Performance[];
   debutPerformance?: Performance;
   firstWitnessPerformance?: Performance;
@@ -45,6 +49,7 @@ export function SongDetailDialog({
 }) {
   const { t, i18n } = useTranslation();
   const artistById = useArtistById();
+  const [scope, setScope] = useState<Scope>('all');
 
   if (!song) return null;
 
@@ -57,8 +62,9 @@ export function SongDetailDialog({
     )
   ].join('・');
   const videoId = (song as SongWithVideo).musicVideo?.videoId;
-  const latestPerformance = performedAt.length
-    ? performedAt.reduce((a, b) => (a.date >= b.date ? a : b))
+  const visiblePerformed = performedAt.filter((p) => scopeMatches(scope, p.category));
+  const latestPerformance = visiblePerformed.length
+    ? visiblePerformed.reduce((a, b) => (a.date >= b.date ? a : b))
     : undefined;
   const lastWitnessPerformance = heardAt.length
     ? heardAt.reduce((a, b) => (a.date >= b.date ? a : b))
@@ -133,6 +139,10 @@ export function SongDetailDialog({
               </Box>
             )}
 
+            <HStack justifyContent="flex-end">
+              <ScopeTabs value={scope} onChange={setScope} size="xs" />
+            </HStack>
+
             <Stack gap="2">
               <HStack gap="2" alignItems="baseline">
                 <Text fontWeight="semibold">{t('songs.song_history')}</Text>
@@ -148,7 +158,7 @@ export function SongDetailDialog({
                     },
                     {
                       key: 'first_witness',
-                      perf: firstWitnessPerformance,
+                      perf: scope === 'remote' ? undefined : firstWitnessPerformance,
                       label: t('songs.first_witness_performance'),
                       variant: 'outline'
                     },
@@ -164,6 +174,7 @@ export function SongDetailDialog({
                     {
                       key: 'last_witness',
                       perf:
+                        scope !== 'remote' &&
                         lastWitnessPerformance &&
                         lastWitnessPerformance.id !== firstWitnessPerformance?.id
                           ? lastWitnessPerformance
@@ -205,20 +216,76 @@ export function SongDetailDialog({
               </Stack>
             </Stack>
 
-            <Stack gap="2">
-              <HStack gap="2" alignItems="baseline">
-                <Text fontWeight="semibold">{t('songs.witnessed_at')}</Text>
-                <Text color="fg.muted" fontSize="sm">
-                  {t('songs.times', { count: heardAt.length })}
-                </Text>
-              </HStack>
-              {heardAt.length === 0 ? (
-                <Text color="fg.muted" fontSize="sm">
-                  {t('songs.never_heard')}
-                </Text>
-              ) : (
+            {scope !== 'remote' && (
+              <Stack gap="2">
+                <HStack gap="2" alignItems="baseline">
+                  <Text fontWeight="semibold">{t('songs.witnessed_at')}</Text>
+                  <Text color="fg.muted" fontSize="sm">
+                    {t('songs.times', { count: heardAt.length })}
+                  </Text>
+                </HStack>
+                {heardAt.length === 0 ? (
+                  <Text color="fg.muted" fontSize="sm">
+                    {t('songs.never_heard')}
+                  </Text>
+                ) : (
+                  <Stack gap="0.5">
+                    {heardAt.map((p) => (
+                      <HStack
+                        key={p.id}
+                        {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}
+                        cursor={onSelectEvent ? 'pointer' : undefined}
+                        gap="2"
+                        alignItems="baseline"
+                        borderRadius="l1"
+                        py="1"
+                        px="1.5"
+                        transition="colors"
+                        _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
+                      >
+                        <Text
+                          flexShrink={0}
+                          color="fg.muted"
+                          fontSize="xs"
+                          fontVariantNumeric="tabular-nums"
+                        >
+                          {p.date}
+                        </Text>
+                        <Stack flex="1" gap="0" minW="0">
+                          <Text
+                            lang="ja"
+                            color={onSelectEvent ? 'accent.text' : undefined}
+                            fontSize="sm"
+                            lineClamp={2}
+                          >
+                            {p.tourName}
+                          </Text>
+                          <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+                            {[p.concertName, p.performanceName, p.venue].filter(Boolean).join('・')}
+                          </Text>
+                        </Stack>
+                        <Text flexShrink={0} color="fg.subtle" fontSize="xs">
+                          {relativeDate(p.date)}
+                        </Text>
+                      </HStack>
+                    ))}
+                  </Stack>
+                )}
+              </Stack>
+            )}
+
+            {scope !== 'inperson' && watchedAt.length > 0 && (
+              <Stack gap="2">
+                <HStack gap="2" alignItems="baseline">
+                  <Text color="blue.11" fontWeight="semibold">
+                    {t('songs.watched_at')}
+                  </Text>
+                  <Text color="fg.muted" fontSize="sm">
+                    {t('songs.times', { count: watchedAt.length })}
+                  </Text>
+                </HStack>
                 <Stack gap="0.5">
-                  {heardAt.map((p) => (
+                  {watchedAt.map((p) => (
                     <HStack
                       key={p.id}
                       {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}
@@ -252,24 +319,21 @@ export function SongDetailDialog({
                           {[p.concertName, p.performanceName, p.venue].filter(Boolean).join('・')}
                         </Text>
                       </Stack>
-                      <Text flexShrink={0} color="fg.subtle" fontSize="xs">
-                        {relativeDate(p.date)}
-                      </Text>
                     </HStack>
                   ))}
                 </Stack>
-              )}
-            </Stack>
+              </Stack>
+            )}
 
             <Stack gap="2">
               <HStack gap="2" alignItems="baseline">
                 <Text fontWeight="semibold">{t('songs.performed_at')}</Text>
                 <Text color="fg.muted" fontSize="sm">
-                  {t('songs.times', { count: performanceCount })}
+                  {t('songs.times', { count: visiblePerformed.length })}
                 </Text>
               </HStack>
               <Stack gap="0.5" maxH="56" overflowY="auto">
-                {performedAt.map((p) => (
+                {visiblePerformed.map((p) => (
                   <HStack
                     key={p.id}
                     {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}

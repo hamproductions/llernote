@@ -14,6 +14,7 @@ import { Link } from '~/components/ui/link';
 import { Text } from '~/components/ui/text';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { VenueText } from '~/components/events/VenueText';
+import { performanceById as allPerformanceById } from '~/data/core';
 import { useToaster } from '~/context/ToasterContext';
 import { useAttendance } from '~/hooks/useAttendance';
 import {
@@ -145,7 +146,14 @@ export function EventernoteImportDialog({ open, onClose }: { open: boolean; onCl
 
   const register = () => {
     const ids = Object.values(selected);
-    for (const id of ids) attendance.setAttendance(id, 'attended');
+    for (const id of ids) {
+      const performance = allPerformanceById.get(id);
+      attendance.setAttendance(
+        id,
+        'attended',
+        performance && performance.category !== 'live' ? { watchType: 'stream' } : {}
+      );
+    }
     setSelected({});
     toast({ title: t('eventernote.registered', { count: ids.length }), type: 'success' });
   };

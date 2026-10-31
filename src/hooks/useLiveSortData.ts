@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useSorter } from './useSorter';
 import { useSortTimer } from './useSortTimer';
 import { useAttendance } from './useAttendance';
-import { useAllPerformances, useAllSetlists, usePerformances } from './useData';
+import { usePerformances } from './useData';
+import { useAllSetlists } from './useSetlists';
+import { sortedPerformances } from '~/data/core';
 import { useToaster } from '~/context/ToasterContext';
 import { getCurrentItem } from '~/utils/sort';
 import { buildSongPerformanceOrdinals } from '~/utils/setlist-insights';
@@ -78,7 +80,6 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
   const { t } = useTranslation();
   const { toast } = useToaster();
   const performances = usePerformances();
-  const allPerformances = useAllPerformances();
   const allSetlists = useAllSetlists();
   const { map: attendanceMap } = useAttendance();
 
@@ -111,8 +112,8 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
   // "Performed before" is a property of the live, not of the viewer, so it counts every
   // performance — including the TV and online ones that `inPersonOnly` hides.
   const songOrdinals = useMemo(
-    () => buildSongPerformanceOrdinals(allPerformances, allSetlists),
-    [allPerformances, allSetlists]
+    () => buildSongPerformanceOrdinals(sortedPerformances, allSetlists),
+    [allSetlists]
   );
 
   const prefix = LIVE_SORT_PREFIX[unit];

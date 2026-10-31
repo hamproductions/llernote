@@ -30,13 +30,12 @@ import {
   getLiveThumb,
   useArtistById,
   useArtists,
-  useCharacters,
   usePerformances,
-  useSeries,
-  useSetlists,
-  useSongById,
-  useSongs
+  useSeries
 } from '~/hooks/useData';
+import { useSongById, useSongs } from '~/hooks/useSongData';
+import { useCharacters } from '~/hooks/useCharacterData';
+import { useSetlists } from '~/hooks/useSetlists';
 import { setMyPick, setMyPickCell, setMyPickConfig } from '~/utils/attendance/storage';
 import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
 import { getPicUrl } from '~/utils/assets';

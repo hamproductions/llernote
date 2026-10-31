@@ -17,9 +17,12 @@ export const displayVenueLocation = (
 export function buildVenueSummaries(
   performances: Performance[],
   venueById: Map<string, VenueInfo>,
-  attendedIds: Set<string> = new Set()
+  witnessedIds: Set<string> = new Set(),
+  watchedIds: Set<string> = new Set()
 ): VenueSummary[] {
   const summaries = new Map<string, VenueSummary>();
+  const witnessedOf = (id: string) => (witnessedIds.has(id) ? 1 : 0);
+  const watchedOf = (id: string) => (watchedIds.has(id) ? 1 : 0);
 
   for (const performance of performances) {
     if (!performance.venue) continue;
@@ -28,13 +31,17 @@ export function buildVenueSummaries(
     const rawInfo = performance.venueId ? venueById.get(performance.venueId) : undefined;
     const info = hasUsableVenueInfo(rawInfo) ? rawInfo : undefined;
     const existing = summaries.get(id);
+    const w = witnessedOf(performance.id);
+    const r = watchedOf(performance.id);
 
     if (!existing) {
       summaries.set(id, {
         id,
         name: rawInfo?.name ?? performance.venue,
         performanceCount: 1,
-        attendedCount: attendedIds.has(performance.id) ? 1 : 0,
+        attendedCount: w + r,
+        witnessedCount: w,
+        watchedCount: r,
         firstDate: performance.date,
         lastDate: performance.date,
         seriesIds: [...performance.seriesIds],
@@ -52,7 +59,9 @@ export function buildVenueSummaries(
     }
 
     existing.performanceCount += 1;
-    if (attendedIds.has(performance.id)) existing.attendedCount += 1;
+    existing.witnessedCount += w;
+    existing.watchedCount += r;
+    existing.attendedCount += w + r;
     existing.firstDate =
       performance.date < existing.firstDate ? performance.date : existing.firstDate;
     existing.lastDate = performance.date > existing.lastDate ? performance.date : existing.lastDate;

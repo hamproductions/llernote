@@ -6,8 +6,10 @@ import { SetlistItemRow } from '~/components/events/EventDetailDialog';
 import { Tabs } from '~/components/ui/tabs';
 import { Text } from '~/components/ui/styled/text';
 import { useDetail } from '~/components/detail/DetailStack';
-import { usePerformanceById, useSetlists } from '~/hooks/useData';
+import { performanceById } from '~/data/core';
+import { useAllSetlists } from '~/hooks/useSetlists';
 import { useAttendance } from '~/hooks/useAttendance';
+import { isWitnessed } from '~/utils/attendance/witness';
 import { legTabLabel, type SortCandidate } from '~/utils/live-sort';
 import {
   buildWitnessBySong,
@@ -47,8 +49,7 @@ function LegSetlist({
   songOrdinals: Map<string, Map<string, number>>;
 }) {
   const { t } = useTranslation();
-  const setlists = useSetlists();
-  const performanceById = usePerformanceById();
+  const setlists = useAllSetlists();
   const { records } = useAttendance();
   const { openSong } = useDetail();
   const setlist = setlists[performance.id];
@@ -56,12 +57,10 @@ function LegSetlist({
 
   // "The Nth time you've seen this song", same tally the event dialog shows. Only
   // meaningful for a live you attended, so it is skipped otherwise.
-  const attended = records.some(
-    (record) => record.performanceId === performance.id && record.status === 'attended'
-  );
+  const attended = records.some((record) => isWitnessed(record, performance));
   const witnessBySong = useMemo(
     () => (attended ? buildWitnessBySong(performance, records, performanceById, setlists) : null),
-    [attended, performance, records, performanceById, setlists]
+    [attended, performance, records, setlists]
   );
 
   if (!setlist || setlist.items.length === 0) {

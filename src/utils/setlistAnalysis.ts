@@ -1,7 +1,7 @@
 import artistsJson from '../../data/artists-info.json';
-import songsJson from '../../data/song-info.json';
+import { loadSongData, type SongData } from '~/data/songs';
 import perfsJson from '../../data/performance-info.json';
-import setlistsJson from '../../data/performance-setlists.json';
+import { loadSetlists } from '~/data/setlists';
 import seriesJson from '../../data/series-info.json';
 import extraJson from '../../data/event-extra.json';
 
@@ -134,14 +134,13 @@ function bindCategories(rows: { keys: Set<string>; date: string; venue: string }
 }
 
 const artists = artistsJson as unknown as Artist[];
-const songs = songsJson as unknown as SongRec[];
+let songs: SongRec[] = [];
 const perfs = perfsJson as unknown as Perf[];
 const perfNameById = new Map(perfs.map((p) => [p.id, p.performanceName] as const));
-const setlistsObj = setlistsJson as unknown as Record<string, Setlist>;
 const seriesInfo = seriesJson as unknown as { id: string; name: string; color: string }[];
 const extraById = extraJson as unknown as Record<
   string,
-  { performanceName?: string; concertName?: string }
+  { performanceName?: string; concertName?: string; tourType?: string }
 >;
 const perfName = (id: string, date: string) => {
   const e = extraById[id];
@@ -183,7 +182,7 @@ function classify(a: Artist): ArtistType {
 }
 const artistType = new Map(artists.map((a) => [a.id, classify(a)] as const));
 
-const songById = new Map(songs.map((s) => [s.id, s]));
+let songById = new Map<string, SongRec>();
 function songArtistType(songId: string): ArtistType | 'unknown' {
   const s = songById.get(songId);
   if (!s || !s.artists?.length) return 'unknown';
@@ -216,9 +215,20 @@ function songOccs(sl: Setlist): Occ[] {
 }
 
 const setlistByPerf = new Map<string, Setlist>();
-for (const k of Object.keys(setlistsObj)) {
-  const sl = setlistsObj[k];
-  setlistByPerf.set(String(sl.performanceId), sl);
+export function populateSongs(data: SongData) {
+  if (songById.size) return;
+  songs = data.songs as unknown as SongRec[];
+  songById = new Map(songs.map((s) => [s.id, s]));
+  for (const s of songs) songCensus[songArtistType(s.id)]++;
+}
+
+export function populateSetlists(obj: Record<string, Setlist>) {
+  if (setlistByPerf.size) return;
+  for (const k of Object.keys(obj)) {
+    const sl = obj[k];
+    setlistByPerf.set(String(sl.performanceId), sl);
+  }
+  tourStats = computeTourStats();
 }
 
 function songKeys(sl: Setlist): string[] {
@@ -282,7 +292,8 @@ const NUMBERED_LIVES: { group: string; match: string; label: string }[] = [
   { group: 'Hasunosora', match: '4th Live Dream', label: '4th' },
   { group: 'Hasunosora', match: '5th Live Tour', label: '5th' },
   { group: 'Hasunosora', match: '6th Live Dream', label: '6th' },
-  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 1st LIVE', label: '1st' }
+  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 1st LIVE', label: '1st' },
+  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 2nd LIVE', label: '2nd' }
 ];
 const flagOf = (tourName: string) => NUMBERED_LIVES.find((e) => tourName.includes(e.match)) ?? null;
 const liveLabel = (tour: string): string => flagOf(tour)?.label ?? '?';
@@ -305,12 +316,27 @@ type TourStat = {
   legPairs: number;
   comp: Record<string, number>;
   isFlagship: boolean;
+  liveCat: LiveCat | null;
 };
 
 const tours = new Map<string, Perf[]>();
 for (const p of perfs) {
   if (!tours.has(p.tourName)) tours.set(p.tourName, []);
   tours.get(p.tourName)!.push(p);
+}
+
+// A tour's ll-fans tourType = the most common tourType across its performances.
+const tourTypeByName = new Map<string, string>();
+for (const [tourName, ps] of tours) {
+  const counts = new Map<string, number>();
+  for (const p of ps) {
+    const tt = extraById[p.id]?.tourType;
+    if (tt) counts.set(tt, (counts.get(tt) ?? 0) + 1);
+  }
+  let best: string | undefined;
+  let bestN = 0;
+  for (const [tt, n] of counts) if (n > bestN) ((best = tt), (bestN = n));
+  if (best) tourTypeByName.set(tourName, best);
 }
 
 function jaccard(a: Set<string>, b: Set<string>) {
@@ -320,82 +346,89 @@ function jaccard(a: Set<string>, b: Set<string>) {
   return uni === 0 ? 1 : inter / uni;
 }
 
-const tourStats: TourStat[] = [];
-for (const [tourName, ps] of tours) {
-  const withSet = ps.filter((p) => p.hasSetlist && setlistByPerf.has(p.id));
-  if (!withSet.length) continue;
-  const sls = withSet.map((p) => setlistByPerf.get(p.id)!);
-  const sets = sls.map((sl) => new Set(songKeys(sl)));
-  const lens = sets.map((s) => s.size).filter((n) => n > 0);
-  if (!lens.length) continue;
+let tourStats: TourStat[] = [];
+function computeTourStats(): TourStat[] {
+  const out: TourStat[] = [];
+  for (const [tourName, ps] of tours) {
+    const flagged = !!flagOf(tourName);
+    const analysisPerfs = flagged ? ps : ps.filter((p) => setlistByPerf.has(p.id));
+    if (!analysisPerfs.length) continue;
+    const sls = analysisPerfs.map(
+      (p) => setlistByPerf.get(p.id) ?? { performanceId: p.id, items: [] }
+    );
+    const sets = sls.map((sl) => new Set(songKeys(sl)));
+    const activeSets = sets.filter((s) => s.size > 0);
+    if (!activeSets.length && !flagged) continue;
+    const counts = new Map<string, number>();
+    for (const s of sets) for (const x of s) counts.set(x, (counts.get(x) || 0) + 1);
+    const nShows = flagged ? sets.length : activeSets.length;
+    const core = [...counts.values()].filter((c) => c === nShows).length;
+    const avgLen = nShows ? activeSets.reduce((a, s) => a + s.size, 0) / nShows : 0;
 
-  const counts = new Map<string, number>();
-  for (const s of sets) for (const x of s) counts.set(x, (counts.get(x) || 0) + 1);
-  const nShows = sets.filter((s) => s.size > 0).length;
-  const core = [...counts.values()].filter((c) => c === nShows).length;
-  const avgLen = lens.reduce((a, b) => a + b, 0) / lens.length;
-
-  const idx: number[] = [];
-  for (let i = 0; i < sets.length; i++) if (sets[i].size > 0) idx.push(i);
-  let jSum = 0,
-    jN = 0;
-  for (let a = 0; a < idx.length; a++)
-    for (let b = a + 1; b < idx.length; b++) {
-      jSum += jaccard(sets[idx[a]], sets[idx[b]]);
-      jN++;
-    }
-  const meanJaccard = jN ? jSum / jN : 1;
-
-  const venueGroups = new Map<string, number[]>();
-  for (const i of idx) {
-    const v = withSet[i].venue || '?';
-    if (!venueGroups.has(v)) venueGroups.set(v, []);
-    venueGroups.get(v)!.push(i);
-  }
-  let jDay = 0,
-    nDay = 0;
-  for (const grp of venueGroups.values())
-    for (let a = 0; a < grp.length; a++)
-      for (let b = a + 1; b < grp.length; b++) {
-        jDay += jaccard(sets[grp[a]], sets[grp[b]]);
-        nDay++;
+    const idx: number[] = [];
+    for (let i = 0; i < sets.length; i++) if (sets[i].size > 0) idx.push(i);
+    let jSum = 0,
+      jN = 0;
+    for (let a = 0; a < idx.length; a++)
+      for (let b = a + 1; b < idx.length; b++) {
+        jSum += jaccard(sets[idx[a]], sets[idx[b]]);
+        jN++;
       }
-  const reps = [...venueGroups.values()].map((grp) => grp[0]);
-  let jLeg = 0,
-    nLeg = 0;
-  for (let a = 0; a < reps.length; a++)
-    for (let b = a + 1; b < reps.length; b++) {
-      jLeg += jaccard(sets[reps[a]], sets[reps[b]]);
-      nLeg++;
+    const meanJaccard = jN ? jSum / jN : 1;
+
+    const venueGroups = new Map<string, number[]>();
+    for (const i of idx) {
+      const v = analysisPerfs[i].venue || '?';
+      if (!venueGroups.has(v)) venueGroups.set(v, []);
+      venueGroups.get(v)!.push(i);
     }
-  const simDays = nDay ? jDay / nDay : null;
-  const simLegs = nLeg ? jLeg / nLeg : null;
+    let jDay = 0,
+      nDay = 0;
+    for (const grp of venueGroups.values())
+      for (let a = 0; a < grp.length; a++)
+        for (let b = a + 1; b < grp.length; b++) {
+          jDay += jaccard(sets[grp[a]], sets[grp[b]]);
+          nDay++;
+        }
+    const reps = [...venueGroups.values()].map((grp) => grp[0]);
+    let jLeg = 0,
+      nLeg = 0;
+    for (let a = 0; a < reps.length; a++)
+      for (let b = a + 1; b < reps.length; b++) {
+        jLeg += jaccard(sets[reps[a]], sets[reps[b]]);
+        nLeg++;
+      }
+    const simDays = nDay ? jDay / nDay : null;
+    const simLegs = nLeg ? jLeg / nLeg : null;
 
-  const comp: Record<string, number> = { group: 0, subunit: 0, solo: 0, collab: 0, unknown: 0 };
-  for (const sl of sls) for (const o of songOccs(sl)) comp[o.t] += o.w;
+    const comp: Record<string, number> = { group: 0, subunit: 0, solo: 0, collab: 0, unknown: 0 };
+    for (const sl of sls) for (const o of songOccs(sl)) comp[o.t] += o.w;
 
-  const seriesIds = ps[0].seriesIds || [];
-  const primarySeries = seriesIds.length === 1 ? seriesIds[0] : 'mixed';
+    const seriesIds = ps[0].seriesIds || [];
+    const primarySeries = seriesIds.length === 1 ? seriesIds[0] : 'mixed';
 
-  tourStats.push({
-    tour: tourName,
-    seriesIds,
-    group: seriesIds.length > 1 ? 'Mixed / Series' : seriesName[primarySeries] || 'Other',
-    headliner: detectHeadliner(tourName)?.name ?? null,
-    from: [...ps].map((p) => p.date).sort()[0],
-    nShows,
-    legs: venueGroups.size,
-    avgLen: +avgLen.toFixed(1),
-    coreShare: +(core / avgLen).toFixed(3),
-    meanJaccard: +meanJaccard.toFixed(3),
-    changeRate: +(1 - meanJaccard).toFixed(3),
-    changeDays: simDays === null ? null : +(1 - simDays).toFixed(3),
-    changeLegs: simLegs === null ? null : +(1 - simLegs).toFixed(3),
-    dayPairs: nDay,
-    legPairs: nLeg,
-    comp,
-    isFlagship: !!flagOf(tourName)
-  });
+    out.push({
+      tour: tourName,
+      seriesIds,
+      group: seriesIds.length > 1 ? 'Mixed / Series' : seriesName[primarySeries] || 'Other',
+      headliner: detectHeadliner(tourName)?.name ?? null,
+      from: [...ps].map((p) => p.date).sort()[0],
+      nShows,
+      legs: venueGroups.size,
+      avgLen: +avgLen.toFixed(1),
+      coreShare: avgLen ? +(core / avgLen).toFixed(3) : 0,
+      meanJaccard: +meanJaccard.toFixed(3),
+      changeRate: +(1 - meanJaccard).toFixed(3),
+      changeDays: simDays === null ? null : +(1 - simDays).toFixed(3),
+      changeLegs: simLegs === null ? null : +(1 - simLegs).toFixed(3),
+      dayPairs: nDay,
+      legPairs: nLeg,
+      comp,
+      isFlagship: !!flagOf(tourName),
+      liveCat: liveCatOf(!!flagOf(tourName), tourTypeByName.get(tourName))
+    });
+  }
+  return out;
 }
 
 function agg(items: TourStat[]) {
@@ -442,8 +475,33 @@ function agg(items: TourStat[]) {
   };
 }
 
-export const SPINOFF = ['Yohane'];
-const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizurai-bu!', ...SPINOFF];
+const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizurai-bu!', 'Yohane'];
+
+// Live categories shown as filters in the infographic. "numbered" is the special
+// flagship subtype of ライブ・ファンミ; the rest map straight from ll-fans tourType.
+export const LIVE_CATS = [
+  'numbered',
+  'fanmeeting',
+  'fes',
+  'release',
+  'external',
+  'virtual'
+] as const;
+export type LiveCat = (typeof LIVE_CATS)[number];
+const TOURTYPE_CAT: Record<string, LiveCat> = {
+  'ライブ・ファンミ': 'fanmeeting',
+  外部のフェス: 'fes',
+  'リリイベ・ミニライブ': 'release',
+  外部イベント内のライブ: 'external',
+  バーチャルライブ: 'virtual',
+  有観客バーチャルライブ: 'virtual',
+  収録配信: 'virtual'
+};
+const liveCatOf = (isFlagship: boolean, tourType?: string): LiveCat | null =>
+  isFlagship ? 'numbered' : tourType ? (TOURTYPE_CAT[tourType] ?? null) : null;
+const belongsToGroup = (t: TourStat, g: string) =>
+  t.seriesIds.length === 1 ? seriesName[t.seriesIds[0]] === g : t.headliner === g;
+
 const REG_QUANTILE = 0.25;
 export type Song2 = { id: string; t: string };
 
@@ -458,14 +516,9 @@ const spinLabel = (tour: string) => {
       .trim() || tour;
   return s.length > 9 ? s.slice(0, 8) + '…' : s;
 };
-const flagshipOf = (g: string) => tourStats.filter((t) => t.isFlagship && t.headliner === g);
-const spinOf = (g: string) =>
-  tourStats.filter(
-    (t) =>
-      !t.isFlagship && t.seriesIds.length === 1 && seriesName[t.seriesIds[0]] === g && t.avgLen > 8
-  );
 
-function build(includeSpin: boolean) {
+function build(cats: string[]) {
+  const catSet = new Set(cats);
   const byGroup: Record<string, ReturnType<typeof agg>> = {};
   const flagByGroup: Record<string, any[]> = {};
   const flagPerfByGroup: Record<string, any[]> = {};
@@ -473,10 +526,10 @@ function build(includeSpin: boolean) {
   const allLives: TourStat[] = [];
 
   for (const g of CANON) {
-    const lives = [
-      ...flagshipOf(g).map((t) => ({ t, spin: false })),
-      ...(includeSpin ? spinOf(g).map((t) => ({ t, spin: true })) : [])
-    ].sort((a, b) => a.t.from.localeCompare(b.t.from));
+    const lives = tourStats
+      .filter((t) => t.liveCat && catSet.has(t.liveCat) && belongsToGroup(t, g))
+      .map((t) => ({ t, spin: !t.isFlagship }))
+      .sort((a, b) => a.t.from.localeCompare(b.t.from));
     if (!lives.length) continue;
     for (const l of lives) allLives.push(l.t);
 
@@ -503,10 +556,10 @@ function build(includeSpin: boolean) {
     lives.forEach(({ t: live, spin }, li) => {
       const lbl = spin ? spinLabel(live.tour) : liveLabel(live.tour);
       const ps = (tours.get(live.tour) || [])
-        .filter((p) => setlistByPerf.has(p.id))
+        .filter((p) => live.isFlagship || setlistByPerf.has(p.id))
         .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
       ps.forEach((p, si) => {
-        const sl = setlistByPerf.get(p.id)!;
+        const sl = setlistByPerf.get(p.id) ?? { performanceId: p.id, items: [] };
         const occs = songOccs(sl);
         let mainW = 0,
           encW = 0;
@@ -595,7 +648,7 @@ function build(includeSpin: boolean) {
         name: r.name,
         liveIdx: r.liveIdx,
         showInLive: r.showInLive,
-        flow: buildFlow(setlistByPerf.get(r.pid)!),
+        flow: buildFlow(setlistByPerf.get(r.pid) ?? { performanceId: r.pid, items: [] }),
         performed: nw + reg + ret,
         new: nw,
         regular: reg,
@@ -679,7 +732,6 @@ function build(includeSpin: boolean) {
 const artistCensus: Record<string, number> = { solo: 0, subunit: 0, group: 0, collab: 0 };
 for (const t of artistType.values()) artistCensus[t]++;
 const songCensus: Record<string, number> = { group: 0, subunit: 0, solo: 0, collab: 0, unknown: 0 };
-for (const s of songs) songCensus[songArtistType(s.id)]++;
 
 const GROUP_COLOR: Record<string, string> = {
   "μ's": seriesColor['1'],
@@ -692,14 +744,25 @@ const GROUP_COLOR: Record<string, string> = {
   'Ikizurai-bu!': seriesColor['8']
 };
 
-const makeAnalysis = (includeSpin: boolean) => ({
-  ...build(includeSpin),
+export const makeAnalysis = (cats: string[]) => ({
+  ...build(cats),
   canon: CANON,
-  spinoff: SPINOFF,
+  liveCats: LIVE_CATS,
   groupColor: GROUP_COLOR,
   songCensus,
   artistCensus
 });
 
-export const ANALYSIS = makeAnalysis(false);
-export const ANALYSIS_SPIN = makeAnalysis(true);
+export type AnalysisResults = ReturnType<typeof makeAnalysis>;
+
+const analysisCache: Record<string, AnalysisResults> = {};
+export const loadAnalysis = async (cats: string[] = ['numbered']): Promise<AnalysisResults> => {
+  const key = [...cats].sort().join(',') || 'none';
+  if (!analysisCache[key]) {
+    populateSongs(await loadSongData());
+    const { all } = await loadSetlists();
+    populateSetlists(all);
+    analysisCache[key] = makeAnalysis(cats);
+  }
+  return analysisCache[key];
+};

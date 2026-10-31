@@ -11,6 +11,7 @@ import { EventThumb } from './EventThumb';
 import { VenueText } from './VenueText';
 import { useAttendance } from '~/hooks/useAttendance';
 import { isFutureEvent } from '~/utils/event-filter';
+import { isWatched, isWitnessed } from '~/utils/attendance/witness';
 import { eventernoteSearchUrl } from '~/utils/share';
 import { clickable } from '~/utils/clickable';
 import type { TourGroup } from '~/utils/tour';
@@ -34,6 +35,8 @@ function LegRow({
   const { t } = useTranslation();
   const { get } = useAttendance();
   const record = get(performance.id);
+  const witnessed = isWitnessed(record, performance);
+  const watched = isWatched(record, performance);
   const label = legLabel(performance);
 
   return (
@@ -42,11 +45,13 @@ function LegRow({
       justifyContent="space-between"
       borderLeftWidth="3px"
       borderLeftColor={
-        record?.status === 'attended'
+        witnessed
           ? 'accent.default'
-          : record?.status === 'interested'
-            ? 'amber.9'
-            : 'border.subtle'
+          : watched
+            ? 'blue.9'
+            : record?.status === 'interested'
+              ? 'amber.9'
+              : 'border.subtle'
       }
       py="0.5"
       pl="2.5"
@@ -89,6 +94,7 @@ function LegRow({
       <HStack gap="0.5" flexShrink={0} alignSelf="flex-start">
         <AttendanceButtons
           performanceId={performance.id}
+          category={performance.category}
           future={isFutureEvent(performance)}
           iconOnly
         />
@@ -167,17 +173,21 @@ export function TourCard({
 
   if (single) {
     const record = get(first.id);
+    const witnessed = isWitnessed(record, first);
+    const watched = isWatched(record, first);
     return (
       <Card.Root
         {...clickable(() => onSelect(first))}
         cursor="pointer"
         borderLeftWidth="3px"
         borderLeftColor={
-          record?.status === 'attended'
+          witnessed
             ? 'accent.default'
-            : record?.status === 'interested'
-              ? 'amber.9'
-              : 'transparent'
+            : watched
+              ? 'blue.9'
+              : record?.status === 'interested'
+                ? 'amber.9'
+                : 'transparent'
         }
         transition="colors"
         _hover={{ borderColor: 'accent.8' }}
@@ -190,7 +200,11 @@ export function TourCard({
               {first.startTime ? `・${first.startTime}〜` : ''}
             </Text>
             <HStack onClick={(e) => e.stopPropagation()} gap="1" flexShrink={0}>
-              <AttendanceButtons performanceId={first.id} future={isFutureEvent(first)} />
+              <AttendanceButtons
+                performanceId={first.id}
+                category={first.category}
+                future={isFutureEvent(first)}
+              />
             </HStack>
           </HStack>
         </Card.Body>

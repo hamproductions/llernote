@@ -11,7 +11,9 @@ import { useSeriesById } from '~/hooks/useData';
 import { colorBarBackground, seriesColors } from '~/utils/series-contrast';
 import {
   canCopyImageToClipboard,
-  copyElementImageToClipboard,
+  copyElementImageToClipboard
+} from '~/utils/share-image';
+import {
   copyTextToClipboard,
   downloadElementAsImage
 } from '~/utils/share';

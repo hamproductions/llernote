@@ -21,11 +21,14 @@ import { Link } from '~/components/ui/link';
 import { EventCard } from '~/components/events/EventCard';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { usePerformances, useSetlists, useSongs, useVenueById } from '~/hooks/useData';
+import { usePerformances } from '~/hooks/useData';
+import { useAppSettings } from '~/hooks/useAppSettings';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useDetail } from '~/components/detail/DetailStack';
 import { todayString } from '~/utils/event-filter';
+import type { AttendanceRecord } from '~/types/attendance';
+import type { Scope } from '~/utils/attendance/witness';
 
 const href = (path: string) => join(import.meta.env.BASE_URL, path);
 const EventernoteImportDialog = lazy(() =>
@@ -70,12 +73,68 @@ function QuickLink({
   );
 }
 
+function HomeStats({ records, scope }: { records: AttendanceRecord[]; scope: Scope }) {
+  const { t } = useTranslation();
+  const { result: stats } = useDerivedDataWorker(
+    'stats',
+    { records, year: '', seriesId: '', category: '', multiSeries: false, scope },
+    [records, scope]
+  );
+  if (!stats) return null;
+  return (
+    <Grid gap="2" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
+      {(
+        [
+          ['witnessed', stats.witnessedCount],
+          ['watched', stats.watchedCount],
+          ['songs_witnessed', stats.songsWitnessed],
+          ['venues_visited', stats.venuesVisited],
+          ['total_interested', stats.interestedCount]
+        ] as const
+      ).map(([key, value]) => (
+        <Link
+          key={key}
+          href={href('/stats')}
+          display="block"
+          w="full"
+          _hover={{ textDecoration: 'none' }}
+        >
+          <Stack
+            cursor="pointer"
+            gap="0"
+            alignItems="center"
+            borderColor="accent.a5"
+            borderRadius="l3"
+            borderWidth="1px"
+            w="full"
+            p="4"
+            bgColor="accent.a2"
+            transition="all"
+            _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)' }}
+          >
+            <Text
+              textStyle="display"
+              color="accent.default"
+              fontSize="3xl"
+              fontWeight="bold"
+              lineHeight="1.2"
+            >
+              {value}
+            </Text>
+            <Text color="fg.muted" fontSize="xs">
+              {t(`stats.${key}`)}
+            </Text>
+          </Stack>
+        </Link>
+      ))}
+    </Grid>
+  );
+}
+
 export default function Page() {
   const { t } = useTranslation();
   const performances = usePerformances();
-  const setlists = useSetlists();
-  const songs = useSongs();
-  const venueById = useVenueById();
+  const { scope } = useAppSettings();
   const { records } = useAttendance();
   const { openEvent } = useDetail();
   const [search, setSearch] = useState('');
@@ -86,22 +145,6 @@ export default function Page() {
     setEventernoteMounted(true);
     setEventernoteOpen(true);
   };
-
-  const derivedStats = useDerivedDataWorker(
-    'stats',
-    {
-      records,
-      performances,
-      setlists,
-      year: '',
-      seriesId: '',
-      category: '',
-      multiSeries: false,
-      venueById
-    },
-    [records, performances, setlists, venueById]
-  );
-  const stats = derivedStats.result;
 
   const goingIds = useMemo(
     () => new Set(records.filter((r) => r.status === 'interested').map((r) => r.performanceId)),
@@ -124,7 +167,7 @@ export default function Page() {
     return performances.filter((p) => ids.has(p.id) && p.date <= today).slice(0, 3);
   }, [performances, records]);
 
-  const hasData = (stats?.attendedCount ?? 0) > 0;
+  const hasData = useMemo(() => records.some((r) => r.status === 'attended'), [records]);
 
   const submitSearch = () => {
     window.location.href = `${href('/events')}?q=${encodeURIComponent(search)}`;
@@ -209,54 +252,7 @@ export default function Page() {
           )}
         </Stack>
 
-        {hasData && stats && (
-          <Grid gap="2" gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' }}>
-            {(
-              [
-                ['total_attended', stats.attendedCount],
-                ['songs_witnessed', stats.songsWitnessed],
-                ['unique_songs', `${stats.uniqueSongs}/${songs.length}`],
-                ['venues_visited', stats.venuesVisited],
-                ['total_interested', stats.interestedCount]
-              ] as const
-            ).map(([key, value]) => (
-              <Link
-                key={key}
-                href={href('/stats')}
-                display="block"
-                w="full"
-                _hover={{ textDecoration: 'none' }}
-              >
-                <Stack
-                  cursor="pointer"
-                  gap="0"
-                  alignItems="center"
-                  borderColor="accent.a5"
-                  borderRadius="l3"
-                  borderWidth="1px"
-                  w="full"
-                  p="4"
-                  bgColor="accent.a2"
-                  transition="all"
-                  _hover={{ borderColor: 'accent.8', transform: 'translateY(-2px)' }}
-                >
-                  <Text
-                    textStyle="display"
-                    color="accent.default"
-                    fontSize="3xl"
-                    fontWeight="bold"
-                    lineHeight="1.2"
-                  >
-                    {value}
-                  </Text>
-                  <Text color="fg.muted" fontSize="xs">
-                    {t(`stats.${key}`)}
-                  </Text>
-                </Stack>
-              </Link>
-            ))}
-          </Grid>
-        )}
+        {hasData && <HomeStats records={records} scope={scope} />}
 
         {nextUp.length > 0 && (
           <Stack gap="2">
