@@ -198,7 +198,9 @@ export function liveHeader(performances: Performance[]): LiveHeader {
   const first = sorted[0]!;
   if (sorted.length === 1) {
     return {
-      name: first.performanceName?.trim() || first.concertName?.trim() || first.tourName,
+      name: [first.tourName, first.concertName?.trim(), first.performanceName?.trim()]
+        .filter(Boolean)
+        .join(' · '),
       dateLabel: first.date,
       venue: first.venue || undefined
     };
