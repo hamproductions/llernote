@@ -43,7 +43,8 @@ export const NUMBERED_LIVES: { group: string; match: string; label: string }[] =
   { group: 'Hasunosora', match: '4th Live Dream', label: '4th' },
   { group: 'Hasunosora', match: '5th Live Tour', label: '5th' },
   { group: 'Hasunosora', match: '6th Live Dream', label: '6th' },
-  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 1st LIVE', label: '1st' }
+  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 1st LIVE', label: '1st' },
+  { group: 'Ikizurai-bu!', match: 'いきづらい部！ 2nd LIVE', label: '2nd' }
 ];
 
 export const flagOf = (tourName: string) =>

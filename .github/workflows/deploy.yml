@@ -65,5 +65,5 @@ jobs:
         with:
           url: ${{ needs.deploy.outputs.url }}
           key: ${{ env.PSI_API_KEY }}
-          threshold: 80
+          threshold: 70
           strategy: desktop

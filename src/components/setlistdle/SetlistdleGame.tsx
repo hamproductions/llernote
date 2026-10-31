@@ -215,7 +215,7 @@ export function SetlistdleGame() {
   const setRound = (next: Round) => (practice ? setPractice(next) : setStored(next));
 
   const targetEntry = round ? byId.get(round.targetId) : undefined;
-  const ready = Boolean(today && pool.length && round && targetEntry);
+  const ready = Boolean(today && answers.length && round && targetEntry);
 
   const targetFacts = useMemo(
     () =>
@@ -286,7 +286,7 @@ export function SetlistdleGame() {
   };
 
   if (!ready || !round || !targetEntry || !targetFacts) {
-    const empty = Boolean(today && Object.keys(setlists).length > 0 && pool.length === 0);
+    const empty = Boolean(today && Object.keys(setlists).length > 0 && answers.length === 0);
     return (
       <Stack gap="4" maxW="4xl" mx="auto">
         <CatChips cats={catsSet} onToggle={toggleCat} />
