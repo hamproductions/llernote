@@ -334,7 +334,6 @@ export function EventDetailDialog({
   const { get, records, updateAttendance } = useAttendance();
   const setlists = useAllSetlists();
   const performances = sortedPerformances;
-  const performanceById = allPerformanceById;
   const setlist = performance ? setlists[performance.id] : undefined;
   const songById = useSongById();
   const record = performance ? get(performance.id) : undefined;
