@@ -114,7 +114,9 @@ describe('/sort', () => {
     render(<Page />);
 
     await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: /Compare/i })).toHaveValue('performance')
+      expect((screen.getByRole('combobox', { name: /Compare/i }) as HTMLSelectElement).value).toBe(
+        'performance'
+      )
     );
   });
 
