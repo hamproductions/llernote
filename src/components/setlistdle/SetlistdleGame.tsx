@@ -504,9 +504,9 @@ export function SetlistdleGame() {
                     base: 'repeat(7, minmax(5rem, 1fr))',
                     md: 'repeat(7, 1fr)'
                   }}
-                  overflowX="auto"
                   w="full"
                   minW="0"
+                  overflowX="auto"
                 >
                   {ATTR_ORDER.map((key, col) => (
                     <Tile
