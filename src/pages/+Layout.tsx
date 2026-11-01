@@ -93,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               _hover={{ bgColor: isActive ? 'accent.subtle' : 'bg.subtle', textDecoration: 'none' }}
             >
               <Icon size={15} />
-              <Text as="span" hideBelow="lg">
+              <Text as="span" hideBelow="2xl">
                 {t(key)}
               </Text>
             </Link>
