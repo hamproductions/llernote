@@ -221,7 +221,7 @@ const seriesName: Record<string, string> = {
   '2': 'Aqours',
   '3': 'Nijigasaki',
   '4': 'Liella!',
-  '5': 'Musical',
+  '5': 'School Idol Musical',
   '6': 'Hasunosora',
   '7': 'Yohane',
   '8': 'Ikizurai-bu!'
@@ -630,7 +630,16 @@ function agg(items: TourStat[]) {
   };
 }
 
-const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizurai-bu!', 'Yohane'];
+const CANON = [
+  "μ's",
+  'Aqours',
+  'Nijigasaki',
+  'Liella!',
+  'School Idol Musical',
+  'Hasunosora',
+  'Ikizurai-bu!',
+  'Yohane'
+];
 
 // Live categories shown as filters in the infographic. "numbered" is the special
 // flagship subtype of ライブ・ファンミ; the rest map straight from ll-fans tourType.

@@ -19,8 +19,14 @@ const CANON = ["μ's", 'Aqours', 'Nijigasaki', 'Liella!', 'Hasunosora', 'Ikizura
 const JUNK = /^(告知|ENCORE|W-ENCORE|AFTER|OP|MC|選手MC|M\d+)$|^実況席/;
 
 describe('setlist analysis integrity', () => {
-  it('covers the 6 canonical groups', () => {
-    expect(ANALYSIS.canon.slice(0, CANON.length)).toEqual(CANON);
+  it('covers canonical groups including School Idol Musical', () => {
+    expect(
+      ANALYSIS.canon
+        .filter((group: string) => group !== 'School Idol Musical')
+        .slice(0, CANON.length)
+    ).toEqual(CANON);
+    expect(ANALYSIS.canon).toContain('School Idol Musical');
+    expect(ANALYSIS.groupColor['School Idol Musical']).toBeDefined();
     for (const g of CANON) expect(ANALYSIS.flagByGroup[g]?.length).toBeGreaterThan(0);
   });
 
