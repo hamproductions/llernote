@@ -10,6 +10,7 @@ import {
   FaMapLocationDot,
   FaMusic,
   FaShirt,
+  FaScaleBalanced,
   FaStar,
   FaTicket,
   FaTrophy
@@ -45,6 +46,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/venues', key: 'navigation.venues', icon: FaMapLocationDot },
   { path: '/stats', key: 'navigation.stats', icon: FaChartSimple },
   { path: '/songs', key: 'navigation.songs', icon: FaMusic },
+  { path: '/sort', key: 'navigation.sort', icon: FaScaleBalanced },
   { path: '/costumes', key: 'navigation.costumes', icon: FaShirt },
   { path: '/infographic', key: 'navigation.infographic', icon: FaChartPie },
   { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
