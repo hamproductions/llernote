@@ -97,7 +97,21 @@
     "core_venue": "Venue-unique",
     "core_day": "Day-unique",
     "core_perf": "One show only",
-    "binding_title": "Rotation breakdown"
+    "binding_title": "Rotation breakdown",
+    "cast_title": "Cast catalog credits",
+    "cast_sub": "Credits inferred from each song's catalog lineup, with group, unit, solo and collaboration breakdowns. These are catalog credits, not verified stage appearances; covers and special lineups can differ.",
+    "cast_avg_all": "Weighted credits / cast-show",
+    "cast_avg_no_guests": "Home-group weighted credits",
+    "cast_guest_shows": "Cross-series credit shows",
+    "cast_include_guests": "All catalog credits",
+    "cast_exclude_guests": "Home-group credits",
+    "cast_guest_badge": "Cross-series in {{count}}",
+    "cast_songs": "weighted credits",
+    "cast_credited_shows": "credited shows",
+    "cast_home_appearance": "catalog coverage {{shows}} / {{total}}",
+    "cast_show_all": "Show {{count}} more cast members",
+    "cast_empty": "Select at least one live category to analyze cast credits.",
+    "cast_method": "Each song's catalog lineup supplies the credits, not a verified performance roster. Every credited member receives one point; medley/short versions receive 0.5 as an analysis convention, not measured singing time. Home-group filtering removes catalog characters outside the show's headlining group. Generation/year variants follow catalog credits. {{count}} ambiguous historical/W-cast or missing source credits are excluded."
   },
   "common": {
     "menu": "Menu",
