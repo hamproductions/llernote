@@ -28,6 +28,7 @@ import { useLocalStorage } from '~/hooks/useLocalStorage';
 import { useDetail } from '~/components/detail/DetailStack';
 import {
   costumeDisplayName,
+  costumeMatchesCategory,
   costumeNameOverrideEn,
   getCostumeSummaries,
   type CostumeSummary,
@@ -38,7 +39,6 @@ import { partitionAttendance, scopeMatches } from '~/utils/attendance/witness';
 import { useAppSettings } from '~/hooks/useAppSettings';
 import { foldKana } from '~/utils/event-filter';
 import { localizedName } from '~/utils/names';
-import { songMatchesCategory, SONG_CATEGORIES, type SongCategory } from '~/utils/song-filter';
 import { hasSongThumb } from '~/utils/song-thumbs';
 
 const PAGE_SIZE = 48;
@@ -100,26 +100,6 @@ export default function Page() {
     [scopedPerfById, witnessed, watched, songStats, songById]
   );
 
-  // Classify each costume by the artist types (group / unit / solo / others) of
-  // the songs it was worn for — a costume can span several types.
-  const costumeCategories = useMemo(() => {
-    const map = new Map<string, Set<SongCategory>>();
-    for (const costume of costumes) {
-      const cats = new Set<SongCategory>();
-      for (const songId of costume.songIds) {
-        const song = songById.get(songId);
-        if (!song) continue;
-        for (const category of SONG_CATEGORIES) {
-          if (!cats.has(category) && songMatchesCategory(song, category, artistById)) {
-            cats.add(category);
-          }
-        }
-      }
-      map.set(costume.id, cats);
-    }
-    return map;
-  }, [costumes, songById, artistById]);
-
   // Precompute a search haystack (costume name + every song it was worn for).
   const searchText = useMemo(() => {
     const map = new Map<string, string>();
@@ -146,8 +126,13 @@ export default function Page() {
         return false;
       }
       if (filters.categories.length > 0) {
-        const cats = costumeCategories.get(costume.id);
-        if (!cats || !filters.categories.some((category) => cats.has(category))) return false;
+        if (
+          !filters.categories.some((category) =>
+            costumeMatchesCategory(costume, category, songById, artistById)
+          )
+        ) {
+          return false;
+        }
       }
       if (filters.witnessed === 'witnessed' && costume.attendedCount === 0) return false;
       if (filters.witnessed === 'unwitnessed' && costume.attendedCount > 0) return false;
@@ -169,7 +154,7 @@ export default function Page() {
       list.sort((a, b) => b.liveCount - a.liveCount || byName(a, b));
     }
     return list;
-  }, [costumes, filters, sort, searchText, costumeCategories]);
+  }, [costumes, filters, sort, searchText, songById, artistById]);
 
   const seenCount = costumes.filter((costume) => costume.attendedCount > 0).length;
   const percent = costumes.length ? Math.round((seenCount / costumes.length) * 100) : 0;

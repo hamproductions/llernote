@@ -24,6 +24,8 @@ import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
 import { SongThumb } from '~/components/songs/SongThumb';
+import { SetlistBar } from '~/components/setlist/SetlistBar';
+import { buildSetlistFlow } from '~/utils/setlist-flow';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useArtistById } from '~/hooks/useData';
 import { performanceById as allPerformanceById, sortedPerformances } from '~/data/core';
@@ -408,61 +410,7 @@ export function EventDetailDialog({
       : setlist
         ? [{ name: '', startIndex: 0, endIndex: setlist.items.length - 1, type: 'main' }]
         : [];
-  const setlistFlow = (() => {
-    type Run = { grow: number; color: string; songs: number; title: string };
-    if (!setlist) return { runs: [] as Run[], counts: { songs: 0, mc: 0, vtr: 0, enc: 0 } };
-    const items = setlist.items;
-    const secType: string[] = Array.from({ length: items.length }, () => 'main');
-    for (const s of sections)
-      for (let i = s.startIndex; i <= s.endIndex && i < secType.length; i++) secType[i] = s.type;
-    const C: Record<string, string> = {
-      main: 'var(--colors-accent-default)',
-      encore: 'var(--colors-accent-7)',
-      mc: '#f59e0b',
-      vtr: '#a855f7',
-      other: 'var(--colors-fg-muted)'
-    };
-    const runs: Run[] = [];
-    let lastK = '',
-      mc = 0,
-      vtr = 0,
-      songs = 0;
-    for (let i = 0; i < items.length; i++) {
-      const it = items[i];
-      if (it.type === 'song') {
-        songs++;
-        const k = secType[i] === 'encore' ? 'encore' : 'main';
-        const label = k === 'encore' ? 'Encore' : 'Main';
-        if (k === lastK) {
-          const last = runs[runs.length - 1];
-          last.songs++;
-          last.grow++;
-          last.title = `${label}: ${last.songs}`;
-        } else runs.push({ grow: 1, color: C[k], songs: 1, title: `${label}: 1` });
-        lastK = k;
-      } else if (it.type === 'mc') {
-        mc++;
-        runs.push({ grow: 1.2, color: C.mc, songs: 0, title: 'MC' });
-        lastK = 'mc';
-      } else if (it.type === 'vtr') {
-        vtr++;
-        runs.push({ grow: 1.2, color: C.vtr, songs: 0, title: 'VTR' });
-        lastK = 'vtr';
-      } else {
-        runs.push({
-          grow: 1,
-          color: C.other,
-          songs: 0,
-          title: it.title ?? it.customSongName ?? '—'
-        });
-        lastK = 'other';
-      }
-    }
-    return {
-      runs,
-      counts: { songs, mc, vtr, enc: sections.filter((s) => s.type === 'encore').length }
-    };
-  })();
+  const setlistFlow = buildSetlistFlow(setlist, sections);
   const setlistInsights = setlist
     ? buildSetlistInsights(performance, performances, setlists)
     : undefined;
@@ -767,26 +715,7 @@ export function EventDetailDialog({
                     )}
                     {setlistFlow.runs.length > 0 && (
                       <Stack gap="1.5">
-                        <HStack gap="0.5" borderRadius="l2" h="6" overflow="hidden">
-                          {setlistFlow.runs.map((r, i) => (
-                            <Box
-                              key={i}
-                              title={r.title}
-                              style={{ flexGrow: r.grow, background: r.color }}
-                              display="flex"
-                              justifyContent="center"
-                              alignItems="center"
-                              minW="1"
-                              h="full"
-                            >
-                              {r.songs > 1 && (
-                                <Text color="white" fontSize="2xs" fontWeight="bold">
-                                  {r.songs}
-                                </Text>
-                              )}
-                            </Box>
-                          ))}
-                        </HStack>
+                        <SetlistBar flow={setlistFlow} />
                         <Text color="fg.muted" fontSize="xs" fontVariantNumeric="tabular-nums">
                           {[
                             t('events.struct_songs', { count: setlistFlow.counts.songs }),
