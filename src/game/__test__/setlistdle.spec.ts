@@ -123,32 +123,34 @@ describe('compareFacts', () => {
   it('flags an exact match', () => {
     const r = compareFacts(target, target);
     expect(r.correct).toBe(true);
-    expect([r.series, r.year, r.songs, r.month].map((a) => a.status)).toEqual([
-      'hit',
-      'hit',
-      'hit',
-      'hit'
-    ]);
+    expect(
+      [r.series, r.year, r.category, r.tourType, r.region, r.songs, r.encores].map((a) => a.status)
+    ).toEqual(['hit', 'hit', 'hit', 'hit', 'hit', 'hit', 'hit']);
   });
 
-  it('year is amber within one year, with direction toward the target', () => {
+  it('year points toward the target without a near-match state', () => {
     const near = compareFacts(
       facts({ id: 'g', date: '2021-07-01', seriesIds: ['2'] }, { n: 12 }),
       target
     );
-    expect(near.year).toEqual({ status: 'partial', dir: 'up' });
+    expect(near.year).toEqual({ status: 'miss', dir: 'up' });
     const far = compareFacts(facts({ id: 'g', date: '2018-07-01' }, { n: 12 }), target);
     expect(far.year).toEqual({ status: 'miss', dir: 'up' });
   });
 
-  it('month is cyclic with no arrow (Dec↔Jan adjacent)', () => {
-    const target1 = facts({ id: 't1', date: '2022-01-01' }, { n: 6 });
-    expect(compareFacts(facts({ id: 'g', date: '2020-12-01' }, { n: 6 }), target1).month).toEqual({
-      status: 'partial'
-    });
-    expect(
-      compareFacts(facts({ id: 'g', date: '2020-06-01' }, { n: 6 }), target1).month.status
-    ).toBe('miss');
+  it('compares category and tour type with category-family partial matches', () => {
+    const target = facts(
+      { id: 'target', category: 'online', tourType: 'バーチャルライブ' },
+      { n: 6 }
+    );
+    const sameFamily = facts({ id: 'guess', category: 'online', tourType: '収録配信' }, { n: 6 });
+    const differentCategory = facts(
+      { id: 'other', category: 'live', tourType: 'ライブ・ファンミ' },
+      { n: 6 }
+    );
+    expect(compareFacts(sameFamily, target).tourType.status).toBe('partial');
+    expect(compareFacts(differentCategory, target).category.status).toBe('miss');
+    expect(compareFacts(differentCategory, target).tourType.status).toBe('miss');
   });
 
   it('unknown prefecture never reads as a match', () => {
@@ -206,17 +208,21 @@ describe('buildHints', () => {
     const sl = setlist({
       performanceId: 'h',
       items,
-      sections: [{ name: 'Main', startIndex: 0, endIndex: 4, type: 'main' }]
+      sections: [
+        { name: 'Main', startIndex: 0, endIndex: 3, type: 'main' },
+        { name: 'W-Encore', startIndex: 4, endIndex: 4, type: 'encore' }
+      ]
     });
     const h = buildHints(sl, (it) => it.customSongName ?? '?');
     expect(h.mcContents).toContain('MC① — トーク');
     expect(h.firstSong).toBe('Song 0');
     expect(h.songList).toEqual(['Song 0', 'Song 2', 'Song 4']);
+    expect(h.sectionCounts).toEqual({ main: 2, encore: 0, wEncore: 1, mc: 1, vtr: 1 });
   });
 });
 
 describe('buildShareText', () => {
-  it('renders a 5-column emoji grid with score', () => {
+  it('renders a seven-column emoji grid with score', () => {
     const target = facts({ id: 't' }, {});
     const guess = facts({ id: 'g', seriesIds: ['9'], date: '2099-01-01' }, { n: 30 });
     const text = buildShareText(
@@ -226,7 +232,15 @@ describe('buildShareText', () => {
       5
     );
     expect(text.startsWith('SetlistDle #7 2/5')).toBe(true);
-    expect(text).toContain('🟩🟩🟩🟩🟩');
-    expect(text).not.toContain('🟩🟩🟩🟩🟩🟩');
+    expect(
+      text
+        .split('\n')
+        .slice(1)
+        .map((line) => Array.from(line).length)
+    ).toEqual([7, 7]);
+  });
+
+  it('labels practice results without a daily puzzle number', () => {
+    expect(buildShareText(7, [], false, 5, 'practice')).toBe('SetlistDle Practice X/5\n');
   });
 });

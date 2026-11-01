@@ -3,9 +3,7 @@ import type { Performance, Setlist, SetlistItem } from '~/types';
 
 export const MAX_GUESSES = 5;
 export const MIN_SONGS = 4;
-const YEAR_NEAR = 1;
 const SONGS_NEAR = 2;
-const MONTH_NEAR = 1;
 const EPOCH = '2026-06-01';
 
 export type PoolEntry = {
@@ -105,11 +103,14 @@ const encoreBlocks = (sl: Setlist) => {
 export type EventFacts = {
   id: string;
   year: number;
-  month: number;
   seriesIds: string[];
+  category: Performance['category'];
+  tourType?: string;
+  tourFamily: LiveCat | null;
   region?: string;
   regionGroup?: string;
   songCount: number;
+  encoreCount: number;
 };
 
 export const factsOf = (
@@ -121,11 +122,14 @@ export const factsOf = (
   return {
     id: p.id,
     year: Number(p.date.slice(0, 4)),
-    month: Number(p.date.slice(5, 7)),
     seriesIds: [...p.seriesIds].sort(),
+    category: p.category,
+    tourType: p.tourType,
+    tourFamily: liveCatOfPerformance(p),
     region,
     regionGroup: region ? PREF_GROUP[region] : undefined,
-    songCount: realSongCount(sl)
+    songCount: realSongCount(sl),
+    encoreCount: encoreBlocks(sl)
   };
 };
 
@@ -136,12 +140,22 @@ export type GuessResult = {
   correct: boolean;
   series: AttrResult;
   year: AttrResult;
-  songs: AttrResult;
+  category: AttrResult;
+  tourType: AttrResult;
   region: AttrResult;
-  month: AttrResult;
+  songs: AttrResult;
+  encores: AttrResult;
 };
 
-export const ATTR_ORDER = ['series', 'year', 'songs', 'region', 'month'] as const;
+export const ATTR_ORDER = [
+  'series',
+  'year',
+  'category',
+  'tourType',
+  'region',
+  'songs',
+  'encores'
+] as const;
 
 const sameSet = (a: string[], b: string[]) =>
   a.length === b.length && a.every((x, i) => x === b[i]);
@@ -150,12 +164,6 @@ const num = (g: number, t: number, near: number): AttrResult =>
   g === t
     ? { status: 'hit' }
     : { status: Math.abs(g - t) <= near ? 'partial' : 'miss', dir: t > g ? 'up' : 'down' };
-const cyclicMonth = (g: number, t: number): AttrResult => {
-  const raw = Math.abs(g - t);
-  const d = Math.min(raw, 12 - raw);
-  return { status: d === 0 ? 'hit' : d <= MONTH_NEAR ? 'partial' : 'miss' };
-};
-
 const HIT: AttrResult = { status: 'hit' };
 
 export const compareFacts = (guess: EventFacts, target: EventFacts): GuessResult => {
@@ -165,9 +173,11 @@ export const compareFacts = (guess: EventFacts, target: EventFacts): GuessResult
       correct: true,
       series: HIT,
       year: HIT,
-      songs: HIT,
+      category: HIT,
+      tourType: HIT,
       region: HIT,
-      month: HIT
+      songs: HIT,
+      encores: HIT
     };
   return {
     id: guess.id,
@@ -175,20 +185,32 @@ export const compareFacts = (guess: EventFacts, target: EventFacts): GuessResult
     series: sameSet(guess.seriesIds, target.seriesIds)
       ? { status: 'hit' }
       : { status: overlaps(guess.seriesIds, target.seriesIds) ? 'partial' : 'miss' },
-    year: num(guess.year, target.year, YEAR_NEAR),
+    year: num(guess.year, target.year, 0),
+    category: { status: guess.category === target.category ? 'hit' : 'miss' },
+    tourType:
+      guess.tourType === target.tourType
+        ? { status: 'hit' }
+        : guess.tourFamily && guess.tourFamily === target.tourFamily
+          ? { status: 'partial' }
+          : { status: 'miss' },
     songs: num(guess.songCount, target.songCount, SONGS_NEAR),
     region:
       guess.region && target.region && guess.region === target.region
         ? { status: 'hit' }
         : guess.regionGroup && target.regionGroup && guess.regionGroup === target.regionGroup
           ? { status: 'partial' }
-          : { status: 'miss' },
-    month: cyclicMonth(guess.month, target.month)
+          : !guess.region &&
+              !target.region &&
+              guess.category === target.category &&
+              guess.category !== 'live'
+            ? { status: 'hit' }
+            : { status: 'miss' },
+    encores: num(guess.encoreCount, target.encoreCount, 0)
   };
 };
 
 export type Hints = {
-  sectionCounts: { main: number; encore: number; mc: number; vtr: number; encoreBlocks: number };
+  sectionCounts: { main: number; encore: number; wEncore: number; mc: number; vtr: number };
   mcContents: string[];
   firstSong: string;
   songList: string[];
@@ -196,18 +218,23 @@ export type Hints = {
 
 export const buildHints = (sl: Setlist, songName: (item: SetlistItem) => string): Hints => {
   const encoreIdx = new Set<number>();
+  const wEncoreIdx = new Set<number>();
   for (const sec of sl.sections ?? [])
-    if (sec.type === 'encore')
-      for (let i = sec.startIndex; i <= sec.endIndex; i++) encoreIdx.add(i);
+    if (sec.type === 'encore') {
+      const indices = sec.name.toLowerCase().includes('w-encore') ? wEncoreIdx : encoreIdx;
+      for (let i = sec.startIndex; i <= sec.endIndex; i++) indices.add(i);
+    }
   let main = 0;
   let encore = 0;
+  let wEncore = 0;
   let mc = 0;
   let vtr = 0;
   const mcContents: string[] = [];
   const songList: string[] = [];
   sl.items.forEach((it, i) => {
     if (it.type === 'song' && it.songId) {
-      if (encoreIdx.has(i)) encore += 1;
+      if (wEncoreIdx.has(i)) wEncore += 1;
+      else if (encoreIdx.has(i)) encore += 1;
       else main += 1;
       songList.push(songName(it));
     } else if (it.type === 'mc') {
@@ -221,14 +248,14 @@ export const buildHints = (sl: Setlist, songName: (item: SetlistItem) => string)
     }
   });
   return {
-    sectionCounts: { main, encore, mc, vtr, encoreBlocks: encoreBlocks(sl) },
+    sectionCounts: { main, encore, wEncore, mc, vtr },
     mcContents,
     firstSong: songList[0] ?? '?',
     songList
   };
 };
 
-export const HINT_TIERS = ['mc', 'firstSong', 'songList'] as const;
+export const HINT_TIERS = ['sectionCounts', 'mc', 'firstSong', 'songList'] as const;
 export type HintTier = (typeof HINT_TIERS)[number];
 
 const EMOJI: Record<Cmp, string> = { hit: '🟩', partial: '🟨', miss: '⬛' };
@@ -237,9 +264,10 @@ export const buildShareText = (
   day: number,
   results: GuessResult[],
   won: boolean,
-  maxGuesses = MAX_GUESSES
+  maxGuesses = MAX_GUESSES,
+  mode: 'daily' | 'practice' = 'daily'
 ): string => {
   const score = won ? `${results.length}/${maxGuesses}` : `X/${maxGuesses}`;
   const grid = results.map((r) => ATTR_ORDER.map((k) => EMOJI[r[k].status]).join('')).join('\n');
-  return `SetlistDle #${day} ${score}\n${grid}`;
+  return `SetlistDle ${mode === 'practice' ? 'Practice' : `#${day}`} ${score}\n${grid}`;
 };

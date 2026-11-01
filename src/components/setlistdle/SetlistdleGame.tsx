@@ -23,6 +23,7 @@ import { todayString } from '~/utils/event-filter';
 import {
   answerPool,
   ATTR_ORDER,
+  buildHints,
   buildPool,
   buildShareText,
   compareFacts,
@@ -76,15 +77,10 @@ type Round = {
   tier: number;
   status: 'playing' | 'won' | 'lost';
 };
-type Stats = { streak: number; max: number; played: number; wins: number };
+type Stats = { streak: number; max: number; played: number; wins: number; lastPlayedDate?: string };
 
 const seriesAlias = (p: Performance) =>
   p.seriesIds.map((id) => SERIES_ALIAS[id] ?? id).join(' · ') || '—';
-const monthLabel = (lang: string, m: number) =>
-  lang.startsWith('ja')
-    ? `${m}月`
-    : ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m];
-
 function Tile({
   label,
   result,
@@ -152,19 +148,7 @@ export function SetlistdleGame() {
   const [today, setToday] = useState<string>();
   useEffect(() => setToday(todayString()), []);
 
-  const [storedCats, setStoredCats] = useLocalStorage<string[]>('llernote-setlistdle-cats-v1', [
-    'numbered'
-  ]);
-  const cats = storedCats && storedCats.length ? storedCats : ['numbered'];
-  const catsKey = [...cats].sort().join(',');
-  const catsSet = useMemo(() => new Set(catsKey.split(',')), [catsKey]);
-  const toggleCat = (c: string) => {
-    const next = new Set(cats);
-    if (next.has(c)) {
-      if (next.size > 1) next.delete(c);
-    } else next.add(c);
-    setStoredCats([...next]);
-  };
+  const catsSet = useMemo(() => new Set<string>(LIVE_CATS), []);
 
   const pool = useMemo<PoolEntry[]>(
     () => buildPool(sortedPerformances, setlists, catsSet),
@@ -177,12 +161,10 @@ export function SetlistdleGame() {
     [venueById]
   );
 
-  const dailyTargetId = useMemo(
+  const seededDailyTargetId = useMemo(
     () =>
-      today && answers.length
-        ? answers[dailyIndex(today, answers.length, catsKey)].performance.id
-        : '',
-    [today, answers, catsKey]
+      today && answers.length ? answers[dailyIndex(today, answers.length)].performance.id : '',
+    [today, answers]
   );
 
   const [stored, setStored] = useLocalStorage<Round>('llernote-setlistdle-v2');
@@ -194,6 +176,12 @@ export function SetlistdleGame() {
     wins: 0
   });
   const [practice, setPractice] = useState<Round>();
+  const dailyTargetId =
+    storedDate === today &&
+    stored &&
+    answers.some((entry) => entry.performance.id === stored.targetId)
+      ? stored.targetId
+      : seededDailyTargetId;
 
   useEffect(() => {
     if (!today || !dailyTargetId) return;
@@ -233,6 +221,7 @@ export function SetlistdleGame() {
     },
     [songById, lang]
   );
+  const hints = targetEntry ? buildHints(targetEntry.setlist, songName) : undefined;
   const results: GuessResult[] = useMemo(() => {
     if (!round || !targetFacts) return [];
     return round.guesses
@@ -255,14 +244,23 @@ export function SetlistdleGame() {
         : 'playing';
     const tier = correct ? round.tier : Math.min(HINT_TIERS.length, Math.max(round.tier, wrong));
     setRound({ ...round, guesses, tier, status });
-    if (status !== 'playing' && round.mode === 'daily') {
+    if (
+      status !== 'playing' &&
+      round.mode === 'daily' &&
+      stored?.status === 'playing' &&
+      stats?.lastPlayedDate !== today
+    ) {
       const s = stats ?? { streak: 0, max: 0, played: 0, wins: 0 };
-      const streak = status === 'won' ? s.streak + 1 : 0;
+      const previousDate = new Date(Date.parse(`${today}T00:00:00Z`) - 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+      const streak = status === 'won' ? (s.lastPlayedDate === previousDate ? s.streak + 1 : 1) : 0;
       setStats({
         streak,
         max: Math.max(s.max, streak),
         played: s.played + 1,
-        wins: s.wins + (status === 'won' ? 1 : 0)
+        wins: s.wins + (status === 'won' ? 1 : 0),
+        lastPlayedDate: today
       });
     }
   };
@@ -289,7 +287,6 @@ export function SetlistdleGame() {
     const empty = Boolean(today && Object.keys(setlists).length > 0 && answers.length === 0);
     return (
       <Stack gap="4" maxW="4xl" mx="auto">
-        <CatChips cats={catsSet} onToggle={toggleCat} />
         <Center py="20">
           <Text color="fg.muted">
             {empty ? t('setlistdle.empty_pool') : t('setlistdle.loading')}
@@ -308,8 +305,11 @@ export function SetlistdleGame() {
     if (key === 'series') return <Text lineClamp={2}>{seriesAlias(p)}</Text>;
     if (key === 'year') return p.date.slice(0, 4);
     if (key === 'songs') return factsOf(e.performance, e.setlist, regionOf).songCount;
+    if (key === 'category') return t(`setlistdle.cat_${p.category}`);
+    if (key === 'tourType') return p.tourType ?? '—';
     if (key === 'region') return <Text lineClamp={1}>{regionOf(p) ?? '—'}</Text>;
-    return monthLabel(lang, Number(p.date.slice(5, 7)));
+    if (key === 'encores') return factsOf(e.performance, e.setlist, regionOf).encoreCount;
+    return factsOf(e.performance, e.setlist, regionOf).songCount;
   };
 
   return (
@@ -359,8 +359,6 @@ export function SetlistdleGame() {
         </HStack>
       </HStack>
 
-      <CatChips cats={catsSet} onToggle={toggleCat} />
-
       <Stack
         gap="2.5"
         borderColor="accent.a5"
@@ -404,7 +402,7 @@ export function SetlistdleGame() {
           }}
           borderRadius="l2"
         >
-          <SetlistBar setlist={targetEntry.setlist} gap="2px" h={{ base: '10', md: '12' }} />
+          <SetlistBar setlist={targetEntry.setlist} masked gap="2px" h={{ base: '10', md: '12' }} />
         </Box>
         <Wrap gap="2.5" justify="center">
           {LEGEND.map((l) => (
@@ -416,12 +414,39 @@ export function SetlistdleGame() {
             </HStack>
           ))}
         </Wrap>
-        <SetlistReveal
-          setlist={targetEntry.setlist}
-          songName={songName}
-          tier={tier}
-          finished={finished}
-        />
+        {tier >= 1 && (
+          <Stack gap="1" borderRadius="l2" p="2" bgColor="bg.subtle">
+            <Text color="fg.subtle" fontSize="2xs" fontWeight="bold">
+              {t('setlistdle.hint_counts_title')}
+            </Text>
+            <Text fontSize="sm">
+              {t('setlistdle.hint_main', { count: hints!.sectionCounts.main })} ·{' '}
+              {t('setlistdle.hint_encore', { count: hints!.sectionCounts.encore })} ·{' '}
+              {t('setlistdle.hint_w_encore', { count: hints!.sectionCounts.wEncore })} ·{' '}
+              {t('setlistdle.hint_mc', { count: hints!.sectionCounts.mc })}
+            </Text>
+          </Stack>
+        )}
+        {tier >= 2 && (
+          <Stack gap="1" borderRadius="l2" p="2" bgColor="bg.subtle">
+            <Text color="fg.subtle" fontSize="2xs" fontWeight="bold">
+              {t('setlistdle.hint_mc_title')}
+            </Text>
+            {hints!.mcContents.map((content, i) => (
+              <Text key={`${i}-${content}`} fontSize="sm">
+                {content}
+              </Text>
+            ))}
+          </Stack>
+        )}
+        {tier >= 3 && (
+          <SetlistReveal
+            setlist={targetEntry.setlist}
+            songName={songName}
+            tier={tier}
+            finished={finished}
+          />
+        )}
       </Stack>
 
       {!finished && (
@@ -439,7 +464,7 @@ export function SetlistdleGame() {
           entry={targetEntry}
           guessCount={round.guesses.length}
           stats={round.mode === 'daily' ? stats : undefined}
-          share={() => buildShareText(day, results, won)}
+          share={() => buildShareText(day, results, won, MAX_GUESSES, round.mode)}
           onView={() => openEvent(targetEntry.performance.id)}
           onPractice={startPractice}
           onBackToDaily={practice ? () => setPractice(undefined) : undefined}
@@ -472,7 +497,14 @@ export function SetlistdleGame() {
                     #{e.number}
                   </Text>
                 </HStack>
-                <Grid gap="1.5" gridTemplateColumns="repeat(5, 1fr)">
+                <Grid
+                  gap="1.5"
+                  gridTemplateColumns={{
+                    base: 'repeat(7, minmax(5rem, 1fr))',
+                    md: 'repeat(7, 1fr)'
+                  }}
+                  overflowX="auto"
+                >
                   {ATTR_ORDER.map((key, col) => (
                     <Tile
                       key={key}
@@ -488,40 +520,6 @@ export function SetlistdleGame() {
         </Stack>
       )}
     </Stack>
-  );
-}
-
-function CatChips({ cats, onToggle }: { cats: Set<string>; onToggle: (c: string) => void }) {
-  const { t } = useTranslation();
-  return (
-    <Wrap gap="1.5" alignItems="center">
-      <Text color="fg.subtle" fontSize="xs" fontWeight="bold">
-        {t('setlistdle.pool_label')}
-      </Text>
-      {LIVE_CATS.map((c) => {
-        const on = cats.has(c);
-        return (
-          <Box
-            as="button"
-            key={c}
-            onClick={() => onToggle(c)}
-            cursor="pointer"
-            borderColor={on ? 'accent.default' : 'border.subtle'}
-            borderRadius="l2"
-            borderWidth="1px"
-            py="1"
-            px="2.5"
-            color={on ? 'accent.fg' : 'fg.muted'}
-            fontSize="xs"
-            fontWeight="medium"
-            bg={on ? 'accent.default' : 'bg.default'}
-            _hover={on ? undefined : { borderColor: 'accent.8' }}
-          >
-            {t(`infographic.cat_live_${c}` as 'infographic.cat_live_numbered')}
-          </Box>
-        );
-      })}
-    </Wrap>
   );
 }
 
@@ -714,7 +712,7 @@ const revealRows = (
               ? 'var(--colors-accent-7)'
               : 'var(--colors-accent-default)',
       ordinal: song,
-      revealed: finished || (isSong ? tier >= 3 || (tier >= 2 && song === 0) : tier >= 1),
+      revealed: finished || (isSong ? tier >= 4 || (tier >= 3 && song === 0) : tier >= 2),
       label: isSong
         ? songName(it)
         : [it.title, it.remarks].filter(Boolean).join(' — ') || it.type.toUpperCase(),
