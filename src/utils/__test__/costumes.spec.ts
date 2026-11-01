@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildCostumeSummaries, type PerformanceCostumes } from '../costumes';
-import type { Performance, Song } from '~/types';
+import {
+  buildCostumeSummaries,
+  costumeMatchesCategory,
+  type PerformanceCostumes
+} from '../costumes';
+import type { Artist, Performance, Song } from '~/types';
 
 const perf = (id: string, overrides: Partial<Performance> = {}): Performance => ({
   id,
@@ -31,6 +35,12 @@ const costumeMap: PerformanceCostumes = {
   // A performance that isn't in performanceById should be ignored (e.g. filtered out).
   pX: [{ id: 'c1', name: 'Snow halation', songId: 'song-snow' }]
 };
+
+const artists: Artist[] = [
+  { id: 'g1', name: "μ's", characters: ['c1', 'c2'], seriesIds: [1] },
+  { id: 's1', name: '高坂穂乃果', characters: ['c1'], seriesIds: [1] }
+];
+const artistById = new Map(artists.map((artist) => [artist.id, artist]));
 
 describe('buildCostumeSummaries', () => {
   it('rolls costume rows up per costume with cross-live stats', () => {
@@ -131,5 +141,36 @@ describe('buildCostumeSummaries', () => {
     // so the namesake song-snow wins the thumbnail.
     const c = buildCostumeSummaries(costumeMap, performanceById)[0]!;
     expect(c.imageSongId).toBe('song-snow');
+  });
+});
+
+describe('costumeMatchesCategory', () => {
+  it('classifies costumes by the representative song instead of every worn song', () => {
+    const song = (id: string, artists: { id: string }[]): Song => ({
+      id,
+      name: id,
+      seriesIds: [1],
+      artists
+    });
+    const costume = buildCostumeSummaries(
+      costumeMap,
+      performanceById,
+      new Set(),
+      new Set(),
+      undefined,
+      new Map([
+        ['song-snow', song('song-snow', [{ id: 'g1' }])],
+        ['song-other', song('song-other', [{ id: 's1' }])]
+      ])
+    )[0]!;
+    const songById = new Map([
+      ['song-snow', song('song-snow', [{ id: 'g1' }])],
+      ['song-other', song('song-other', [{ id: 's1' }])]
+    ]);
+
+    expect(costume.imageSongId).toBe('song-snow');
+    expect(costume.songIds).toContain('song-other');
+    expect(costumeMatchesCategory(costume, 'group', songById, artistById)).toBe(true);
+    expect(costumeMatchesCategory(costume, 'solo', songById, artistById)).toBe(false);
   });
 });

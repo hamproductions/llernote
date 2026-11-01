@@ -1,6 +1,7 @@
 import performanceCostumes from '../../data/performance-costumes.json';
 import costumeNamesEnJson from '../../data/costume-names-en.json';
-import type { Performance, Song } from '~/types';
+import type { Artist, Performance, Song } from '~/types';
+import { songMatchesCategory, type SongCategory } from '~/utils/song-filter';
 
 /**
  * Hand-written English names for outfit-style costumes that aren't named after a
@@ -257,6 +258,17 @@ export function costumeDisplayName(
 ): string {
   if (!language.startsWith('en')) return costume.name;
   return costumeNamesEn[costume.id] ?? songByName.get(costume.name)?.englishName ?? costume.name;
+}
+
+export function costumeMatchesCategory(
+  costume: CostumeSummary,
+  category: SongCategory,
+  songById: Map<string, Song>,
+  artistById: Map<string, Artist>
+): boolean {
+  const songId = costume.imageSongId ?? costume.topSongByRateId ?? costume.topSongId;
+  const song = songId ? songById.get(songId) : undefined;
+  return song ? songMatchesCategory(song, category, artistById) : false;
 }
 
 /** English outfit-name override for a costume id, if one exists (for search indexing). */
