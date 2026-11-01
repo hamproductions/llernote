@@ -8,7 +8,7 @@ import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { SortSetlistPanel } from './SortSetlistPanel';
 import { LiveHero } from './LiveHero';
 import { candidateSongIds, type SortCandidate } from '~/utils/live-sort';
-import { useSetlists } from '~/hooks/useData';
+import { useAllSetlists } from '~/hooks/useSetlists';
 import { clickable } from '~/utils/clickable';
 
 interface LiveSortCardProps {
@@ -32,7 +32,7 @@ export function LiveSortCard({
   songOrdinals
 }: LiveSortCardProps) {
   const { t } = useTranslation();
-  const setlists = useSetlists();
+  const setlists = useAllSetlists();
   const lead = candidate.performances[0];
   const songCount = candidateSongIds(candidate, setlists).length;
   const venues = [...new Set(candidate.performances.map((p) => p.venue).filter(Boolean))];

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { FaTicket } from 'react-icons/fa6';
 import { Box, Center, Grid } from 'styled-system/jsx';
-import { useLiveThumb, useSeriesById, useSetlists } from '~/hooks/useData';
+import { useLiveThumb, useSeriesById } from '~/hooks/useData';
+import { useAllSetlists } from '~/hooks/useSetlists';
 import { heroSongIds, mosaicLayout, type SortCandidate } from '~/utils/live-sort';
 import { getPicUrl } from '~/utils/assets';
 import { hasSongThumb } from '~/utils/song-thumbs';
@@ -44,7 +45,7 @@ export function LiveHero({
   // Always resolved at tour scope: a single performance should wear the poster of the
   // event it belongs to, so every leg of a tour shows the same key visual.
   const thumb = useLiveThumb(lead, true);
-  const setlists = useSetlists();
+  const setlists = useAllSetlists();
   const seriesById = useSeriesById();
   const [posterFailed, setPosterFailed] = useState(false);
 

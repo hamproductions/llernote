@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseEventList, parseTotalCount } from '../eventernote-server';
+import { isAllowedOrigin, parseEventList, parseTotalCount } from '../eventernote-server';
 
 /** Trimmed from a real eventernote.com listing page. */
 const page = `
@@ -105,5 +105,18 @@ describe('parseTotalCount', () => {
 
   it('is undefined when the page states no total', () => {
     expect(parseTotalCount('<h2>no count</h2>')).toBeUndefined();
+  });
+});
+
+describe('isAllowedOrigin', () => {
+  it('allows the local frontend origins and requests without an Origin header', () => {
+    expect(isAllowedOrigin('http://localhost:5173')).toBe(true);
+    expect(isAllowedOrigin('http://127.0.0.1:5173')).toBe(true);
+    expect(isAllowedOrigin(undefined)).toBe(true);
+  });
+
+  it('rejects unrelated and opaque origins', () => {
+    expect(isAllowedOrigin('https://attacker.example')).toBe(false);
+    expect(isAllowedOrigin('null')).toBe(false);
   });
 });

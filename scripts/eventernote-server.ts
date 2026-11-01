@@ -178,10 +178,25 @@ export const searchEvents = (keyword: string, limit: number) =>
 
 // --------------------------------------------------------------------- server
 
-const CORS: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type'
-};
+const allowedOrigins = new Set(
+  (process.env.EVENTERNOTE_ALLOWED_ORIGINS ?? 'http://localhost:5173,http://127.0.0.1:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
+
+export const isAllowedOrigin = (origin: string | undefined) =>
+  origin === undefined || allowedOrigins.has(origin);
+
+const corsHeaders = (origin: string | undefined): Record<string, string> => ({
+  Vary: 'Origin',
+  ...(origin && allowedOrigins.has(origin)
+    ? {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
+    : {})
+});
 
 interface Reply {
   status: number;
@@ -231,15 +246,20 @@ const isEntrypoint = process.argv[1] === fileURLToPath(import.meta.url);
 
 if (isEntrypoint) {
   const server = createServer((request, response) => {
+    const origin = request.headers.origin;
+    if (!isAllowedOrigin(origin)) {
+      response.writeHead(403, corsHeaders(origin)).end();
+      return;
+    }
     if (request.method === 'OPTIONS') {
-      response.writeHead(204, CORS).end();
+      response.writeHead(204, corsHeaders(origin)).end();
       return;
     }
     const url = new URL(request.url ?? '/', `http://localhost:${PORT}`);
     void route(url).then(({ status, body }) => {
       response.writeHead(status, {
         'Content-Type': 'application/json; charset=utf-8',
-        ...CORS
+        ...corsHeaders(origin)
       });
       response.end(JSON.stringify(body));
     });
