@@ -82,6 +82,8 @@ jobs:
           fi
           git -C scripts/internal add -A
           git -C scripts/internal commit -m "chore: automated update from LLerNote"
+          git -C scripts/internal fetch origin main
+          git -C scripts/internal rebase origin/main
           git -C scripts/internal push origin HEAD:main
 
       - name: Commit and push data updates
@@ -92,4 +94,9 @@ jobs:
           fi
           git add data public/assets/songs/thumbnails
           git commit -m "chore(data): automated update"
+          git fetch origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            git rebase origin/main
+            PUBLIC_ENV__BASE_URL=/${{ github.event.repository.name }} PUBLIC_ENV__EVENTERNOTE_API_URL=${{ secrets.PUBLIC_ENV__EVENTERNOTE_API_URL }} bun run ci:build
+          fi
           git push origin HEAD:main
