@@ -22,6 +22,7 @@ import {
 import { ChangeChart, CompChart, Donut, StructChart } from '~/components/infographic/charts';
 import { Strip } from '~/components/infographic/Strip';
 import { Cat, PoolRow } from '~/components/infographic/pools';
+import { SongsPerCast } from '~/components/infographic/SongsPerCast';
 
 type StripMode = 'flow' | 'nrr' | 'core' | 'dna';
 
@@ -189,6 +190,8 @@ function Body() {
             />
           </Panel>
         </Grid>
+
+        <SongsPerCast />
 
         <H>{t('infographic.pershow_title')}</H>
         <Text maxW="3xl" color="fg.muted" fontSize="sm">
