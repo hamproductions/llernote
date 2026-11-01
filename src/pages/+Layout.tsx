@@ -11,7 +11,8 @@ import {
   FaMusic,
   FaShirt,
   FaStar,
-  FaTicket
+  FaTicket,
+  FaTrophy
 } from 'react-icons/fa6';
 import { Box, Container, HStack, Stack } from 'styled-system/jsx';
 import { DetailStackProvider } from '~/components/detail/DetailStack';
@@ -46,7 +47,8 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/songs', key: 'navigation.songs', icon: FaMusic },
   { path: '/costumes', key: 'navigation.costumes', icon: FaShirt },
   { path: '/infographic', key: 'navigation.infographic', icon: FaChartPie },
-  { path: '/mypick', key: 'navigation.mypick', icon: FaStar }
+  { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
+  { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy }
 ];
 
 const MOBILE_PRIMARY_PATHS = ['/', '/events', '/calendar', '/songs'];
@@ -91,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               _hover={{ bgColor: isActive ? 'accent.subtle' : 'bg.subtle', textDecoration: 'none' }}
             >
               <Icon size={15} />
-              <Text as="span" hideBelow="lg">
+              <Text as="span" hideBelow="2xl">
                 {t(key)}
               </Text>
             </Link>
