@@ -288,4 +288,24 @@ describe('useLiveSortData', () => {
     expect(live.result.current.state).toBeDefined();
     expect(perf.result.current.state).toBeUndefined();
   });
+
+  it('resumes active timing after saved timing hydrates', () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1000);
+    localStorage.setItem(
+      'lives-sort-timing',
+      JSON.stringify({
+        startedAt: 100,
+        durations: [],
+        accumulatedActiveMs: 500,
+        lastTickActiveMs: 500
+      })
+    );
+    try {
+      const { result } = renderHook(() => useLiveSortData(EMPTY_LIVE_SORT_FILTERS, 'live'));
+      clock.mockReturnValue(2500);
+      expect(result.current.timer.getElapsedMs()).toBe(2000);
+    } finally {
+      clock.mockRestore();
+    }
+  });
 });

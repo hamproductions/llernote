@@ -100,7 +100,7 @@ export const useSortTimer = (storagePrefix: string) => {
       runningSinceRef.current = isVisible() ? Date.now() : null;
     }
     // oxlint-disable-next-line exhaustive-deps
-  }, []);
+  }, [timing?.startedAt, timing?.endedAt]);
 
   // Pause on hidden (fold running segment), resume on visible.
   useEffect(() => {
