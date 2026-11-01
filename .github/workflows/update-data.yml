@@ -12,6 +12,11 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    env:
+      DO_NOT_TRACK: '1'
+      FULL_SCAN: '1'
+      RAYON_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
     permissions:
       contents: write
     steps:
