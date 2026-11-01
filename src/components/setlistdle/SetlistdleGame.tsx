@@ -313,7 +313,7 @@ export function SetlistdleGame() {
   };
 
   return (
-    <Stack gap="4" maxW="4xl" mx="auto">
+    <Stack gap="4" w="full" minW="0" maxW="4xl" mx="auto">
       <style dangerouslySetInnerHTML={{ __html: KEYFRAMES }} />
 
       <HStack gap="2" justifyContent="space-between" alignItems="center" flexWrap="wrap">
@@ -484,6 +484,7 @@ export function SetlistdleGame() {
                 borderColor={r.correct ? '#16a34a' : 'border.subtle'}
                 borderRadius="l2"
                 borderWidth="1px"
+                minW="0"
                 p="2"
                 bgColor="bg.subtle"
               >
@@ -504,6 +505,8 @@ export function SetlistdleGame() {
                     md: 'repeat(7, 1fr)'
                   }}
                   overflowX="auto"
+                  w="full"
+                  minW="0"
                 >
                   {ATTR_ORDER.map((key, col) => (
                     <Tile
