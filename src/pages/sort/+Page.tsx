@@ -27,9 +27,19 @@ import { decodeLiveSortResults } from '~/utils/live-sort-share';
 const UNITS: SortUnit[] = ['live', 'performance'];
 
 export default function Page() {
-  const { t } = useTranslation();
   const [storedUnit, setUnit] = useLocalStorage<SortUnit>('llernote-sort-unit', 'live');
   const unit: SortUnit = storedUnit === 'performance' ? 'performance' : 'live';
+  return <SortPage key={unit} unit={unit} onUnitChange={setUnit} />;
+}
+
+function SortPage({
+  unit,
+  onUnitChange
+}: {
+  unit: SortUnit;
+  onUnitChange: (unit: SortUnit) => void;
+}) {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<LiveSortFilters>(EMPTY_LIVE_SORT_FILTERS);
   const [setlistOpen, setSetlistOpen] = useState(false);
   const [shared, setShared] = useState<{ unit: SortUnit; ranking: SortCandidate[][] }>();
@@ -140,7 +150,7 @@ export default function Page() {
                   value={unit}
                   aria-label={t('sort.unit')}
                   options={unitOptions}
-                  onChange={(value) => setUnit(value as SortUnit)}
+                  onChange={(value) => onUnitChange(value as SortUnit)}
                 />
               </Stack>
               <Text pb="2" color="fg.muted" fontSize="sm">

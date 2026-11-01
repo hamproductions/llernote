@@ -120,6 +120,27 @@ describe('/sort', () => {
     );
   });
 
+  it('writes a switched performance mode to its own storage keys', async () => {
+    const user = userEvent.setup();
+    const first = render(<Page />);
+
+    await user.selectOptions(screen.getByRole('combobox', { name: /Compare/i }), 'performance');
+    await startSort(user);
+
+    const saved = localStorage.getItem('live-perfs-sort-state');
+    expect(saved).not.toBeNull();
+    expect(localStorage.getItem('lives-sort-state')).toBeNull();
+    expect(localStorage.getItem('live-perfs-sort-timing')).not.toBeNull();
+    expect(localStorage.getItem('lives-sort-timing')).toBeNull();
+
+    first.unmount();
+    render(<Page />);
+
+    await waitFor(() => expect(screen.getByText(/Which live do you prefer/i)).not.toBeNull());
+    expect(localStorage.getItem('live-perfs-sort-state')).toBe(saved);
+    expect(localStorage.getItem('lives-sort-state')).toBeNull();
+  });
+
   it('blocks starting when fewer than two lives are in the pool', () => {
     attendanceMap = { '1': attended('1') };
     render(<Page />);
