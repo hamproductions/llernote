@@ -61,7 +61,7 @@ vi.mock('~/hooks/useSetlists', () => ({
 }));
 vi.mock('~/hooks/useSongData', () => ({ useSongById: () => new Map() }));
 vi.mock('~/data/core', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('~/data/core')>()),
+  ...(await importOriginal()),
   sortedPerformances: mockData.performances
 }));
 vi.mock('~/context/ToasterContext', () => ({ useToaster: () => ({ toast: vi.fn() }) }));

@@ -9,14 +9,8 @@ import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useToaster } from '~/context/ToasterContext';
 import { useSeriesById } from '~/hooks/useData';
 import { colorBarBackground, seriesColors } from '~/utils/series-contrast';
-import {
-  canCopyImageToClipboard,
-  copyElementImageToClipboard
-} from '~/utils/share-image';
-import {
-  copyTextToClipboard,
-  downloadElementAsImage
-} from '~/utils/share';
+import { canCopyImageToClipboard, copyElementImageToClipboard } from '~/utils/share-image';
+import { copyTextToClipboard, downloadElementAsImage } from '~/utils/share';
 import {
   encodeLiveSortResults,
   formatLiveSortText,

@@ -66,7 +66,10 @@ export default function Page() {
     const decoded = decodeLiveSortResults(encoded);
     if (!decoded) return;
     const byId = new Map(
-      buildSortCandidates(sortedPerformances, decoded.unit).map((candidate) => [candidate.id, candidate])
+      buildSortCandidates(sortedPerformances, decoded.unit).map((candidate) => [
+        candidate.id,
+        candidate
+      ])
     );
     const resolved = decoded.results
       .map((bucket) =>
