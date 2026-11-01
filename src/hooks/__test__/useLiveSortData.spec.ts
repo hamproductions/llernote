@@ -5,6 +5,8 @@ import { useLiveSortData, EMPTY_LIVE_SORT_FILTERS } from '../useLiveSortData';
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist } from '~/types';
 
+const mockData = vi.hoisted(() => ({ performances: [] as Performance[] }));
+
 const makePerformance = (
   overrides: Partial<Performance> & { id: string; date: string }
 ): Performance => ({
@@ -48,14 +50,16 @@ const performances: Performance[] = [
   makePerformance({ id: 'run-past', tourName: 'Tour Running', date: offsetDate(-5) }),
   makePerformance({ id: 'run-next', tourName: 'Tour Running', date: offsetDate(5) })
 ];
+mockData.performances.push(...performances);
 
 const setlists: Record<string, Setlist> = {};
 
 let attendanceMap: Record<string, AttendanceRecord> = {};
 
 vi.mock('~/hooks/useData', () => ({
-  usePerformances: () => performances
+  usePerformances: () => mockData.performances
 }));
+vi.mock('~/data/core', () => ({ sortedPerformances: mockData.performances }));
 vi.mock('~/hooks/useSetlists', () => ({
   useAllSetlists: () => setlists
 }));
@@ -76,6 +80,7 @@ const attended = (performanceId: string): AttendanceRecord => ({
 beforeEach(() => {
   localStorage.clear();
   attendanceMap = {};
+  mockData.performances.splice(0, mockData.performances.length, ...performances);
 });
 
 describe('useLiveSortData', () => {
@@ -104,6 +109,47 @@ describe('useLiveSortData', () => {
 
     const running = result.current.candidates.find((c) => c.title === 'Tour Running');
     expect(running?.performances.map((p) => p.id)).toEqual(['run-past']);
+  });
+
+  it('keeps one canonical live when filters remove a bridge leg', () => {
+    const tourName = 'Tour with bridge';
+    const early = makePerformance({
+      id: 'bridge-early',
+      tourName,
+      date: offsetDate(-100),
+      venue: 'Early Venue'
+    });
+    const bridge = makePerformance({
+      id: 'bridge-middle',
+      tourName,
+      date: offsetDate(-50),
+      venue: 'Middle Venue',
+      category: 'tv'
+    });
+    const late = makePerformance({
+      id: 'bridge-late',
+      tourName,
+      date: offsetDate(-1),
+      venue: 'Late Venue'
+    });
+    mockData.performances.push(early, bridge, late);
+
+    const { result } = renderHook(() =>
+      useLiveSortData(
+        { ...EMPTY_LIVE_SORT_FILTERS, attendedOnly: false, categories: ['live'] },
+        'live'
+      )
+    );
+    const candidates = result.current.candidates.filter(
+      (candidate) => candidate.title === tourName
+    );
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.id).toBe(`live:${early.date}:${tourName}`);
+    expect(candidates[0]?.performances.map((performance) => performance.id)).toEqual([
+      early.id,
+      late.id
+    ]);
   });
 
   it('excludes external festivals, which are not LoveLive lives', () => {

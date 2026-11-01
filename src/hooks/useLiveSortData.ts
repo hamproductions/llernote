@@ -97,15 +97,13 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
     () =>
       buildSortCandidates(
         performances.filter((performance) => matchesFilters(performance, filters, attendedIds)),
-        unit
+        unit,
+        sortedPerformances
       ),
     [performances, filters, attendedIds, unit]
   );
 
-  const catalogCandidates = useMemo(
-    () => buildSortCandidates(performances, unit),
-    [performances, unit]
-  );
+  const catalogCandidates = useMemo(() => buildSortCandidates(sortedPerformances, unit), [unit]);
 
   const candidateById = useMemo(
     () => new Map(catalogCandidates.map((candidate) => [candidate.id, candidate])),

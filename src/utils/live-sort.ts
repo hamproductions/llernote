@@ -62,7 +62,8 @@ export const legTabLabel = (performance: Performance): LegTabLabel => {
 
 export const buildSortCandidates = (
   performances: Performance[],
-  unit: SortUnit
+  unit: SortUnit,
+  catalog: Performance[] = performances
 ): SortCandidate[] => {
   if (unit === 'performance') {
     return [...performances].sort(comparePerformancesChronologically).map((performance) => ({
@@ -77,16 +78,25 @@ export const buildSortCandidates = (
     }));
   }
 
-  return groupByTour(performances).map((tour) => ({
-    id: liveCandidateId(tour.tourName, tour.startDate),
-    unit,
-    title: tour.tourName,
-    subtitle: undefined,
-    performances: [...tour.legs].sort(comparePerformancesChronologically),
-    seriesIds: tour.seriesIds,
-    startDate: tour.startDate,
-    endDate: tour.endDate
-  }));
+  const selectedIds = new Set(performances.map((performance) => performance.id));
+  return groupByTour(catalog).flatMap((tour) => {
+    const legs = tour.legs
+      .filter((performance) => selectedIds.has(performance.id))
+      .sort(comparePerformancesChronologically);
+    if (legs.length === 0) return [];
+    return [
+      {
+        id: liveCandidateId(tour.tourName, tour.startDate),
+        unit,
+        title: tour.tourName,
+        subtitle: undefined,
+        performances: legs,
+        seriesIds: [...new Set(legs.flatMap((performance) => performance.seriesIds))],
+        startDate: legs[0]!.date,
+        endDate: legs[legs.length - 1]!.date
+      }
+    ];
+  });
 };
 
 /**

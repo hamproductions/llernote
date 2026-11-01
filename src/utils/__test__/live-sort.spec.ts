@@ -107,6 +107,37 @@ describe('buildSortCandidates', () => {
     expect(withOnlyA[0]!.id).toBe(withBoth.find((c) => c.title === 'Tour A')!.id);
   });
 
+  it('keeps a filtered live id anchored to the catalog start date', () => {
+    const catalog = [
+      makePerformance({ id: 'early', tourName: 'Tour A', date: '2026-03-01' }),
+      makePerformance({ id: 'late', tourName: 'Tour A', date: '2026-03-02' })
+    ];
+    const filtered = [catalog[1]!];
+    const [canonical] = buildSortCandidates(catalog, 'live');
+    const [selected] = buildSortCandidates(filtered, 'live', catalog);
+
+    expect(selected?.id).toBe(canonical?.id);
+    expect(selected?.startDate).toBe(filtered[0]!.date);
+    expect(selected?.performances.map((performance) => performance.id)).toEqual(['late']);
+  });
+
+  it('does not split a catalog tour when filtering removes a bridge leg', () => {
+    const early = makePerformance({ id: 'early', tourName: 'Tour A', date: '2026-01-01' });
+    const bridge = makePerformance({ id: 'bridge', tourName: 'Tour A', date: '2026-02-20' });
+    const late = makePerformance({ id: 'late', tourName: 'Tour A', date: '2026-04-10' });
+    const catalog = [early, bridge, late];
+    const [canonical] = buildSortCandidates(catalog, 'live');
+    const filtered = buildSortCandidates([early, late], 'live', catalog);
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.id).toBe(canonical?.id);
+    expect(filtered[0]?.startDate).toBe('2026-01-01');
+    expect(filtered[0]?.performances.map((performance) => performance.id)).toEqual([
+      'early',
+      'late'
+    ]);
+  });
+
   it('splits a tour with a long gap into separate candidates with distinct ids', () => {
     const candidates = buildSortCandidates(
       [
