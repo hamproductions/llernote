@@ -54,8 +54,9 @@ const setlists: Record<string, Setlist> = {};
 let attendanceMap: Record<string, AttendanceRecord> = {};
 
 vi.mock('~/hooks/useData', () => ({
-  usePerformances: () => performances,
-  useAllPerformances: () => performances,
+  usePerformances: () => performances
+}));
+vi.mock('~/hooks/useSetlists', () => ({
   useAllSetlists: () => setlists
 }));
 

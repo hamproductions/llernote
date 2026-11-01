@@ -6,6 +6,8 @@ import Page from '../sort/+Page';
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Performance, Setlist } from '~/types';
 
+const mockData = vi.hoisted(() => ({ performances: [] as Performance[] }));
+
 const makePerformance = (
   overrides: Partial<Performance> & { id: string; date: string }
 ): Performance => ({
@@ -24,6 +26,7 @@ const performances: Performance[] = [
   makePerformance({ id: '2', tourName: 'Tour Bravo', date: '2026-02-01' }),
   makePerformance({ id: '3', tourName: 'Tour Charlie', date: '2026-01-01' })
 ];
+mockData.performances.push(...performances);
 
 const setlists: Record<string, Setlist> = {
   '1': {
@@ -39,11 +42,7 @@ let attendanceMap: Record<string, AttendanceRecord> = {};
 
 vi.mock('~/hooks/useData', () => ({
   usePerformances: () => performances,
-  useAllPerformances: () => performances,
-  useAllSetlists: () => setlists,
-  useSetlists: () => setlists,
   usePerformanceById: () => new Map(performances.map((p) => [p.id, p])),
-  useSongById: () => new Map(),
   useArtistById: () => new Map(),
   useSeries: () => [],
   useSeriesById: () => new Map(),
@@ -56,6 +55,14 @@ vi.mock('~/hooks/useAttendance', () => ({
     map: attendanceMap,
     records: Object.values(attendanceMap).filter((r) => !r.deleted)
   })
+}));
+vi.mock('~/hooks/useSetlists', () => ({
+  useAllSetlists: () => setlists
+}));
+vi.mock('~/hooks/useSongData', () => ({ useSongById: () => new Map() }));
+vi.mock('~/data/core', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/data/core')>()),
+  sortedPerformances: mockData.performances
 }));
 vi.mock('~/context/ToasterContext', () => ({ useToaster: () => ({ toast: vi.fn() }) }));
 vi.mock('~/components/detail/DetailStack', () => ({
