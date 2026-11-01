@@ -47,19 +47,25 @@ const setlists: Record<string, Setlist> = {
 };
 
 let attendanceRecords: AttendanceRecord[] = [];
-let performanceById = new Map<string, Performance>();
+const performanceById = vi.hoisted(() => new Map<string, Performance>());
+const songById = new Map<string, Song>([
+  ['song-1', { id: 'song-1', name: 'Brand New Song', artists: [], seriesIds: [] }],
+  ['song-2', { id: 'song-2', name: 'Veteran Song', artists: [], seriesIds: [] }],
+  ['song-3', { id: 'song-3', name: 'Ishikawa Day Two Song', artists: [], seriesIds: [] }],
+  ['song-4', { id: 'song-4', name: 'Aichi Song', artists: [], seriesIds: [] }]
+]);
 
 vi.mock('~/hooks/useData', () => ({
   useSetlists: () => setlists,
   usePerformanceById: () => performanceById,
-  useSongById: () =>
-    new Map<string, Song>([
-      ['song-1', { id: 'song-1', name: 'Brand New Song', artists: [], seriesIds: [] }],
-      ['song-2', { id: 'song-2', name: 'Veteran Song', artists: [], seriesIds: [] }],
-      ['song-3', { id: 'song-3', name: 'Ishikawa Day Two Song', artists: [], seriesIds: [] }],
-      ['song-4', { id: 'song-4', name: 'Aichi Song', artists: [], seriesIds: [] }]
-    ]),
   useArtistById: () => new Map()
+}));
+
+vi.mock('~/hooks/useSetlists', () => ({ useAllSetlists: () => setlists }));
+vi.mock('~/hooks/useSongData', () => ({ useSongById: () => songById }));
+vi.mock('~/data/core', async (importOriginal) => ({
+  ...(await importOriginal()),
+  performanceById
 }));
 
 vi.mock('~/utils/song-thumbs', () => ({ hasSongThumb: () => false }));
@@ -101,10 +107,9 @@ const attended = (performanceId: string): AttendanceRecord => ({
 
 beforeEach(() => {
   attendanceRecords = [];
-  performanceById = new Map([
-    [performance.id, performance],
-    [earlierPerformance.id, earlierPerformance]
-  ]);
+  performanceById.clear();
+  performanceById.set(performance.id, performance);
+  performanceById.set(earlierPerformance.id, earlierPerformance);
 });
 
 const renderPanel = (overrides?: Partial<Performance>) => {

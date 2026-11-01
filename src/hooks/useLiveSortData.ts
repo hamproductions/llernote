@@ -102,9 +102,14 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
     [performances, filters, attendedIds, unit]
   );
 
+  const catalogCandidates = useMemo(
+    () => buildSortCandidates(performances, unit),
+    [performances, unit]
+  );
+
   const candidateById = useMemo(
-    () => new Map(candidates.map((candidate) => [candidate.id, candidate])),
-    [candidates]
+    () => new Map(catalogCandidates.map((candidate) => [candidate.id, candidate])),
+    [catalogCandidates]
   );
 
   const candidateIds = useMemo(() => candidates.map((candidate) => candidate.id), [candidates]);

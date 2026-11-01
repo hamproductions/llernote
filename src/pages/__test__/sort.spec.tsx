@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '~/i18n';
@@ -100,6 +100,22 @@ describe('/sort', () => {
 
     expect(screen.getByText(/3 lives to rank/i)).not.toBeNull();
     expect(screen.getByRole('button', { name: /Start ranking/i })).not.toBeNull();
+  });
+
+  it('persists the comparison unit across reloads', async () => {
+    const user = userEvent.setup();
+    const first = render(<Page />);
+    const unitSelect = screen.getByRole('combobox', { name: /Compare/i });
+
+    await user.selectOptions(unitSelect, 'performance');
+    expect(JSON.parse(localStorage.getItem('llernote-sort-unit') ?? 'null')).toBe('performance');
+
+    first.unmount();
+    render(<Page />);
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: /Compare/i })).toHaveValue('performance')
+    );
   });
 
   it('blocks starting when fewer than two lives are in the pool', () => {

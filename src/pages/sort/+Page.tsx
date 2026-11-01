@@ -14,6 +14,7 @@ import { SortTimer } from '~/components/sorter/SortTimer';
 import { LiveSortCard } from '~/components/sorter/LiveSortCard';
 import { LiveSortFiltersBar } from '~/components/sorter/LiveSortFiltersBar';
 import { LiveSortResults } from '~/components/sorter/LiveSortResults';
+import { useLocalStorage } from '~/hooks/useLocalStorage';
 import {
   EMPTY_LIVE_SORT_FILTERS,
   useLiveSortData,
@@ -27,7 +28,8 @@ const UNITS: SortUnit[] = ['live', 'performance'];
 
 export default function Page() {
   const { t } = useTranslation();
-  const [unit, setUnit] = useState<SortUnit>('live');
+  const [storedUnit, setUnit] = useLocalStorage<SortUnit>('llernote-sort-unit', 'live');
+  const unit: SortUnit = storedUnit === 'performance' ? 'performance' : 'live';
   const [filters, setFilters] = useState<LiveSortFilters>(EMPTY_LIVE_SORT_FILTERS);
   const [setlistOpen, setSetlistOpen] = useState(false);
   const [shared, setShared] = useState<{ unit: SortUnit; ranking: SortCandidate[][] }>();

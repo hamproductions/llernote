@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import '~/i18n';
 import { useLiveSortData, EMPTY_LIVE_SORT_FILTERS } from '../useLiveSortData';
@@ -169,6 +169,38 @@ describe('useLiveSortData', () => {
     expect(result.current.ranking.flat()).toHaveLength(6);
     // No tie sentinels leak into the rendered ranking.
     expect(result.current.ranking.every((bucket) => bucket.length > 0)).toBe(true);
+  });
+
+  it('resolves a saved ranking when the current attended pool is empty', async () => {
+    const { result, unmount } = renderHook(() =>
+      useLiveSortData({ ...EMPTY_LIVE_SORT_FILTERS, attendedOnly: false }, 'live')
+    );
+
+    act(() => result.current.start());
+
+    let guard = 0;
+    while (result.current.currentPair && guard++ < 100) {
+      act(() => result.current.pickLeft());
+    }
+
+    expect(result.current.isEnded).toBe(true);
+    const expectedIds = result.current.ranking
+      .flat()
+      .map((candidate) => candidate.id)
+      .sort();
+    unmount();
+    attendanceMap = {};
+
+    const resumed = renderHook(() => useLiveSortData(EMPTY_LIVE_SORT_FILTERS, 'live'));
+
+    await waitFor(() => expect(resumed.result.current.isEnded).toBe(true));
+    expect(resumed.result.current.candidates).toHaveLength(0);
+    expect(
+      resumed.result.current.ranking
+        .flat()
+        .map((candidate) => candidate.id)
+        .sort()
+    ).toEqual(expectedIds);
   });
 
   it('collapses tied candidates into a single rank bucket', () => {
