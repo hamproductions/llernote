@@ -89,7 +89,7 @@ export function LiveSortResults({ ranking, unit, readOnly }: LiveSortResultsProp
       <HStack gap="2" justifyContent="space-between" alignItems="center" flexWrap="wrap">
         <SectionHeading>{t('sort.results_title')}</SectionHeading>
         {!readOnly && (
-          <HStack gap="2">
+          <HStack gap="2" flexWrap="wrap">
             <Button variant="outline" size="sm" onClick={onCopyLink}>
               <FaLink />
               {t('sort.copy_link')}
