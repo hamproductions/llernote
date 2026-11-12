@@ -121,7 +121,7 @@ function FitCaption({ children }: { children: ReactNode }) {
       }}
       fontWeight="600"
       textAlign="center"
-      lineClamp="3"
+      lineClamp="2"
       overflowWrap="break-word"
     >
       {children}
@@ -1366,7 +1366,7 @@ export function Page() {
                           <Box
                             style={{
                               background:
-                                'linear-gradient(0deg, rgba(10,8,16,0.88) 0%, rgba(10,8,16,0.55) 60%, transparent)',
+                                'linear-gradient(0deg, rgba(10,8,16,0.8) 0%, rgba(10,8,16,0.45) 65%, transparent)',
                               borderBottom: `3px solid ${franchise}`
                             }}
                             position="absolute"
@@ -1374,7 +1374,7 @@ export function Page() {
                             right="0"
                             bottom="0"
                             px={{ base: '0.5', md: '1' }}
-                            pt={{ base: '3', md: '5' }}
+                            pt={{ base: '2', md: '3' }}
                             pb={{ base: '0.5', md: '1' }}
                             color="white"
                             fontSize={{ base: '8px', sm: '10px', md: '11px' }}
