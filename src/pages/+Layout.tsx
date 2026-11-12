@@ -82,11 +82,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               aria-current={isActive ? 'page' : undefined}
               data-active={isActive ? true : undefined}
               display="flex"
-              gap="1.5"
+              gap="1"
               alignItems="center"
               borderRadius="md"
               py="1.5"
-              px={{ base: '2', lg: '2.5' }}
+              px="2"
               color={isActive ? 'accent.text' : 'fg.muted'}
               textDecoration="none"
               fontSize="sm"

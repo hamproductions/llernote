@@ -12,7 +12,7 @@ export function LanguageToggle() {
   };
 
   return (
-    <Wrap>
+    <Wrap flexWrap={{ lg: 'nowrap' }} whiteSpace={{ lg: 'nowrap' }}>
       <Button
         variant="link"
         data-active={currentLanguage === 'en' ? 'true' : undefined}

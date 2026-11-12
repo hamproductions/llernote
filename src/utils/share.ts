@@ -23,8 +23,8 @@ export const elementToImageBlob = async (element: HTMLElement, backgroundColor?:
   const { domToBlob } = await import('modern-screenshot');
   return domToBlob(element, {
     scale: 2,
-    width: element.scrollWidth,
-    height: element.scrollHeight,
+    width: element.offsetWidth,
+    height: element.offsetHeight,
     ...(backgroundColor === 'transparent'
       ? {}
       : { backgroundColor: backgroundColor ?? getComputedStyle(document.body).backgroundColor }),

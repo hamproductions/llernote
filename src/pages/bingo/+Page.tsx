@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FaArrowRightArrowLeft,
@@ -77,6 +85,31 @@ const foregroundFor = (hex: string) => {
   const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
   return luminance > 0.4 ? '#111111' : '#ffffff';
 };
+
+function FitCaption({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [dense, setDense] = useState(false);
+  useLayoutEffect(() => setDense(false), [children]);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (element && !dense && element.scrollHeight > element.clientHeight + 1) setDense(true);
+  });
+  return (
+    <Text
+      ref={ref}
+      style={{ wordBreak: 'auto-phrase' as 'normal', fontSize: dense ? '0.82em' : undefined }}
+      maxH={{ base: '30px', sm: '36px', md: '39px' }}
+      fontSize="inherit"
+      fontWeight="500"
+      lineHeight={dense ? '1.15' : 'inherit'}
+      textAlign="center"
+      overflow="hidden"
+      overflowWrap="break-word"
+    >
+      {children}
+    </Text>
+  );
+}
 
 export function Page() {
   const { t } = useTranslation();
@@ -1315,20 +1348,12 @@ export function Page() {
                             justifyContent="center"
                             alignItems="center"
                             borderTopWidth="3px"
-                            h="calc(2.4em + 6px)"
+                            h={{ base: '39px', sm: '45px', md: '48px' }}
                             px="1"
                             fontSize={{ base: '8px', sm: '10px', md: '11px' }}
+                            lineHeight={{ base: '10px', sm: '12px', md: '13px' }}
                           >
-                            <Text
-                              fontSize="inherit"
-                              fontWeight="500"
-                              lineHeight="1.2"
-                              textAlign="center"
-                              lineClamp="2"
-                              overflowWrap="anywhere"
-                            >
-                              {label}
-                            </Text>
+                            <FitCaption>{label}</FitCaption>
                           </Box>
                         )}
                         {!song && !free && (
@@ -1350,12 +1375,7 @@ export function Page() {
                           </Stack>
                         )}
                         {free && (
-                          <Stack
-                            gap="0"
-                            justifyContent="center"
-                            alignItems="center"
-                            aspectRatio="1"
-                          >
+                          <Stack flex="1" gap="0" justifyContent="center" alignItems="center">
                             <Text
                               style={{ color: '#ffffff' }}
                               fontSize={{ base: 'sm', md: 'xl' }}
@@ -1366,17 +1386,9 @@ export function Page() {
                             >
                               FREE
                             </Text>
-                            <Text style={{ color: '#ffffff' }} fontSize={{ base: 'xs', md: 'md' }}>
-                              ♡
-                            </Text>
                           </Stack>
                         )}
-                        {!song && (
-                          <Box
-                            h="calc(2.4em + 6px)"
-                            fontSize={{ base: '8px', sm: '10px', md: '11px' }}
-                          />
-                        )}
+                        {!song && !free && <Box h={{ base: '39px', sm: '45px', md: '48px' }} />}
                         {marked && !free && (
                           <Box
                             aria-hidden="true"
