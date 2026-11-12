@@ -32,6 +32,7 @@ import {
   type BingoCard
 } from '~/utils/bingo';
 import { fuzzySearch, getSearchScore } from '~/utils/search';
+import { SONG_CATEGORIES, songMatchesCategory, type SongCategory } from '~/utils/song-filter';
 import {
   canShareImageFile,
   downloadElementAsImage,
@@ -79,6 +80,7 @@ export function Page() {
   const [active, setActive] = useState(0);
   const [query, setQuery] = useState('');
   const [seriesId, setSeriesId] = useState('');
+  const [categories, setCategories] = useState<SongCategory[]>([]);
   const [eventQuery, setEventQuery] = useState('');
   const [exporting, setExporting] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -201,10 +203,12 @@ export function Page() {
   const results = useMemo(() => {
     const scoped = (data?.songs.songs ?? []).filter(
       (song) =>
-        !seriesId ||
-        (seriesId === 'live'
-          ? song.seriesIds.some((id) => performance?.seriesIds.includes(String(id)))
-          : song.seriesIds.includes(Number(seriesId)))
+        (!seriesId ||
+          (seriesId === 'live'
+            ? song.seriesIds.some((id) => performance?.seriesIds.includes(String(id)))
+            : song.seriesIds.includes(Number(seriesId)))) &&
+        (!categories.length ||
+          categories.some((category) => songMatchesCategory(song, category, artistById)))
     );
     const search = query.trim();
     return search
@@ -212,7 +216,7 @@ export function Page() {
           .filter((song) => fuzzySearch(song, search))
           .toSorted((a, b) => getSearchScore(b, search) - getSearchScore(a, search))
       : scoped;
-  }, [data, query, seriesId, performance]);
+  }, [data, query, seriesId, categories, performance]);
   const events = useMemo(() => {
     const search = eventQuery.trim().toLocaleLowerCase();
     const today = new Date().toLocaleDateString('sv-SE');
@@ -248,7 +252,7 @@ export function Page() {
 
   useEffect(() => {
     songScrollElement?.scrollTo({ top: 0 });
-  }, [query, seriesId, songScrollElement]);
+  }, [query, seriesId, categories, songScrollElement]);
 
   const pick = (id: string) => {
     if (shared || (selected.has(id) && current.cells[active] !== id)) return;
@@ -549,6 +553,38 @@ export function Page() {
             {item.id && item.id !== 'live' ? getSeriesShortName(item.id, item.name) : item.name}
           </styled.button>
         ))}
+      </HStack>
+      <HStack aria-label={t('events.category')} gap="1.5" flexShrink="0" px="4" pb="2.5">
+        {SONG_CATEGORIES.map((category) => {
+          const on = categories.includes(category);
+          return (
+            <styled.button
+              key={category}
+              type="button"
+              aria-pressed={on}
+              onClick={() =>
+                setCategories(
+                  on ? categories.filter((item) => item !== category) : [...categories, category]
+                )
+              }
+              cursor="pointer"
+              borderColor={on ? 'fg.default' : 'border.default'}
+              borderRadius="full"
+              borderWidth="1px"
+              h="7"
+              px="3"
+              color={on ? 'bg.default' : 'fg.default'}
+              fontSize="xs"
+              fontWeight="semibold"
+              bg={on ? 'fg.default' : 'transparent'}
+              whiteSpace="nowrap"
+              _focusVisible={{ outline: '2px solid', outlineOffset: '2px' }}
+              _hover={{ bg: on ? 'fg.default' : 'bg.subtle' }}
+            >
+              {t(`mypick.row_${category}`)}
+            </styled.button>
+          );
+        })}
       </HStack>
       <Text px="4" pb="1" color="fg.muted" fontSize="xs">
         {t('bingo.results', { count: results.length, shown: results.length })}
