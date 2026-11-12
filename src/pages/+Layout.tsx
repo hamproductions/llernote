@@ -232,9 +232,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </HStack>
                 </HStack>
 
-                <HStack gap="1" alignItems="center" justifySelf="flex-end">
+                <HStack gap="3" alignItems="center" justifySelf="flex-end">
                   <SearchButton />
-                  <HStack hideBelow="md" gap="0.5">
+                  <HStack hideBelow="md" gap="2">
                     <LanguageToggle />
                     <ColorModeToggle />
                     <SettingsMenu />

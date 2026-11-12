@@ -65,5 +65,7 @@
   "action_link": "リンク",
   "action_share": "シェア",
   "action_save": "保存",
-  "action_shuffle": "シャッフル"
+  "action_shuffle": "シャッフル",
+  "clear_card": "全部クリア",
+  "clear_card_confirm": "本当にクリア？"
 }

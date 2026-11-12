@@ -65,5 +65,7 @@
   "action_link": "Link",
   "action_share": "Share",
   "action_save": "Save",
-  "action_shuffle": "Shuffle"
+  "action_shuffle": "Shuffle",
+  "clear_card": "Clear all",
+  "clear_card_confirm": "Clear all songs?"
 }

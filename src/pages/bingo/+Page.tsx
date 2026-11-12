@@ -147,6 +147,7 @@ export function Page() {
   const [eventPicking, setEventPicking] = useState(false);
   const [swapSource, setSwapSource] = useState<number | null>(null);
   const [canShareImage, setCanShareImage] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const gridDrafts = useRef<Record<string, BingoCard>>({});
@@ -1158,6 +1159,26 @@ export function Page() {
                         </styled.button>
                       ))}
                     </HStack>
+                    <Button
+                      size="xs"
+                      variant={confirmClear ? 'solid' : 'ghost'}
+                      disabled={selected.size === 0}
+                      onBlur={() => setConfirmClear(false)}
+                      onClick={() => {
+                        if (!confirmClear) {
+                          setConfirmClear(true);
+                          return;
+                        }
+                        update({ ...current, cells: current.cells.map(() => null) });
+                        setActive(0);
+                        setSwapSource(null);
+                        setConfirmClear(false);
+                      }}
+                      colorPalette={confirmClear ? 'red' : undefined}
+                    >
+                      <FaEraser aria-hidden="true" />
+                      {t(confirmClear ? 'bingo.clear_card_confirm' : 'bingo.clear_card')}
+                    </Button>
                     <Text
                       flex="1"
                       color="fg.muted"
@@ -1346,8 +1367,7 @@ export function Page() {
                         data-hit={marked || undefined}
                         data-franchise={song ? franchise : undefined}
                         style={{
-                          background: free ? skin.pink : '#ffffff',
-                          boxShadow: isActive ? `inset 0 0 0 3px ${skin.ink}` : undefined
+                          background: free ? skin.pink : '#ffffff'
                         }}
                         cursor={shared ? 'default' : 'pointer'}
                         display="flex"
@@ -1436,6 +1456,19 @@ export function Page() {
                               FREE
                             </Text>
                           </Stack>
+                        )}
+                        {isActive && (
+                          <Box
+                            aria-hidden="true"
+                            style={{
+                              boxShadow: `inset 0 0 0 3px ${skin.pink}, inset 0 0 0 5px #ffffff`,
+                              background: `${skin.pink}33`
+                            }}
+                            zIndex="3"
+                            inset="0"
+                            position="absolute"
+                            pointerEvents="none"
+                          />
                         )}
                         {marked && !free && (
                           <Box
