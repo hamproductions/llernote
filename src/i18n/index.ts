@@ -3,15 +3,17 @@ import { initReactI18next } from 'react-i18next';
 
 import en from './locales/en.json';
 import ja from './locales/ja.json';
+import bingoEn from './locales/bingo-en.json';
+import bingoJa from './locales/bingo-ja.json';
 // don't want to use this?
 // have a look at the Quick start guide
 // for passing in lng and translations on init
 export const resources = {
   en: {
-    translation: en
+    translation: { ...en, bingo: bingoEn }
   },
   ja: {
-    translation: ja
+    translation: { ...ja, bingo: bingoJa }
   }
 };
 

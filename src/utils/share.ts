@@ -19,23 +19,45 @@ export const xShareUrl = (text: string, url?: string) => {
   return `https://x.com/intent/post?${params.toString()}`;
 };
 
-export const downloadElementAsImage = async (
-  element: HTMLElement,
-  filename: string,
-  backgroundColor?: string
-) => {
-  const [{ domToBlob }, { saveAs }] = await Promise.all([
-    import('modern-screenshot'),
-    import('file-saver')
-  ]);
-  const blob = await domToBlob(element, {
+export const elementToImageBlob = async (element: HTMLElement, backgroundColor?: string) => {
+  const { domToBlob } = await import('modern-screenshot');
+  return domToBlob(element, {
     scale: 2,
     width: element.scrollWidth,
     height: element.scrollHeight,
     backgroundColor: backgroundColor ?? getComputedStyle(document.body).backgroundColor,
     style: { overflow: 'visible' }
   });
+};
+
+export const downloadElementAsImage = async (
+  element: HTMLElement,
+  filename: string,
+  backgroundColor?: string
+) => {
+  const [blob, { saveAs }] = await Promise.all([
+    elementToImageBlob(element, backgroundColor),
+    import('file-saver')
+  ]);
   if (blob) saveAs(blob, filename);
+};
+
+export const canShareImageFile = () =>
+  typeof navigator !== 'undefined' &&
+  Boolean(navigator.canShare?.({ files: [new File([''], 'image.png', { type: 'image/png' })] }));
+
+export const shareElementAsImage = async (
+  element: HTMLElement,
+  filename: string,
+  data: { text: string; url: string },
+  backgroundColor?: string
+) => {
+  const blob = await elementToImageBlob(element, backgroundColor);
+  if (!blob) return;
+  await navigator.share({
+    files: [new File([blob], filename, { type: 'image/png' })],
+    text: `${data.text} ${data.url}`
+  });
 };
 
 export const copyTextToClipboard = async (text: string) => {

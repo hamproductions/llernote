@@ -50,7 +50,8 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/costumes', key: 'navigation.costumes', icon: FaShirt },
   { path: '/infographic', key: 'navigation.infographic', icon: FaChartPie },
   { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
-  { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy }
+  { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy },
+  { path: '/bingo', key: 'bingo.title', icon: FaMusic }
 ];
 
 const MOBILE_PRIMARY_PATHS = ['/', '/events', '/calendar', '/songs'];
