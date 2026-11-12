@@ -211,16 +211,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <DetailStackProvider>
       <CommandPaletteProvider>
-        <Stack position="relative" w="full" minH="100vh" bgColor="bg.default">
-          <Container
-            zIndex="1"
-            position="relative"
-            flex={1}
-            w="full"
-            px={4}
-            pt={4}
-            pb={{ base: '24', md: '4' }}
-          >
+        <Stack
+          position="relative"
+          w="full"
+          minH="100vh"
+          pb={{ base: 'calc(env(safe-area-inset-bottom) + 64px)', md: '0' }}
+          bgColor="bg.default"
+        >
+          <Container zIndex="1" position="relative" flex={1} w="full" px={4} pt={4} pb="4">
             <Stack>
               <HStack justifyContent="space-between" alignItems="center" w="full">
                 <HStack gap="4" alignItems="center">
