@@ -97,13 +97,12 @@ function FitCaption({ children }: { children: ReactNode }) {
   return (
     <Text
       ref={ref}
-      style={{ wordBreak: 'auto-phrase' as 'normal', fontSize: dense ? '0.82em' : undefined }}
-      maxH={{ base: '30px', sm: '36px', md: '39px' }}
+      style={{ wordBreak: 'auto-phrase' as 'normal', fontSize: dense ? '0.85em' : undefined }}
       fontSize="inherit"
-      fontWeight="500"
-      lineHeight={dense ? '1.15' : 'inherit'}
+      fontWeight="600"
+      lineHeight="inherit"
       textAlign="center"
-      overflow="hidden"
+      lineClamp="2"
       overflowWrap="break-word"
     >
       {children}
@@ -1271,9 +1270,16 @@ export function Page() {
                   </Text>
                 </Stack>
                 <Grid
-                  style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
+                  style={{
+                    gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                    background: skin.party ? skin.line : '#d9d4de',
+                    borderColor: skin.party ? skin.line : '#d9d4de'
+                  }}
                   position="relative"
-                  gap={{ base: '2', md: '3' }}
+                  gap={skin.party ? '2px' : '1px'}
+                  borderRadius="lg"
+                  borderWidth={skin.party ? '2px' : '1px'}
+                  overflow="hidden"
                 >
                   {current.cells.map((id, index) => {
                     const song = id ? data.songs.songById.get(id) : null;
@@ -1300,28 +1306,25 @@ export function Page() {
                         data-hit={marked || undefined}
                         data-franchise={song ? franchise : undefined}
                         style={{
-                          borderColor: skin.party ? skin.line : 'transparent',
                           background: free ? skin.pink : '#ffffff',
-                          boxShadow: `0 1px 4px rgba(42,37,48,0.12)${isActive ? `, 0 0 0 2px ${skin.paper}, 0 0 0 4px ${skin.ink}` : ''}`
+                          boxShadow: isActive ? `inset 0 0 0 3px ${skin.ink}` : undefined
                         }}
                         cursor={shared ? 'default' : 'pointer'}
                         display="flex"
                         position="relative"
                         flexDirection="column"
-                        borderRadius={{ base: 'md', md: 'lg' }}
-                        borderWidth={skin.party ? '1.5px' : '0'}
+                        aspectRatio="1"
                         minW="0"
                         minH="0"
                         p="0"
                         color="inherit"
                         fontFamily="inherit"
                         overflow="hidden"
-                        transition="transform 120ms ease"
-                        _focusVisible={{ outline: '3px solid', outlineOffset: '2px' }}
-                        _hover={!shared ? { transform: 'translateY(-1px)' } : undefined}
+                        _focusVisible={{ outline: '3px solid', outlineOffset: '-3px' }}
+                        _hover={!shared ? { filter: 'brightness(1.06)' } : undefined}
                       >
                         {song && (
-                          <Box position="relative" aspectRatio="1" overflow="hidden">
+                          <Box inset="0" position="absolute" overflow="hidden">
                             {thumb && (
                               <img
                                 src={getPicUrl(song.id, 'thumbnail')}
@@ -1342,26 +1345,32 @@ export function Page() {
                         )}
                         {song && (
                           <Box
-                            style={{ borderColor: franchise }}
-                            display="flex"
-                            flexShrink="0"
-                            justifyContent="center"
-                            alignItems="center"
-                            borderTopWidth="3px"
-                            h={{ base: '39px', sm: '45px', md: '48px' }}
+                            style={{
+                              background:
+                                'linear-gradient(0deg, rgba(10,8,16,0.88) 0%, rgba(10,8,16,0.55) 60%, transparent)',
+                              borderBottom: `3px solid ${franchise}`
+                            }}
+                            position="absolute"
+                            left="0"
+                            right="0"
+                            bottom="0"
                             px="1"
+                            pt={{ base: '3', md: '5' }}
+                            pb={{ base: '0.5', md: '1' }}
+                            color="white"
                             fontSize={{ base: '8px', sm: '10px', md: '11px' }}
                             lineHeight={{ base: '10px', sm: '12px', md: '13px' }}
+                            textShadow="0 1px 2px rgba(0,0,0,0.8)"
                           >
                             <FitCaption>{label}</FitCaption>
                           </Box>
                         )}
                         {!song && !free && (
                           <Stack
+                            flex="1"
                             gap="0"
                             justifyContent="center"
                             alignItems="center"
-                            aspectRatio="1"
                             opacity="0.4"
                           >
                             <Text fontSize={{ base: 'xs', md: 'md' }} fontWeight="900">
@@ -1388,7 +1397,6 @@ export function Page() {
                             </Text>
                           </Stack>
                         )}
-                        {!song && !free && <Box h={{ base: '39px', sm: '45px', md: '48px' }} />}
                         {marked && !free && (
                           <Box
                             aria-hidden="true"
