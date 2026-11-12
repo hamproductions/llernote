@@ -307,12 +307,12 @@ export function Page() {
     }
   };
 
-  const download = async () => {
+  const exportImage = async (mode: 'share' | 'download') => {
     if (!cardRef.current) return;
     setExporting(true);
     try {
       const background = getComputedStyle(cardRef.current).backgroundColor;
-      if (canShareImage) {
+      if (mode === 'share') {
         await shareElementAsImage(
           cardRef.current,
           'setlist-bingo.png',
@@ -708,14 +708,33 @@ export function Page() {
       key: 'x',
       icon: <FaXTwitter aria-hidden="true" />,
       label: t('bingo.share_x'),
+      short: t('bingo.action_x'),
       onClick: shareToX
     },
-    { key: 'link', icon: <FaLink aria-hidden="true" />, label: t('bingo.share'), onClick: share },
+    {
+      key: 'link',
+      icon: <FaLink aria-hidden="true" />,
+      label: t('bingo.share'),
+      short: t('bingo.action_link'),
+      onClick: share
+    },
+    ...(canShareImage
+      ? [
+          {
+            key: 'share-image',
+            icon: <FaShareNodes aria-hidden="true" />,
+            label: t('bingo.share_image'),
+            short: t('bingo.action_share'),
+            onClick: () => exportImage('share')
+          }
+        ]
+      : []),
     {
       key: 'image',
-      icon: canShareImage ? <FaShareNodes aria-hidden="true" /> : <FaDownload aria-hidden="true" />,
-      label: t(canShareImage ? 'bingo.share_image' : 'bingo.download'),
-      onClick: download
+      icon: <FaDownload aria-hidden="true" />,
+      label: t('bingo.download'),
+      short: t('bingo.action_save'),
+      onClick: () => exportImage('download')
     },
     ...(shared
       ? []
@@ -724,6 +743,7 @@ export function Page() {
             key: 'shuffle',
             icon: <FaShuffle aria-hidden="true" />,
             label: t('bingo.shuffle'),
+            short: t('bingo.action_shuffle'),
             onClick: shuffle
           }
         ])
@@ -1161,7 +1181,12 @@ export function Page() {
                   textAlign="center"
                 >
                   {performance && !current.performanceId.startsWith('-') && (
-                    <Text fontSize={{ base: '2xs', md: 'xs' }} fontWeight="700" opacity="0.75">
+                    <Text
+                      fontSize={{ base: '2xs', md: 'xs' }}
+                      fontWeight="700"
+                      opacity="0.75"
+                      whiteSpace="nowrap"
+                    >
                       {performance.date}{' '}
                       {performance.performanceName ?? performance.concertName ?? ''}
                     </Text>
@@ -1189,6 +1214,7 @@ export function Page() {
                     fontWeight="900"
                     letterSpacing="0.3em"
                     lineHeight="1"
+                    whiteSpace="nowrap"
                   >
                     BINGO
                   </Text>
@@ -1318,6 +1344,7 @@ export function Page() {
                               fontWeight="900"
                               letterSpacing="0.08em"
                               lineHeight="1"
+                              whiteSpace="nowrap"
                             >
                               FREE
                             </Text>
@@ -1375,6 +1402,7 @@ export function Page() {
                       color="white"
                       fontSize={{ base: 'sm', md: 'md' }}
                       fontWeight="900"
+                      whiteSpace="nowrap"
                     >
                       {t('bingo.hits', { count: score.hits, total: songTotal })} ·{' '}
                       {t('bingo.lines', { count: score.lines })}
@@ -1398,9 +1426,10 @@ export function Page() {
                     key={action.key}
                     type="button"
                     disabled={
-                      (action.key === 'image' && exporting) ||
+                      ((action.key === 'image' || action.key === 'share-image') && exporting) ||
                       (action.key === 'shuffle' && selected.size < 2)
                     }
+                    aria-label={action.label}
                     onClick={action.onClick}
                     cursor="pointer"
                     display="flex"
@@ -1446,7 +1475,7 @@ export function Page() {
                       textAlign="center"
                       whiteSpace="nowrap"
                     >
-                      {action.label}
+                      {action.short}
                     </Text>
                   </styled.button>
                 ))}

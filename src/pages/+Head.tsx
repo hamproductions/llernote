@@ -15,6 +15,7 @@ export function Head() {
         href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Outfit:wght@400;600;800&display=optional"
         rel="stylesheet"
         media="print"
+        crossOrigin="anonymous"
         data-font="1"
       />
       <noscript>

@@ -56,9 +56,14 @@
   "unknown_performance": "Performance unavailable ({{id}})",
   "in_slot": "In this square",
   "share_x": "Post on X",
-  "share_text": "Made my setlist bingo for {{title}} — how many will hit? #SetlistBingo",
-  "share_result_text": "{{title}} setlist bingo: {{hits}}/{{total}} hits, {{lines}} BINGO! #SetlistBingo",
+  "share_text": "{{title}} setlist bingo #SetlistBingo",
+  "share_result_text": "{{title}} setlist bingo: {{hits}}/{{total}} hits, {{lines}} lines #SetlistBingo",
   "share_image": "Share image",
   "bingo_badge": "BINGO ×{{count}}!",
-  "clear_search": "Clear search"
+  "clear_search": "Clear search",
+  "action_x": "X",
+  "action_link": "Link",
+  "action_share": "Share",
+  "action_save": "Save",
+  "action_shuffle": "Shuffle"
 }

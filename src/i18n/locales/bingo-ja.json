@@ -56,9 +56,14 @@
   "unknown_performance": "公演が見つかりません（{{id}}）",
   "in_slot": "このマス",
   "share_x": "Xでポスト",
-  "share_text": "{{title}}のセトリビンゴ作った！何曲当たる？ #セトリビンゴ",
-  "share_result_text": "{{title}}のセトリビンゴ結果：{{hits}}/{{total}}曲的中、{{lines}}列ビンゴ！ #セトリビンゴ",
+  "share_text": "{{title}} セトリビンゴ #セトリビンゴ",
+  "share_result_text": "{{title}} セトリビンゴ {{hits}}/{{total}}曲的中・{{lines}}列ビンゴ #セトリビンゴ",
   "share_image": "画像でシェア",
   "bingo_badge": "BINGO ×{{count}}!",
-  "clear_search": "検索をクリア"
+  "clear_search": "検索をクリア",
+  "action_x": "X",
+  "action_link": "リンク",
+  "action_share": "シェア",
+  "action_save": "保存",
+  "action_shuffle": "シャッフル"
 }
