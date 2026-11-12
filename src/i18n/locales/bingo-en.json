@@ -67,5 +67,7 @@
   "action_save": "Save",
   "action_shuffle": "Shuffle",
   "clear_card": "Clear all",
-  "clear_card_confirm": "Clear all songs?"
+  "clear_card_confirm": "Clear all songs?",
+  "action_clear": "Clear",
+  "action_clear_confirm": "Sure?"
 }

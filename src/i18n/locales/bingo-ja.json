@@ -67,5 +67,7 @@
   "action_save": "保存",
   "action_shuffle": "シャッフル",
   "clear_card": "全部クリア",
-  "clear_card_confirm": "本当にクリア？"
+  "clear_card_confirm": "本当にクリア？",
+  "action_clear": "クリア",
+  "action_clear_confirm": "本当に？"
 }

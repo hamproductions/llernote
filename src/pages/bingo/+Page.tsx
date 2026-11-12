@@ -815,6 +815,22 @@ export function Page() {
             label: t('bingo.shuffle'),
             short: t('bingo.action_shuffle'),
             onClick: shuffle
+          },
+          {
+            key: 'clear',
+            icon: <FaEraser aria-hidden="true" />,
+            label: t(confirmClear ? 'bingo.clear_card_confirm' : 'bingo.clear_card'),
+            short: t(confirmClear ? 'bingo.action_clear_confirm' : 'bingo.action_clear'),
+            onClick: () => {
+              if (!confirmClear) {
+                setConfirmClear(true);
+                return;
+              }
+              update({ ...current, cells: current.cells.map(() => null) });
+              setActive(0);
+              setSwapSource(null);
+              setConfirmClear(false);
+            }
           }
         ])
   ];
@@ -1159,26 +1175,6 @@ export function Page() {
                         </styled.button>
                       ))}
                     </HStack>
-                    <Button
-                      size="xs"
-                      variant={confirmClear ? 'solid' : 'ghost'}
-                      disabled={selected.size === 0}
-                      onBlur={() => setConfirmClear(false)}
-                      onClick={() => {
-                        if (!confirmClear) {
-                          setConfirmClear(true);
-                          return;
-                        }
-                        update({ ...current, cells: current.cells.map(() => null) });
-                        setActive(0);
-                        setSwapSource(null);
-                        setConfirmClear(false);
-                      }}
-                      colorPalette={confirmClear ? 'red' : undefined}
-                    >
-                      <FaEraser aria-hidden="true" />
-                      {t(confirmClear ? 'bingo.clear_card_confirm' : 'bingo.clear_card')}
-                    </Button>
                     <Text
                       flex="1"
                       color="fg.muted"
@@ -1527,6 +1523,28 @@ export function Page() {
                 )}
               </Box>
 
+              {!shared && !isDesktop && (
+                <Box>
+                  <Button
+                    size="lg"
+                    onClick={() => setPicking(true)}
+                    style={{
+                      background: skin.pink,
+                      color: foregroundFor(skin.pink),
+                      boxShadow: '0 6px 18px rgba(42,37,48,0.22)'
+                    }}
+                    borderRadius="full"
+                    w="full"
+                    fontWeight="700"
+                  >
+                    <FaMusic aria-hidden="true" />
+                    {t('bingo.choose_songs')}
+                    <Text as="span" fontSize="sm" opacity="0.8">
+                      {selected.size}/{songTotal}
+                    </Text>
+                  </Button>
+                </Box>
+              )}
               <Grid
                 aria-label={t('bingo.sharing')}
                 style={{ gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))` }}
@@ -1538,8 +1556,10 @@ export function Page() {
                     type="button"
                     disabled={
                       ((action.key === 'image' || action.key === 'share-image') && exporting) ||
-                      (action.key === 'shuffle' && selected.size < 2)
+                      (action.key === 'shuffle' && selected.size < 2) ||
+                      (action.key === 'clear' && selected.size === 0)
                     }
+                    onBlur={action.key === 'clear' ? () => setConfirmClear(false) : undefined}
                     aria-label={action.label}
                     onClick={action.onClick}
                     cursor="pointer"
@@ -1563,11 +1583,18 @@ export function Page() {
                               color: '#ffffff',
                               boxShadow: '0 1px 4px rgba(42,37,48,0.15)'
                             }
-                          : {
-                              background: action.key === 'shuffle' ? '#ffd84d' : skin.pink,
-                              color: action.key === 'shuffle' ? skin.ink : foregroundFor(skin.pink),
-                              boxShadow: '0 1px 4px rgba(42,37,48,0.15)'
-                            }
+                          : action.key === 'clear'
+                            ? {
+                                background: confirmClear ? '#dc2626' : '#ffffff',
+                                color: confirmClear ? '#ffffff' : '#dc2626',
+                                boxShadow: '0 1px 4px rgba(42,37,48,0.15)'
+                              }
+                            : {
+                                background: action.key === 'shuffle' ? '#ffd84d' : skin.pink,
+                                color:
+                                  action.key === 'shuffle' ? skin.ink : foregroundFor(skin.pink),
+                                boxShadow: '0 1px 4px rgba(42,37,48,0.15)'
+                              }
                       }
                       display="grid"
                       borderRadius="full"
@@ -1622,33 +1649,6 @@ export function Page() {
               </Stack>
             )}
           </Grid>
-
-          {!shared && !isDesktop && (
-            <Box
-              zIndex="docked"
-              position="sticky"
-              bottom={{ base: 'calc(env(safe-area-inset-bottom) + 72px)', md: '4' }}
-            >
-              <Button
-                size="lg"
-                onClick={() => setPicking(true)}
-                style={{
-                  background: skin.pink,
-                  color: foregroundFor(skin.pink),
-                  boxShadow: '0 6px 18px rgba(42,37,48,0.22)'
-                }}
-                borderRadius="full"
-                w="full"
-                fontWeight="700"
-              >
-                <FaMusic aria-hidden="true" />
-                {t('bingo.choose_songs')}
-                <Text as="span" fontSize="sm" opacity="0.8">
-                  {selected.size}/{songTotal}
-                </Text>
-              </Button>
-            </Box>
-          )}
 
           {!shared && !isDesktop && (
             <Dialog.Root
