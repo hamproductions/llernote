@@ -86,21 +86,40 @@ const foregroundFor = (hex: string) => {
   return luminance > 0.4 ? '#111111' : '#ffffff';
 };
 
+const CAPTION_STEPS = [
+  { scale: 1, phrase: true },
+  { scale: 0.9, phrase: true },
+  { scale: 0.8, phrase: true },
+  { scale: 0.72, phrase: true },
+  { scale: 0.8, phrase: false },
+  { scale: 0.72, phrase: false },
+  { scale: 0.65, phrase: false },
+  { scale: 0.58, phrase: false },
+  { scale: 0.5, phrase: false }
+];
+
 function FitCaption({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLParagraphElement>(null);
-  const [dense, setDense] = useState(false);
-  useLayoutEffect(() => setDense(false), [children]);
+  const [step, setStep] = useState(0);
+  useLayoutEffect(() => setStep(0), [children]);
   useLayoutEffect(() => {
     const element = ref.current;
-    if (element && !dense && element.scrollHeight > element.clientHeight + 1) setDense(true);
+    if (
+      element &&
+      step < CAPTION_STEPS.length - 1 &&
+      element.scrollHeight > element.clientHeight + 1
+    )
+      setStep(step + 1);
   });
   return (
     <Text
       ref={ref}
-      style={{ wordBreak: 'auto-phrase' as 'normal', fontSize: dense ? '0.85em' : undefined }}
-      fontSize="inherit"
+      style={{
+        wordBreak: CAPTION_STEPS[step].phrase ? ('auto-phrase' as 'normal') : 'normal',
+        fontSize: `${CAPTION_STEPS[step].scale}em`,
+        lineHeight: 1.2
+      }}
       fontWeight="600"
-      lineHeight="inherit"
       textAlign="center"
       lineClamp="2"
       overflowWrap="break-word"
@@ -1354,7 +1373,7 @@ export function Page() {
                             left="0"
                             right="0"
                             bottom="0"
-                            px="1"
+                            px={{ base: '0.5', md: '1' }}
                             pt={{ base: '3', md: '5' }}
                             pb={{ base: '0.5', md: '1' }}
                             color="white"
