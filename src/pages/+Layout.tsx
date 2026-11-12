@@ -86,7 +86,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               alignItems="center"
               borderRadius="md"
               py="1.5"
-              px="2"
+              px={{ base: '1', lg: '1.5', xl: '2' }}
               color={isActive ? 'accent.text' : 'fg.muted'}
               textDecoration="none"
               fontSize="sm"
