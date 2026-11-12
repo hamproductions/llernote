@@ -1275,18 +1275,39 @@ export function Page() {
                       {t('bingo.unknown_performance', { id: current.performanceId })}
                     </Text>
                   )}
-                  <Text
-                    aria-hidden="true"
-                    style={{ color: skin.pink }}
-                    pl="0.3em"
-                    fontSize={{ base: 'xl', md: '3xl' }}
-                    fontWeight="900"
-                    letterSpacing="0.3em"
-                    lineHeight="1"
-                    whiteSpace="nowrap"
-                  >
-                    BINGO
-                  </Text>
+                  {gridSize === 5 ? (
+                    <Grid
+                      aria-hidden="true"
+                      style={{
+                        color: skin.pink,
+                        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                        gap: skin.party ? '2px' : '1px',
+                        paddingInline: skin.party ? '2px' : '1px'
+                      }}
+                      alignSelf="stretch"
+                      fontSize={{ base: 'xl', md: '3xl' }}
+                      fontWeight="900"
+                      lineHeight="1"
+                      textAlign="center"
+                    >
+                      {'BINGO'.split('').map((letter) => (
+                        <span key={letter}>{letter}</span>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <Text
+                      aria-hidden="true"
+                      style={{ color: skin.pink }}
+                      pl="0.3em"
+                      fontSize={{ base: 'xl', md: '3xl' }}
+                      fontWeight="900"
+                      letterSpacing="0.3em"
+                      lineHeight="1"
+                      whiteSpace="nowrap"
+                    >
+                      BINGO
+                    </Text>
+                  )}
                 </Stack>
                 <Grid
                   style={{
