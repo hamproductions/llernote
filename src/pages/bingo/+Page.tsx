@@ -121,7 +121,7 @@ function FitCaption({ children }: { children: ReactNode }) {
       }}
       fontWeight="600"
       textAlign="center"
-      lineClamp="2"
+      lineClamp="3"
       overflowWrap="break-word"
     >
       {children}
