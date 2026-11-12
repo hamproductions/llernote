@@ -51,6 +51,15 @@ import { EventThumb } from '~/components/events/EventThumb';
 import { NativeSelect } from '~/components/events/NativeSelect';
 
 const STORAGE_KEY = 'llernote:bingo:v1';
+const CARD_FONT =
+  'https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap';
+
+const loadCardFont = () =>
+  Promise.all(
+    ['500', '700', '900'].map((weight) =>
+      document.fonts.load(`${weight} 16px "Zen Maru Gothic"`, 'BINGOセトリビンゴ')
+    )
+  );
 const BROWN = '#7c4d3d';
 const PINK = '#ff6cc7';
 const CREAM = '#ffecfb';
@@ -121,6 +130,14 @@ export function Page() {
   } as CSSProperties;
 
   useEffect(() => {
+    if (!document.querySelector(`link[href="${CARD_FONT}"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = CARD_FONT;
+      link.crossOrigin = 'anonymous';
+      link.onload = () => void loadCardFont();
+      document.head.append(link);
+    }
     setCanShareImage(canShareImageFile());
     const query = window.matchMedia('(min-width: 1024px)');
     const sync = () => setIsDesktop(query.matches);
@@ -311,7 +328,8 @@ export function Page() {
     if (!cardRef.current) return;
     setExporting(true);
     try {
-      const background = getComputedStyle(cardRef.current).backgroundColor;
+      await loadCardFont();
+      const background = 'transparent';
       if (mode === 'share') {
         await shareElementAsImage(
           cardRef.current,

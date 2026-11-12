@@ -25,7 +25,9 @@ export const elementToImageBlob = async (element: HTMLElement, backgroundColor?:
     scale: 2,
     width: element.scrollWidth,
     height: element.scrollHeight,
-    backgroundColor: backgroundColor ?? getComputedStyle(document.body).backgroundColor,
+    ...(backgroundColor === 'transparent'
+      ? {}
+      : { backgroundColor: backgroundColor ?? getComputedStyle(document.body).backgroundColor }),
     style: { overflow: 'visible' }
   });
 };
