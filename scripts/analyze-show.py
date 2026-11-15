@@ -56,6 +56,7 @@ def lineup_for(pid):
     for tour in json.load(open('data/raw/llfans-detailed-tours.json')):
         for c in tour['concerts']:
             if any(p['id'] == pid for p in c['performances']): note = tour.get('note') or ''
+    global FULL_NOTE; FULL_NOTE = norm(note)
     if '出演者' not in note: return set()
     note = norm(note.split('ゲスト出演')[0]); out = set()
     for c in CH.values():
@@ -67,6 +68,7 @@ def lineup_for(pid):
             out |= set(VAR[('133', '102〜105期生')])  # the data's own 102〜105期生 member list
         if 'イキヅライブ' in line and '役' not in line: out |= set(series_chars('8'))
     return out
+FULL_NOTE = ''
 LINEUP = lineup_for(pid)
 rows = []; show_all = set()
 items = S['items']
@@ -86,7 +88,11 @@ for it in items:
 for r in rows:
     if r['remarks'] and '出演者全員' in r['remarks']: r['chars'] = sorted(LINEUP | show_all if LINEUP else show_all); r['src'] = 'all'
 show_all = set(c for r in rows for c in r['chars'])
-cast = lambda c: (CH[c]['casts'][0]['seiyuu'] if CH[c]['casts'] else CH[c]['fullName'])
+def cast(c):  # the cast member named on this show's lineup (SIM etc. have several casts over the years)
+    cs = CH[c]['casts']
+    if not cs: return CH[c]['fullName']
+    hit = [x['seiyuu'] for x in cs if FULL_NOTE and norm(x['seiyuu']) in FULL_NOTE]
+    return hit[0] if hit else cs[0]['seiyuu']
 per = C.defaultdict(lambda: dict(w=0.0, n=0, solo=0.0, collab=0.0)); ser = C.Counter(); art = C.Counter()
 for r in rows:
     sers = {CH[c]['seriesId'] for c in r['chars']}
