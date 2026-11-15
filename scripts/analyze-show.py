@@ -34,6 +34,7 @@ def resolve_artist(a):  # same variant logic as src/utils/setlistAnalysis.ts res
     if a.get('variant') and VAR.get((a['id'], a['variant'])): return VAR[(a['id'], a['variant'])]
     return [c for c in AR[a['id']]['characters'] if c]
 def parse_remark(rm):
+    if re.search(r'B\.\s?G\.\s?P\.', rm or ''): return list(VAR[(next(k[0] for k in VAR if k[1].replace(' ', '') == 'B.G.P.'), next(k[1] for k in VAR if k[1].replace(' ', '') == 'B.G.P.'))] ) if False else [c for (u, a), cs in VAR.items() if a.replace(' ', '') == 'B.G.P.' for c in cs]  # B.G.P. = the 9 original 蓮ノ空 members
     rm = (rm or '').split('｜')[-1]
     if 'Ver.' not in rm and not rm.startswith('Liella'): return None
     body = rm.replace('Ver.', '').strip(); toks = [t.strip() for t in re.split('[、,，]', body) if t.strip()]
@@ -76,6 +77,7 @@ for it in items:
     src = 'remark'
     if ch is None:
         ch = [c for a in song['artists'] if a['id'] in AR for c in resolve_artist(a)]; src = 'artist'
+    if src == 'artist' and song['artists'] and all(AR[a['id']]['name'].startswith('Liella!') for a in song['artists'] if a['id'] in AR): ch = series_chars('4')  # unlisted Liella! songs = whole group
     if LINEUP: ch = [c for c in ch if c in LINEUP or CH[c]['seriesId'] == '5']  # drop non-lineup (absent) members; SIM guests kept
     rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=weight(it.get('remarks')), wb=weight(it.get('remarks'), False),
                      chars=list(dict.fromkeys(ch)), src=src, artist=' / '.join(dict.fromkeys(AR[a['id']]['name'] for a in song['artists'] if a['id'] in AR)), song=song))
