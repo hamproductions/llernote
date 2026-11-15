@@ -48,6 +48,24 @@ def parse_remark(rm):
             if len(m) == 1: out += m
             else: return None  # e.g. "B. G. P." style labels
     return out
+# Official lineup from the tour note ("出演者:" block): named cast via seiyuu, whole-series lines (Liella!, 蓮ノ空, いきづらい部) via series.
+def lineup_for(pid):
+    note = ''
+    for tour in json.load(open('data/raw/llfans-detailed-tours.json')):
+        for c in tour['concerts']:
+            if any(p['id'] == pid for p in c['performances']): note = tour.get('note') or ''
+    if '出演者' not in note: return set()
+    note = norm(note.split('ゲスト出演')[0]); out = set()
+    for c in CH.values():
+        s = c['seriesId']; nm = [norm(x['seiyuu']) for x in c['casts']]
+        if any(n and n in note for n in nm): out.add(c['id'])
+    for line in note.split('『')[1:]:
+        if 'ラブライブ！スーパースター' in line and '役' not in line: out |= set(series_chars('4'))
+        if '蓮ノ空' in line and '役' not in line:  # "102期〜105期生": 106期 (ids 91+) not in lineup
+            out |= {c for c in series_chars('6') if int(c) < 91}
+        if 'イキヅライブ' in line and '役' not in line: out |= set(series_chars('8'))
+    return out
+LINEUP = lineup_for(pid)
 rows = []; show_all = set()
 items = S['items']
 for it in items:
@@ -58,12 +76,13 @@ for it in items:
     src = 'remark'
     if ch is None:
         ch = [c for a in song['artists'] if a['id'] in AR for c in resolve_artist(a)]; src = 'artist'
+    if LINEUP: ch = [c for c in ch if c in LINEUP or CH[c]['seriesId'] == '5']  # drop non-lineup (absent) members; SIM guests kept
     rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=weight(it.get('remarks')), wb=weight(it.get('remarks'), False),
                      chars=list(dict.fromkeys(ch)), src=src, artist=' / '.join(dict.fromkeys(AR[a['id']]['name'] for a in song['artists'] if a['id'] in AR)), song=song))
     show_all |= set(ch)
 # "all cast" songs
 for r in rows:
-    if r['remarks'] and '出演者全員' in r['remarks']: r['chars'] = sorted(show_all); r['src'] = 'all'
+    if r['remarks'] and '出演者全員' in r['remarks']: r['chars'] = sorted(LINEUP | show_all if LINEUP else show_all); r['src'] = 'all'
 show_all = set(c for r in rows for c in r['chars'])
 cast = lambda c: (CH[c]['casts'][0]['seiyuu'] if CH[c]['casts'] else CH[c]['fullName'])
 per = C.defaultdict(lambda: dict(w=0.0, n=0, solo=0.0, collab=0.0)); ser = C.Counter(); art = C.Counter()
