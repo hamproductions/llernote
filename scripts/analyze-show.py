@@ -30,11 +30,12 @@ VAR = C.defaultdict(list)
 for c in CH.values():
     for u in c.get('units') or []:
         if u.get('additionalInfo'): VAR[(u['id'], u['additionalInfo'])].append(c['id'])
-def resolve_artist(a):  # same variant logic as src/utils/setlistAnalysis.ts resolveArtistCharacterIds
+def resolve_artist(a, remark=''):  # same variant logic as src/utils/setlistAnalysis.ts resolveArtistCharacterIds
+    for (uid, label), cs in VAR.items():  # remark such as 'B. G. P. Ver.' naming a variant this artist has
+        if uid == a['id'] and remark and label.replace(' ', '') in remark.replace(' ', '') and label.replace(' ', '') == 'B.G.P.': return cs
     if a.get('variant') and VAR.get((a['id'], a['variant'])): return VAR[(a['id'], a['variant'])]
     return [c for c in AR[a['id']]['characters'] if c]
 def parse_remark(rm):
-    if re.search(r'B\.\s?G\.\s?P\.', rm or ''): return list(VAR[(next(k[0] for k in VAR if k[1].replace(' ', '') == 'B.G.P.'), next(k[1] for k in VAR if k[1].replace(' ', '') == 'B.G.P.'))] ) if False else [c for (u, a), cs in VAR.items() if a.replace(' ', '') == 'B.G.P.' for c in cs]  # B.G.P. = the 9 original 蓮ノ空 members
     rm = (rm or '').split('｜')[-1]
     if 'Ver.' not in rm and not rm.startswith('Liella'): return None
     body = rm.replace('Ver.', '').strip(); toks = [t.strip() for t in re.split('[、,，]', body) if t.strip()]
@@ -76,7 +77,7 @@ for it in items:
     ch = parse_remark(it.get('remarks'))
     src = 'remark'
     if ch is None:
-        ch = [c for a in song['artists'] if a['id'] in AR for c in resolve_artist(a)]; src = 'artist'
+        ch = [c for a in song['artists'] if a['id'] in AR for c in resolve_artist(a, it.get('remarks') or '')]; src = 'artist'
     if LINEUP: ch = [c for c in ch if c in LINEUP or CH[c]['seriesId'] == '5']  # drop non-lineup (absent) members; SIM guests kept
     rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=weight(it.get('remarks')), wb=weight(it.get('remarks'), False),
                      chars=list(dict.fromkeys(ch)), src=src, artist=' / '.join(dict.fromkeys(AR[a['id']]['name'] for a in song['artists'] if a['id'] in AR)), song=song))
