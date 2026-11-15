@@ -46,6 +46,7 @@ def weight(rm):
     if re.search(r'TV\s?サイズ|TV\s?Size|ショート|Short', rm, re.I): return 0.5
     return 1.0
 
+OVR = json.load(open('data/show-overrides.json')).get(pid, {})
 rows = []
 for it in items:
     if it['type'] != 'song': continue
@@ -84,7 +85,7 @@ for it in items:
     tied = [x for x in ss if cnt.get(x, 0) == best]
     billed = tied[0] if tied else max(cnt, key=cnt.get)
     if len(tied) > 1: flag('NOTE', f"#{it['position']+1} {s['name']}: billing tie between {[series[x] for x in tied]} → {series[billed]}")
-    rows.append(dict(pos=it['position'], name=s['name'], rm=rm, w=weight(rm), members=members, how=how, absent=absent, billed=series[billed]))
+    rows.append(dict(pos=it['position'], name=s['name'], rm=rm, w=OVR.get(str(it['position']), {}).get('weight', weight(rm)), members=members, how=how, absent=absent, billed=series[billed]))
 
 # ---- compare with analyze-show output, song by song
 d = json.load(open(other))

@@ -70,6 +70,7 @@ def lineup_for(pid):
     return out
 FULL_NOTE = ''
 LINEUP = lineup_for(pid)
+OVR = json.load(open('data/show-overrides.json')).get(pid, {})  # hand corrections, e.g. measured length
 rows = []; show_all = set()
 items = S['items']
 for it in items:
@@ -81,7 +82,7 @@ for it in items:
     if ch is None:
         ch = [c for a in song['artists'] if a['id'] in AR for c in resolve_artist(a, it.get('remarks') or '')]; src = 'artist'
     if LINEUP: ch = [c for c in ch if c in LINEUP or CH[c]['seriesId'] == '5']  # drop non-lineup (absent) members; SIM guests kept
-    rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=weight(it.get('remarks')), wb=weight(it.get('remarks'), False),
+    rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=OVR.get(str(it['position']), {}).get('weight', weight(it.get('remarks'))), wb=weight(it.get('remarks'), False),
                      chars=list(dict.fromkeys(ch)), src=src, artist=' / '.join(dict.fromkeys(AR[a['id']]['name'] for a in song['artists'] if a['id'] in AR)), song=song))
     show_all |= set(ch)
 # "all cast" songs
