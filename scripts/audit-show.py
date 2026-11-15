@@ -83,9 +83,9 @@ for it in items:
     ss = [str(x) for x in s.get('seriesIds') or []]
     best = max(cnt.get(x, 0) for x in ss) if ss else 0
     tied = [x for x in ss if cnt.get(x, 0) == best]
-    billed = tied[0] if tied else max(cnt, key=cnt.get)
-    if len(tied) > 1: flag('NOTE', f"#{it['position']+1} {s['name']}: billing tie between {[series[x] for x in tied]} → {series[billed]}")
-    rows.append(dict(pos=it['position'], name=s['name'], rm=rm, w=OVR.get(str(it['position']), {}).get('weight', weight(rm)), members=members, how=how, absent=absent, billed=series[billed]))
+    billed = tied[0] if len(tied) == 1 else 'OTHERS'
+    if len(tied) > 1: flag('NOTE', f"#{it['position']+1} {s['name']}: tie between {[series[x] for x in tied]} → Others")
+    rows.append(dict(pos=it['position'], name=s['name'], rm=rm, w=OVR.get(str(it['position']), {}).get('weight', weight(rm)), members=members, how=how, absent=absent, billed=('その他（複数シリーズ）' if billed == 'OTHERS' else series[billed])))
 
 # ---- compare with analyze-show output, song by song
 d = json.load(open(other))
