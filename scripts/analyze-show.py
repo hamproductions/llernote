@@ -43,7 +43,7 @@ def parse_remark(rm):
     for t in toks:
         g = next((v for k, v in {"μ's": '1', 'μ’s': '1', 'Aqours': '2', '虹ヶ咲': '3', 'Liella': '4', '蓮ノ空': '6', 'いきづらい部': '8'}.items() if t.startswith(k)), None)
         if g: out += series_chars(g)
-        elif re.fullmatch(r'\d〜\d期生', t): out += series_chars('4')  # Liella! 1-3rd gen
+        elif re.fullmatch(r'\d〜\d期生', t): out += VAR[('91', '1期生〜3期生')]  # Liella! 1st-3rd gen (11), excludes 4th gen
         else:
             m = by_token(t)
             if len(m) == 1: out += m
@@ -61,7 +61,7 @@ def lineup_for(pid):
         s = c['seriesId']; nm = [norm(x['seiyuu']) for x in c['casts']]
         if any(n and n in note for n in nm): out.add(c['id'])
     for line in note.split('『')[1:]:
-        if 'ラブライブ！スーパースター' in line and '役' not in line: out |= set(series_chars('4'))
+        if 'ラブライブ！スーパースター' in line and '役' not in line: out |= set(VAR[('91', '1期生〜3期生')])  # 4th gen not on this show
         if '蓮ノ空' in line and '役' not in line:  # "102期〜105期生": 106期 (ids 91+) not in lineup
             out |= {c for c in series_chars('6') if int(c) < 91}
         if 'イキヅライブ' in line and '役' not in line: out |= set(series_chars('8'))
@@ -77,7 +77,6 @@ for it in items:
     src = 'remark'
     if ch is None:
         ch = [c for a in song['artists'] if a['id'] in AR for c in resolve_artist(a)]; src = 'artist'
-    if src == 'artist' and song['artists'] and all(AR[a['id']]['name'].startswith('Liella!') for a in song['artists'] if a['id'] in AR): ch = series_chars('4')  # unlisted Liella! songs = whole group
     if LINEUP: ch = [c for c in ch if c in LINEUP or CH[c]['seriesId'] == '5']  # drop non-lineup (absent) members; SIM guests kept
     rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=weight(it.get('remarks')), wb=weight(it.get('remarks'), False),
                      chars=list(dict.fromkeys(ch)), src=src, artist=' / '.join(dict.fromkeys(AR[a['id']]['name'] for a in song['artists'] if a['id'] in AR)), song=song))
