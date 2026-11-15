@@ -77,6 +77,9 @@ for r in rows:
         if r['collab']: p['collab'] += r['w']
         if r['solo']: p['solo'] += r['w']
     cnt = C.Counter(CH[c]['seriesId'] for c in r['chars'])
+    # bill the whole song to its own franchise: the song's series that most performers belong to (ties -> first listed)
+    ss = [str(x) for x in r['song'].get('seriesIds') or []] or [max(cnt, key=cnt.get)]
+    r['fid'] = max(ss, key=lambda s: (cnt.get(s, 0), -ss.index(s)))
     for s, n in cnt.items(): ser[s] += r['w'] * n / len(r['chars'])
     art[r['artist']] += r['w']
 def gini(v):
@@ -86,7 +89,7 @@ out = dict(name=P['tourName'], date=P['date'], songs=len(rows), weighted=sum(r['
     artists=[[k, v] for k, v in art.most_common()],
     perf=sorted([[CH[c]['fullName'], cast(c), SER[CH[c]['seriesId']]['color'], SER[CH[c]['seriesId']]['name'], p['w'], p['n'], p['collab'], p['solo']] for c, p in per.items()], key=lambda x: -x[4]),
     gini=gini([p['w'] for p in per.values()]), gini_series=gini(list(ser.values())),
-    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30], r['wb']] for r in rows])
+    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30], r['wb'], [SER[r['fid']]['name'], SER[r['fid']]['color']]] for r in rows])
 json.dump(out, open(sys.argv[2] if len(sys.argv) > 2 else '/dev/stdout', 'w'), ensure_ascii=False, indent=1)
 if len(sys.argv) > 2:
     print(len(rows), 'songs', out['weighted'], 'weighted', len(per), 'performers', 'gini', round(out['gini'], 3))
