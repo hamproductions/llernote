@@ -8,6 +8,15 @@ pid = sys.argv[1]
 S, P = L('performance-setlists.json')[pid], {x['id']: x for x in L('performance-info.json')}[pid]
 SI = {x['id']: x for x in L('song-info.json')}; AR = {x['id']: x for x in L('artists-info.json')}
 CH = {x['id']: x for x in L('character-info.json')}; SER = {x['id']: x for x in L('series-info.json')}
+# Song weight tiers (assumptions, not measured durations). First match wins.
+TIERS = [(re.compile(r'Movie\s?Edit', re.I), 1.0),
+         (re.compile(r'メドレー|medley', re.I), 0.3),
+         (re.compile(r'1番.*(ラスサビ|[CDＤ]メロ)|ショート.*1番|2コーラス'), 0.75),
+         (re.compile(r'TV\s?サイズ|TV\s?Size|ショート|Short|抜粋|さわり', re.I), 0.5)]
+def weight(rm, tiered=True):
+    for rx, w in TIERS:
+        if rx.search(rm or ''): return w if tiered else (1.0 if w == 1.0 else 0.5)
+    return 1.0
 PART = re.compile(r'メドレー|medley|TV\s?サイズ|ショート|Short|抜粋|さわり', re.I)
 norm = lambda s: re.sub(r'[\s　]', '', s)
 ALIAS = {'ランジュ': '嵐珠'}
@@ -49,7 +58,7 @@ for it in items:
     src = 'remark'
     if ch is None:
         ch = [c for a in song['artists'] if a['id'] in AR for c in resolve_artist(a)]; src = 'artist'
-    rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=0.5 if PART.search(it.get('remarks') or '') else 1,
+    rows.append(dict(pos=it['position'], name=it.get('customSongName') or song['name'], remarks=it.get('remarks'), w=weight(it.get('remarks')), wb=weight(it.get('remarks'), False),
                      chars=list(dict.fromkeys(ch)), src=src, artist=' / '.join(dict.fromkeys(AR[a['id']]['name'] for a in song['artists'] if a['id'] in AR)), song=song))
     show_all |= set(ch)
 # "all cast" songs
@@ -72,12 +81,12 @@ for r in rows:
     art[r['artist']] += r['w']
 def gini(v):
     v = sorted(v); n = len(v); t = sum(v); return 0 if not t else 2 * sum((i + 1) * x for i, x in enumerate(v)) / (n * t) - (n + 1) / n
-out = dict(name=P['tourName'], date=P['date'], songs=len(rows), weighted=sum(r['w'] for r in rows), performers=len(per),
+out = dict(name=P['tourName'], date=P['date'], songs=len(rows), weighted=sum(r['w'] for r in rows), weighted_binary=sum(r['wb'] for r in rows), performers=len(per),
     series=[[SER[s]['name'], SER[s]['color'], round(v, 2)] for s, v in ser.most_common()],
     artists=[[k, v] for k, v in art.most_common()],
     perf=sorted([[CH[c]['fullName'], cast(c), SER[CH[c]['seriesId']]['color'], SER[CH[c]['seriesId']]['name'], p['w'], p['n'], p['collab'], p['solo']] for c, p in per.items()], key=lambda x: -x[4]),
     gini=gini([p['w'] for p in per.values()]), gini_series=gini(list(ser.values())),
-    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30]] for r in rows])
+    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30], r['wb']] for r in rows])
 json.dump(out, open(sys.argv[2] if len(sys.argv) > 2 else '/dev/stdout', 'w'), ensure_ascii=False, indent=1)
 if len(sys.argv) > 2:
     print(len(rows), 'songs', out['weighted'], 'weighted', len(per), 'performers', 'gini', round(out['gini'], 3))
