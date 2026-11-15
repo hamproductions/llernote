@@ -1,0 +1,1620 @@
+{
+ "day1": "756",
+ "generated_from_history_before": "2026-11-14",
+ "pairs_all": 117,
+ "pairs_multi": 7,
+ "class_rates": {
+  "opening": {
+   "p": 0.888,
+   "all_pairs": 0.949,
+   "multi": 0.714,
+   "n_all": 117,
+   "n_multi": 7
+  },
+  "unit/group (3-10)": {
+   "p": 0.517,
+   "all_pairs": 0.855,
+   "multi": 0.452,
+   "n_all": 1517,
+   "n_multi": 104
+  },
+  "closing": {
+   "p": 0.943,
+   "all_pairs": 0.923,
+   "multi": 1.0,
+   "n_all": 117,
+   "n_multi": 7
+  },
+  "solo/duo": {
+   "p": 0.546,
+   "all_pairs": 0.66,
+   "multi": 0.5,
+   "n_all": 901,
+   "n_multi": 50
+  },
+  "many-series / 11+ people": {
+   "p": 0.96,
+   "all_pairs": 0.957,
+   "multi": 1.0,
+   "n_all": 23,
+   "n_multi": 2
+  },
+  "short/medley/TV": {
+   "p": 0.492,
+   "all_pairs": 0.551,
+   "multi": 0.462,
+   "n_all": 147,
+   "n_multi": 39
+  }
+ },
+ "expected_changed_slots": 22.4,
+ "of": 50,
+ "slots": [
+  {
+   "slot": 1,
+   "position": 1,
+   "song_id": "1",
+   "song": "僕らのLIVE 君とのLIFE",
+   "remarks": "穂乃果、ことり、凛、真姫、花陽、にこ Ver.",
+   "cls": "opening",
+   "franchise": "ラブライブ！",
+   "p_kept": 0.888,
+   "p_changed": 0.112,
+   "candidates": [
+    {
+     "song": "Mermaid festa vol.2 ～Passionate～",
+     "recent_shows": 5
+    },
+    {
+     "song": "Beat in Angel",
+     "recent_shows": 5
+    },
+    {
+     "song": "ミはμ'sicのミ",
+     "recent_shows": 4
+    },
+    {
+     "song": "きっと青春が聞こえる",
+     "recent_shows": 4
+    },
+    {
+     "song": "愛してるばんざーい！",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 2,
+   "position": 3,
+   "song_id": "351",
+   "song": "未来予報ハレルヤ！",
+   "remarks": "TVサイズ",
+   "cls": "short/medley/TV",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 3,
+   "position": 4,
+   "song_id": "685",
+   "song": "Let's be ONE",
+   "remarks": "TVサイズ",
+   "cls": "short/medley/TV",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 4,
+   "position": 5,
+   "song_id": "283",
+   "song": "Just Believe!!!",
+   "remarks": "歩夢、かすみ、しずく、果林、愛、彼方、エマ、璃奈、栞子、ミア、嵐珠 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 5,
+   "position": 7,
+   "song_id": "770",
+   "song": "What is my LIFE?",
+   "remarks": "",
+   "cls": "unit/group (3-10)",
+   "franchise": "イキヅライブ！ LOVELIVE! BLUEBIRD",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "浅草Guilty Girlの歌",
+     "recent_shows": 5
+    },
+    {
+     "song": "Little Green委員会",
+     "recent_shows": 5
+    },
+    {
+     "song": "キミは夜のポラリス",
+     "recent_shows": 5
+    },
+    {
+     "song": "イキタクナイevery day",
+     "recent_shows": 5
+    },
+    {
+     "song": "恋のワンタイムパスワード",
+     "recent_shows": 5
+    }
+   ]
+  },
+  {
+   "slot": 6,
+   "position": 9,
+   "song_id": "878",
+   "song": "Dou-Da? DOING!",
+   "remarks": "",
+   "cls": "unit/group (3-10)",
+   "franchise": "イキヅライブ！ LOVELIVE! BLUEBIRD",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "浅草Guilty Girlの歌",
+     "recent_shows": 5
+    },
+    {
+     "song": "Little Green委員会",
+     "recent_shows": 5
+    },
+    {
+     "song": "キミは夜のポラリス",
+     "recent_shows": 5
+    },
+    {
+     "song": "イキタクナイevery day",
+     "recent_shows": 5
+    },
+    {
+     "song": "恋のワンタイムパスワード",
+     "recent_shows": 5
+    }
+   ]
+  },
+  {
+   "slot": 7,
+   "position": 10,
+   "song_id": "924",
+   "song": "Tale of Primavera",
+   "remarks": "",
+   "cls": "unit/group (3-10)",
+   "franchise": "イキヅライブ！ LOVELIVE! BLUEBIRD",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "浅草Guilty Girlの歌",
+     "recent_shows": 5
+    },
+    {
+     "song": "Little Green委員会",
+     "recent_shows": 5
+    },
+    {
+     "song": "キミは夜のポラリス",
+     "recent_shows": 5
+    },
+    {
+     "song": "イキタクナイevery day",
+     "recent_shows": 5
+    },
+    {
+     "song": "恋のワンタイムパスワード",
+     "recent_shows": 5
+    }
+   ]
+  },
+  {
+   "slot": 8,
+   "position": 11,
+   "song_id": "858",
+   "song": "REGAIN AGAIN LLLLOVE",
+   "remarks": "",
+   "cls": "unit/group (3-10)",
+   "franchise": "イキヅライブ！ LOVELIVE! BLUEBIRD",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "浅草Guilty Girlの歌",
+     "recent_shows": 5
+    },
+    {
+     "song": "Little Green委員会",
+     "recent_shows": 5
+    },
+    {
+     "song": "キミは夜のポラリス",
+     "recent_shows": 5
+    },
+    {
+     "song": "イキタクナイevery day",
+     "recent_shows": 5
+    },
+    {
+     "song": "恋のワンタイムパスワード",
+     "recent_shows": 5
+    }
+   ]
+  },
+  {
+   "slot": 9,
+   "position": 12,
+   "song_id": "735",
+   "song": "全方位キュン♡",
+   "remarks": "",
+   "cls": "solo/duo",
+   "franchise": "蓮ノ空女学院スクールアイドルクラブ",
+   "p_kept": 0.546,
+   "p_changed": 0.454,
+   "candidates": [
+    {
+     "song": "アイドゥーミー！",
+     "recent_shows": 12
+    },
+    {
+     "song": "BLAST!!",
+     "recent_shows": 12
+    },
+    {
+     "song": "Echoes Beyond",
+     "recent_shows": 12
+    },
+    {
+     "song": "はじまりの羽音",
+     "recent_shows": 10
+    },
+    {
+     "song": "チャーミングな花束を！",
+     "recent_shows": 10
+    }
+   ]
+  },
+  {
+   "slot": 10,
+   "position": 13,
+   "song_id": "881",
+   "song": "アイシイ",
+   "remarks": "B. G. P. Ver.",
+   "cls": "solo/duo",
+   "franchise": "蓮ノ空女学院スクールアイドルクラブ",
+   "p_kept": 0.546,
+   "p_changed": 0.454,
+   "candidates": [
+    {
+     "song": "アイドゥーミー！",
+     "recent_shows": 12
+    },
+    {
+     "song": "BLAST!!",
+     "recent_shows": 12
+    },
+    {
+     "song": "Echoes Beyond",
+     "recent_shows": 12
+    },
+    {
+     "song": "はじまりの羽音",
+     "recent_shows": 10
+    },
+    {
+     "song": "チャーミングな花束を！",
+     "recent_shows": 10
+    }
+   ]
+  },
+  {
+   "slot": 11,
+   "position": 14,
+   "song_id": "854",
+   "song": "シアター生き様",
+   "remarks": "",
+   "cls": "solo/duo",
+   "franchise": "蓮ノ空女学院スクールアイドルクラブ",
+   "p_kept": 0.546,
+   "p_changed": 0.454,
+   "candidates": [
+    {
+     "song": "アイドゥーミー！",
+     "recent_shows": 12
+    },
+    {
+     "song": "BLAST!!",
+     "recent_shows": 12
+    },
+    {
+     "song": "Echoes Beyond",
+     "recent_shows": 12
+    },
+    {
+     "song": "はじまりの羽音",
+     "recent_shows": 10
+    },
+    {
+     "song": "チャーミングな花束を！",
+     "recent_shows": 10
+    }
+   ]
+  },
+  {
+   "slot": 12,
+   "position": 15,
+   "song_id": "675",
+   "song": "月夜見海月",
+   "remarks": "",
+   "cls": "solo/duo",
+   "franchise": "蓮ノ空女学院スクールアイドルクラブ",
+   "p_kept": 0.546,
+   "p_changed": 0.454,
+   "candidates": [
+    {
+     "song": "アイドゥーミー！",
+     "recent_shows": 12
+    },
+    {
+     "song": "BLAST!!",
+     "recent_shows": 12
+    },
+    {
+     "song": "Echoes Beyond",
+     "recent_shows": 12
+    },
+    {
+     "song": "はじまりの羽音",
+     "recent_shows": 10
+    },
+    {
+     "song": "チャーミングな花束を！",
+     "recent_shows": 10
+    }
+   ]
+  },
+  {
+   "slot": 13,
+   "position": 17,
+   "song_id": "502",
+   "song": "Dream Believers",
+   "remarks": "B. G. P. Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "蓮ノ空女学院スクールアイドルクラブ",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "アイドゥーミー！",
+     "recent_shows": 12
+    },
+    {
+     "song": "BLAST!!",
+     "recent_shows": 12
+    },
+    {
+     "song": "Echoes Beyond",
+     "recent_shows": 12
+    },
+    {
+     "song": "はじまりの羽音",
+     "recent_shows": 10
+    },
+    {
+     "song": "チャーミングな花束を！",
+     "recent_shows": 10
+    }
+   ]
+  },
+  {
+   "slot": 14,
+   "position": 18,
+   "song_id": "892",
+   "song": "SUPER SUMMER SENSATION!!",
+   "remarks": "ポルカ、玲、奇跡、輝夜、翔音、瑠璃乃、慈、吟子、小鈴、セラス Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "イキヅライブ！ LOVELIVE! BLUEBIRD",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "浅草Guilty Girlの歌",
+     "recent_shows": 5
+    },
+    {
+     "song": "Little Green委員会",
+     "recent_shows": 5
+    },
+    {
+     "song": "キミは夜のポラリス",
+     "recent_shows": 5
+    },
+    {
+     "song": "イキタクナイevery day",
+     "recent_shows": 5
+    },
+    {
+     "song": "恋のワンタイムパスワード",
+     "recent_shows": 5
+    }
+   ]
+  },
+  {
+   "slot": 15,
+   "position": 20,
+   "song_id": "493",
+   "song": "未完成ドリーム！",
+   "remarks": "メドレー・ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "スクールアイドルミュージカル",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": []
+  },
+  {
+   "slot": 16,
+   "position": 21,
+   "song_id": "519",
+   "song": "きらりひらり舞う桜",
+   "remarks": "メドレー・ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "スクールアイドルミュージカル",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": []
+  },
+  {
+   "slot": 17,
+   "position": 22,
+   "song_id": "643",
+   "song": "夢見ガチガール",
+   "remarks": "メドレー・ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "スクールアイドルミュージカル",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": []
+  },
+  {
+   "slot": 18,
+   "position": 23,
+   "song_id": "538",
+   "song": "ゆめの羅針盤",
+   "remarks": "メドレー・ショート・文化祭 Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "スクールアイドルミュージカル",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": []
+  },
+  {
+   "slot": 19,
+   "position": 24,
+   "song_id": "41",
+   "song": "START:DASH!!",
+   "remarks": "穂乃果、ことり、凛、真姫、花陽、にこ Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Mermaid festa vol.2 ～Passionate～",
+     "recent_shows": 5
+    },
+    {
+     "song": "Beat in Angel",
+     "recent_shows": 5
+    },
+    {
+     "song": "ミはμ'sicのミ",
+     "recent_shows": 4
+    },
+    {
+     "song": "きっと青春が聞こえる",
+     "recent_shows": 4
+    },
+    {
+     "song": "愛してるばんざーい！",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 20,
+   "position": 25,
+   "song_id": "45",
+   "song": "No brand girls",
+   "remarks": "穂乃果、ことり、凛、真姫、花陽、にこ Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Mermaid festa vol.2 ～Passionate～",
+     "recent_shows": 5
+    },
+    {
+     "song": "Beat in Angel",
+     "recent_shows": 5
+    },
+    {
+     "song": "ミはμ'sicのミ",
+     "recent_shows": 4
+    },
+    {
+     "song": "きっと青春が聞こえる",
+     "recent_shows": 4
+    },
+    {
+     "song": "愛してるばんざーい！",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 21,
+   "position": 27,
+   "song_id": "3",
+   "song": "Snow halation",
+   "remarks": "穂乃果、ことり、凛、真姫、花陽、にこ Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Mermaid festa vol.2 ～Passionate～",
+     "recent_shows": 5
+    },
+    {
+     "song": "Beat in Angel",
+     "recent_shows": 5
+    },
+    {
+     "song": "ミはμ'sicのミ",
+     "recent_shows": 4
+    },
+    {
+     "song": "きっと青春が聞こえる",
+     "recent_shows": 4
+    },
+    {
+     "song": "愛してるばんざーい！",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 22,
+   "position": 28,
+   "song_id": "893",
+   "song": "NEXT CARD",
+   "remarks": "",
+   "cls": "many-series / 11+ people",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.96,
+   "p_changed": 0.04,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 23,
+   "position": 30,
+   "song_id": "691",
+   "song": "愛♡スクリ～ム！",
+   "remarks": "歩夢、四季、セラス、麻衣 Ver.",
+   "cls": "many-series / 11+ people",
+   "franchise": "ラブライブ！サンシャイン!!",
+   "p_kept": 0.96,
+   "p_changed": 0.04,
+   "candidates": [
+    {
+     "song": "コワレヤスキ",
+     "recent_shows": 6
+    },
+    {
+     "song": "Strawberry Trapper",
+     "recent_shows": 5
+    },
+    {
+     "song": "Guilty Night, Guilty Kiss!",
+     "recent_shows": 4
+    },
+    {
+     "song": "SELF CONTROL!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "DROPOUT!?",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 24,
+   "position": 31,
+   "song_id": "310",
+   "song": "smile smile ship Start!",
+   "remarks": "千歌、梨子、曜、善子、花丸 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！サンシャイン!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "コワレヤスキ",
+     "recent_shows": 6
+    },
+    {
+     "song": "Strawberry Trapper",
+     "recent_shows": 5
+    },
+    {
+     "song": "Guilty Night, Guilty Kiss!",
+     "recent_shows": 4
+    },
+    {
+     "song": "SELF CONTROL!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "DROPOUT!?",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 25,
+   "position": 32,
+   "song_id": "213",
+   "song": "Wake up, Challenger!!",
+   "remarks": "千歌、梨子、曜、善子、花丸 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！サンシャイン!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "コワレヤスキ",
+     "recent_shows": 6
+    },
+    {
+     "song": "Strawberry Trapper",
+     "recent_shows": 5
+    },
+    {
+     "song": "Guilty Night, Guilty Kiss!",
+     "recent_shows": 4
+    },
+    {
+     "song": "SELF CONTROL!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "DROPOUT!?",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 26,
+   "position": 34,
+   "song_id": "120",
+   "song": "君のこころは輝いてるかい？",
+   "remarks": "千歌、梨子、曜、善子、花丸 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！サンシャイン!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "コワレヤスキ",
+     "recent_shows": 6
+    },
+    {
+     "song": "Strawberry Trapper",
+     "recent_shows": 5
+    },
+    {
+     "song": "Guilty Night, Guilty Kiss!",
+     "recent_shows": 4
+    },
+    {
+     "song": "SELF CONTROL!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "DROPOUT!?",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 27,
+   "position": 35,
+   "song_id": "193",
+   "song": "ホップ・ステップ・ワーイ！",
+   "remarks": "千歌、梨子、曜、善子、花丸 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！サンシャイン!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "コワレヤスキ",
+     "recent_shows": 6
+    },
+    {
+     "song": "Strawberry Trapper",
+     "recent_shows": 5
+    },
+    {
+     "song": "Guilty Night, Guilty Kiss!",
+     "recent_shows": 4
+    },
+    {
+     "song": "SELF CONTROL!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "DROPOUT!?",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 28,
+   "position": 36,
+   "song_id": "69",
+   "song": "ユメノトビラ",
+   "remarks": "穂乃果、ことり、凛、真姫、花陽、にこ、千歌、梨子、曜、善子、花丸 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Mermaid festa vol.2 ～Passionate～",
+     "recent_shows": 5
+    },
+    {
+     "song": "Beat in Angel",
+     "recent_shows": 5
+    },
+    {
+     "song": "ミはμ'sicのミ",
+     "recent_shows": 4
+    },
+    {
+     "song": "きっと青春が聞こえる",
+     "recent_shows": 4
+    },
+    {
+     "song": "愛してるばんざーい！",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 29,
+   "position": 37,
+   "song_id": "902",
+   "song": "Hyper Glowing！",
+   "remarks": "",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 30,
+   "position": 38,
+   "song_id": "458",
+   "song": "スター宣言",
+   "remarks": "1〜3期生 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 31,
+   "position": 39,
+   "song_id": "701",
+   "song": "Dazzling Game",
+   "remarks": "",
+   "cls": "many-series / 11+ people",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.96,
+   "p_changed": 0.04,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 32,
+   "position": 41,
+   "song_id": "831",
+   "song": "OPEN THE G☆TE!!!",
+   "remarks": "",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 33,
+   "position": 42,
+   "song_id": "316",
+   "song": "私のSymphony",
+   "remarks": "1〜3期生 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 34,
+   "position": 43,
+   "song_id": "470",
+   "song": "ビタミンSUMMER！",
+   "remarks": "千砂都、すみれ、メイ、夏美、マルガレーテ、歩夢、愛、璃奈、栞子、ミア、嵐珠 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 35,
+   "position": 44,
+   "song_id": "428",
+   "song": "Colorful Dreams! Colorful Smiles!",
+   "remarks": "歩夢、かすみ、しずく、果林、愛、彼方、エマ、璃奈、栞子、ミア、嵐珠 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 36,
+   "position": 45,
+   "song_id": "496",
+   "song": "わちゅごなどぅー",
+   "remarks": "侑、歩夢、かすみ、しずく、果林、愛、彼方、エマ、璃奈、栞子、ミア、嵐珠 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 37,
+   "position": 47,
+   "song_id": "296",
+   "song": "ツナガルコネクト",
+   "remarks": "TVサイズ",
+   "cls": "short/medley/TV",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 38,
+   "position": 48,
+   "song_id": "717",
+   "song": "White Delight",
+   "remarks": "ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 39,
+   "position": 49,
+   "song_id": "255",
+   "song": "無敵級*ビリーバー",
+   "remarks": "ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 40,
+   "position": 50,
+   "song_id": "597",
+   "song": "小悪魔LOVE♡",
+   "remarks": "ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 41,
+   "position": 51,
+   "song_id": "278",
+   "song": "Märchen Star",
+   "remarks": "ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 42,
+   "position": 52,
+   "song_id": "224",
+   "song": "夢への一歩",
+   "remarks": "ショート Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 43,
+   "position": 53,
+   "song_id": "820",
+   "song": "約束になれ僕らの歌",
+   "remarks": "歩夢、かすみ、しずく、果林、愛、彼方、エマ、璃奈、栞子、ミア、嵐珠 Ver.",
+   "cls": "unit/group (3-10)",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.517,
+   "p_changed": 0.483,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 44,
+   "position": 54,
+   "song_id": "36",
+   "song": "僕らは今のなかで",
+   "remarks": "TVサイズ｜穂乃果、ことり、凛、真姫、花陽、にこ、かのん、可可、マルガレーテ、花帆、梢、ポルカ、翔音 Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "ラブライブ！",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Mermaid festa vol.2 ～Passionate～",
+     "recent_shows": 5
+    },
+    {
+     "song": "Beat in Angel",
+     "recent_shows": 5
+    },
+    {
+     "song": "ミはμ'sicのミ",
+     "recent_shows": 4
+    },
+    {
+     "song": "きっと青春が聞こえる",
+     "recent_shows": 4
+    },
+    {
+     "song": "愛してるばんざーい！",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 45,
+   "position": 55,
+   "song_id": "132",
+   "song": "青空Jumping Heart",
+   "remarks": "TVサイズ｜千歌、梨子、曜、善子、花丸、千砂都、冬毬、綴理、瑠璃乃、姫芽、玲、のりこ Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "ラブライブ！サンシャイン!!",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "コワレヤスキ",
+     "recent_shows": 6
+    },
+    {
+     "song": "Strawberry Trapper",
+     "recent_shows": 5
+    },
+    {
+     "song": "Guilty Night, Guilty Kiss!",
+     "recent_shows": 4
+    },
+    {
+     "song": "SELF CONTROL!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "DROPOUT!?",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 46,
+   "position": 56,
+   "song_id": "617",
+   "song": "Trick ＆ Cute",
+   "remarks": "ショート Ver.｜慈、吟子、泉、歩夢、かすみ、璃奈、ミア、きな子、メイ、奇跡、輝夜 Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "蓮ノ空女学院スクールアイドルクラブ",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "アイドゥーミー！",
+     "recent_shows": 12
+    },
+    {
+     "song": "BLAST!!",
+     "recent_shows": 12
+    },
+    {
+     "song": "Echoes Beyond",
+     "recent_shows": 12
+    },
+    {
+     "song": "はじまりの羽音",
+     "recent_shows": 10
+    },
+    {
+     "song": "チャーミングな花束を！",
+     "recent_shows": 10
+    }
+   ]
+  },
+  {
+   "slot": 47,
+   "position": 57,
+   "song_id": "853",
+   "song": "Boooooom Boooooom Bee!!",
+   "remarks": "ショート Ver.｜しずく、愛、彼方、エマ、栞子、ランジュ、すみれ、四季、夏美、小鈴、セラス、花火、ゆくり、真緑 Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "虹ヶ咲学園スクールアイドル同好会",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Eternalize Love!!",
+     "recent_shows": 6
+    },
+    {
+     "song": "Circle of Love",
+     "recent_shows": 5
+    },
+    {
+     "song": "TOKIMEKI Runners",
+     "recent_shows": 4
+    },
+    {
+     "song": "Cheer for you!!",
+     "recent_shows": 4
+    },
+    {
+     "song": "think of you",
+     "recent_shows": 4
+    }
+   ]
+  },
+  {
+   "slot": 48,
+   "position": 58,
+   "song_id": "784",
+   "song": "ひっさつマイマイモード",
+   "remarks": "ショート Ver.｜麻衣、果林、恋、さやか Ver.",
+   "cls": "short/medley/TV",
+   "franchise": "イキヅライブ！ LOVELIVE! BLUEBIRD",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "浅草Guilty Girlの歌",
+     "recent_shows": 5
+    },
+    {
+     "song": "Little Green委員会",
+     "recent_shows": 5
+    },
+    {
+     "song": "キミは夜のポラリス",
+     "recent_shows": 5
+    },
+    {
+     "song": "イキタクナイevery day",
+     "recent_shows": 5
+    },
+    {
+     "song": "恋のワンタイムパスワード",
+     "recent_shows": 5
+    }
+   ]
+  },
+  {
+   "slot": 49,
+   "position": 59,
+   "song_id": "455",
+   "song": "WE WILL!!",
+   "remarks": "ショート Ver.｜Liella!、μ's、Aqours、虹ヶ咲学園スクールアイドル同好会、蓮ノ空女学院スクールアイドルクラブ、いきづらい部！",
+   "cls": "short/medley/TV",
+   "franchise": "ラブライブ！スーパースター!!",
+   "p_kept": 0.492,
+   "p_changed": 0.508,
+   "candidates": [
+    {
+     "song": "Aspire",
+     "recent_shows": 9
+    },
+    {
+     "song": "恋のチュートリアル",
+     "recent_shows": 9
+    },
+    {
+     "song": "High！モチベーション",
+     "recent_shows": 8
+    },
+    {
+     "song": "オレンジのままで",
+     "recent_shows": 8
+    },
+    {
+     "song": "Chance Day, Chance Way！",
+     "recent_shows": 7
+    }
+   ]
+  },
+  {
+   "slot": 50,
+   "position": 61,
+   "song_id": "103",
+   "song": "SUNNY DAY SONG",
+   "remarks": "Movie Edit｜出演者全員",
+   "cls": "closing",
+   "franchise": "ラブライブ！",
+   "p_kept": 0.943,
+   "p_changed": 0.057,
+   "candidates": [
+    {
+     "song": "Mermaid festa vol.2 ～Passionate～",
+     "recent_shows": 5
+    },
+    {
+     "song": "Beat in Angel",
+     "recent_shows": 5
+    },
+    {
+     "song": "ミはμ'sicのミ",
+     "recent_shows": 4
+    },
+    {
+     "song": "きっと青春が聞こえる",
+     "recent_shows": 4
+    },
+    {
+     "song": "愛してるばんざーい！",
+     "recent_shows": 4
+    }
+   ]
+  }
+ ]
+}
