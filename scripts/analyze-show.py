@@ -35,9 +35,9 @@ def resolve_artist(a, remark=''):  # same variant logic as src/utils/setlistAnal
         if uid == a['id'] and remark and label.replace(' ', '') in remark.replace(' ', '') and label.replace(' ', '') == 'B.G.P.': return cs
     if a.get('variant') and VAR.get((a['id'], a['variant'])): return VAR[(a['id'], a['variant'])]
     return [c for c in AR[a['id']]['characters'] if c]
-def parse_remark(rm):
-    rm = (rm or '').split('｜')[-1]
-    if 'Ver.' not in rm and not rm.startswith('Liella'): return None
+def parse_remark(rm0):
+    rm0 = rm0 or ''; rm = rm0.split('｜')[-1]
+    if 'Ver.' not in rm and not rm.startswith('Liella') and '｜' not in rm0: return None  # '｜' = a member list may follow even without 'Ver.'
     body = rm.replace('Ver.', '').strip(); toks = [t.strip() for t in re.split('[、,，]', body) if t.strip()]
     if not toks: return None
     out = []

@@ -60,16 +60,17 @@ for it in items:
         members, how = (set().union(*[variant[(i, 'B. G. P.')] for i in ids]) if ids else None), 'remark B.G.P. → artist variant'
     elif re.search(r'\d〜\d期生', tail):
         members, how = set(variant[('91', '1期生〜3期生')]), 'remark 1〜3期生 → variant'
-    elif 'Ver.' in tail or tail.startswith('Liella'):
+    elif 'Ver.' in tail or tail.startswith('Liella') or '｜' in rm:
         toks = [x.strip() for x in re.split('[、,]', tail.replace('Ver.', '')) if x.strip()]
-        if all(re.fullmatch(r'(メドレー|ショート|TVサイズ|文化祭|・)+', x) for x in toks): toks = []  # format words only, no names
+        if all(re.fullmatch(r'(メドレー|ショート|TVサイズ|文化祭|椿滝桜|・|\s)+', x) for x in toks): toks = []  # format words only, no names
         out = set(); ok = True
         for tk in toks:
             g = next((v for k, v in GROUP.items() if tk.startswith(k)), None)
             if g: out |= {c for c in lineup if chars[c]['seriesId'] == g}; continue
             h = lookup(tk)
-            if len(h) != 1: ok = False; flag('WARN', f"#{it['position']+1} {s['name']}: token '{tk}' resolves to {[chars[x]['fullName'] for x in h]}")
+            if len(h) != 1: ok = False; ('Ver.' in tail) and flag('WARN', f"#{it['position']+1} {s['name']}: token '{tk}' resolves to {[chars[x]['fullName'] for x in h]}")
             else: out |= set(h)
+        if '｜' in rm and 'Ver.' not in tail and not all(any(tk.startswith(k) for k in GROUP) or len(lookup(tk)) == 1 for tk in toks): toks, out, ok = [], set(), False  # free text after ｜, not a member list
         if toks and ok and out: members, how = out, 'remark names'
     if members is None:
         members = set()
