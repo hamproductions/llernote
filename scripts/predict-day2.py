@@ -16,6 +16,7 @@ S, P = J('performance-setlists.json'), {x['id']: x for x in J('performance-info.
 SI = {x['id']: x for x in J('song-info.json')}; AR = {x['id']: x for x in J('artists-info.json')}
 SER = {s['id']: s['name'] for s in J('series-info.json')}
 d1, out = sys.argv[1], sys.argv[2]
+SONG_LEVEL = '--level=song' in sys.argv  # kept = still played on Day 2 anywhere (reordering is not a change)
 PRIOR_N = 20
 SHORT = re.compile(r'メドレー|ショート|Short|TV', re.I)
 
@@ -54,7 +55,7 @@ def rates(pp):
         keep = set()
         for blk in difflib.SequenceMatcher(None, ia, ib, autojunk=False).get_matching_blocks(): keep |= set(range(blk.a, blk.a + blk.size))
         for i, (pos, sid, rm) in enumerate(sa):
-            k = cls(sid, rm, i, len(sa)); r[k][1] += 1; r[k][0] += i in keep
+            k = cls(sid, rm, i, len(sa)); r[k][1] += 1; r[k][0] += (sid in ib) if SONG_LEVEL else (i in keep)
     return r
 ra, rm_ = rates(pairs), rates(multi)
 pk = {}
@@ -78,7 +79,7 @@ for i, (pos, sid, rm) in enumerate(s1):
     slots.append(dict(slot=i + 1, position=pos, song_id=sid, song=so['name'], remarks=rm, cls=k, franchise=SER.get(fr, fr),
                       p_kept=pk[k]['p'], p_changed=round(1 - pk[k]['p'], 3), candidates=[dict(song=a, recent_shows=b) for a, b in cands]))
 exp = sum(s['p_changed'] for s in slots)
-json.dump(dict(day1=d1, generated_from_history_before=cut, pairs_all=len(pairs), pairs_multi=len(multi), class_rates=pk,
+json.dump(dict(level='song' if SONG_LEVEL else 'slot', day1=d1, generated_from_history_before=cut, pairs_all=len(pairs), pairs_multi=len(multi), class_rates=pk,
                expected_changed_slots=round(exp, 1), of=len(slots), slots=slots), open(out, 'w'), ensure_ascii=False, indent=1)
 print(f'{len(pairs)} past pairs ({len(multi)} multi-franchise). Expected changed slots: {exp:.1f} of {len(slots)}')
 for k, v in sorted(pk.items(), key=lambda kv: -kv[1]['p']): print(f"  {k:<26} P(kept)={v['p']:.0%}  (all {v['all_pairs']:.0%} n={v['n_all']}, multi {v['multi'] if v['multi'] is None else format(v['multi'], '.0%')} n={v['n_multi']})")

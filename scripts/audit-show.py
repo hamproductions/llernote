@@ -85,7 +85,10 @@ for it in items:
     tied = [x for x in ss if cnt.get(x, 0) == best]
     billed = tied[0] if len(tied) == 1 else 'OTHERS'
     if len(tied) > 1: flag('NOTE', f"#{it['position']+1} {s['name']}: tie between {[series[x] for x in tied]} → Others")
-    rows.append(dict(pos=it['position'], name=s['name'], rm=rm, w=OVR.get(str(it['position']), {}).get('weight', weight(rm)), members=members, how=how, absent=absent, billed=('その他（複数シリーズ）' if billed == 'OTHERS' else series[billed])))
+    nm = [artists[a['id']]['name'] for a in s['artists'] if a['id'] in artists]; sz = max([len([c for c in artists[a['id']]['characters'] if c]) for a in s['artists'] if a['id'] in artists] or [0])
+    ids = s.get('seriesIds') or []
+    otype = 'Guest (SIM)' if ids == [5] else 'Cross-franchise' if len(ids) > 1 else 'Full group' if any(n in ("μ's", 'Aqours', '虹ヶ咲学園スクールアイドル同好会', '蓮ノ空女学院スクールアイドルクラブ', 'いきづらい部！') or n.startswith('Liella!') for n in nm) else 'Solo' if sz == 1 else 'Unit'
+    rows.append(dict(otype=otype, pos=it['position'], name=s['name'], rm=rm, w=OVR.get(str(it['position']), {}).get('weight', weight(rm)), members=members, how=how, absent=absent, billed=('その他（複数シリーズ）' if billed == 'OTHERS' else series[billed])))
 
 # ---- compare with analyze-show output, song by song
 d = json.load(open(other))
@@ -95,7 +98,7 @@ print(f"{'#':>2} {'song':<26} {'w':>4} {'n':>3}  {'billed':<12} {'source':<30} c
 for r in rows:
     t = theirs.get(r['pos'])
     tm = {byname[n] for n in t[11]} if t else set()
-    ok = t and abs(t[3] - r['w']) < 1e-9 and tm == r['members'] and t[10][0] == r['billed']
+    ok = t and abs(t[3] - r['w']) < 1e-9 and tm == r['members'] and t[10][0] == r['billed'] and t[12] == r['otype']
     why = '' if ok else f" MISMATCH w={t[3] if t else None} vs {r['w']} | only-mine={sorted(chars[c]['fullName'] for c in r['members']-tm)} only-theirs={sorted(chars[c]['fullName'] for c in tm-r['members'])} | billed {t[10][0] if t else None} vs {r['billed']}"
     if not ok: flag('FAIL', f"#{r['pos']+1} {r['name']}:{why}")
     ab = f" (dropped absent: {', '.join(chars[c]['fullName'] for c in r['absent'])})" if r['absent'] else ''
@@ -120,4 +123,8 @@ print('\nsong time by franchise (audit):', {k: round(v, 2) for k, v in sertime.m
 print('performer-song total (audit):', round(sum(per.values()), 2), ' analyze:', round(sum(tp.values()), 2))
 print('\nFINDINGS:' if findings else '\nFINDINGS: none')
 for lv, m in findings: print(f'  [{lv}] {m}')
+import os
+if os.environ.get('AUDIT_OUT'):
+    json.dump([dict(pos=r['pos'], name=r['name'], w=r['w'], otype=r['otype'], billed=r['billed'], members=sorted(chars[c]['fullName'] for c in r['members'])) for r in rows],
+              open(os.environ['AUDIT_OUT'], 'w'), ensure_ascii=False)
 sys.exit(1 if any(lv == 'FAIL' for lv, _ in findings) else 0)

@@ -2,7 +2,8 @@
 """Score data/predictions/day2-from-day1.json against the real Day 2 setlist.
 Usage: python3 scripts/score-prediction.py <day1Id> <day2Id> <prediction.json> [out.json]"""
 import json, sys, difflib, collections as C
-d1, d2, pred, *o = sys.argv[1:]
+SONG = '--level=song' in sys.argv
+d1, d2, pred, *o = [x for x in sys.argv[1:] if not x.startswith('--')]
 J = lambda f: json.load(open('data/' + f))
 S = J('performance-setlists.json'); SI = {x['id']: x for x in J('song-info.json')}
 songs = lambda pid: [(it['position'], it['songId']) for it in S[pid]['items'] if it['type'] == 'song' and it.get('songId')]
@@ -12,7 +13,7 @@ for blk in difflib.SequenceMatcher(None, ia, ib, autojunk=False).get_matching_bl
 P = json.load(open(pred)); res = []
 for s in P['slots']:
     i = s['slot'] - 1
-    kept = i in keep; moved = (not kept) and s['song_id'] in ib
+    kept = (s['song_id'] in ib) if SONG else (i in keep); moved = (not SONG) and (not kept) and s['song_id'] in ib
     res.append(dict(slot=s['slot'], song=s['song'], cls=s['cls'], p_changed=s['p_changed'], kept=kept, moved=moved, changed=not kept,
                     in_day2=s['song_id'] in ib, hit_candidate=None))
 n = len(res); actual = sum(r['changed'] for r in res); expected = sum(r['p_changed'] for r in res)
@@ -20,7 +21,7 @@ brier = sum((r['p_changed'] - r['changed']) ** 2 for r in res) / n
 base = actual / n; brier_flat = sum((base - r['changed']) ** 2 for r in res) / n
 cands = {s['slot']: {c['song'] for c in s['candidates']} for s in P['slots']}
 names_d2 = {SI[x]['name'] for x in ib if x in SI}
-print(f'Day1 {len(a)} songs, Day2 {len(b)} songs; shared songs: {len(set(ia) & set(ib))}; D1 slots kept in place: {len(keep)}')
+print(f'[{"song-level: changed = dropped" if SONG else "slot-level"}] Day1 {len(a)} songs, Day2 {len(b)} songs; shared songs: {len(set(ia) & set(ib))}; D1 slots kept in place: {len(keep)}')
 print(f'changed slots: predicted {expected:.1f}, actual {actual} of {n}')
 print(f'Brier (lower better): model {brier:.3f}  vs always-{base:.0%} {brier_flat:.3f}  vs coin-flip 0.250')
 by = C.defaultdict(lambda: [0, 0, 0.0])

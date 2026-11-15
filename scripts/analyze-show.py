@@ -109,7 +109,14 @@ for r in rows:
     ss = [str(x) for x in r['song'].get('seriesIds') or []] or [max(cnt, key=cnt.get)]
     top = max(cnt.get(s, 0) for s in ss)
     tied = [s for s in ss if cnt.get(s, 0) == top]
-    r['fid'] = tied[0] if len(tied) == 1 else 'OTHERS'  # a tie = a cross-franchise song with no single home -> Others
+    r['fid'] = tied[0] if len(tied) == 1 else 'OTHERS'
+    # original song type = what the song IS (its credited artist + series), not who performed it this time
+    anames = [AR[a['id']]['name'] for a in r['song']['artists'] if a['id'] in AR]
+    asz = max([len([c for c in AR[a['id']]['characters'] if c]) for a in r['song']['artists'] if a['id'] in AR] or [0])
+    sids = r['song'].get('seriesIds') or []
+    MAINNAMES = {"μ's", 'Aqours', '虹ヶ咲学園スクールアイドル同好会', '蓮ノ空女学院スクールアイドルクラブ', 'いきづらい部！'}
+    r['otype'] = ('Guest (SIM)' if sids == [5] else 'Cross-franchise' if len(sids) >= 2 else
+                  'Full group' if any(n in MAINNAMES or n.startswith('Liella!') for n in anames) else 'Solo' if asz == 1 else 'Unit')  # a tie = a cross-franchise song with no single home -> Others
     for s, n in cnt.items(): ser[s] += r['w'] * n / len(r['chars'])
     art[r['artist']] += r['w']
 def gini(v):
@@ -119,7 +126,7 @@ out = dict(name=P['tourName'], date=P['date'], songs=len(rows), weighted=sum(r['
     artists=[[k, v] for k, v in art.most_common()],
     perf=sorted([[CH[c]['fullName'], cast(c), SER[CH[c]['seriesId']]['color'], SER[CH[c]['seriesId']]['name'], p['w'], p['n'], p['collab'], p['solo']] for c, p in per.items()], key=lambda x: -x[4]),
     gini=gini([p['w'] for p in per.values()]), gini_series=gini(list(ser.values())),
-    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30], r['wb'], (('その他（複数シリーズ）', '#7a8794') if r['fid'] == 'OTHERS' else (SER[r['fid']]['name'], SER[r['fid']]['color'])), [CH[c]['fullName'] for c in r['chars']]] for r in rows])
+    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30], r['wb'], (('その他（複数シリーズ）', '#7a8794') if r['fid'] == 'OTHERS' else (SER[r['fid']]['name'], SER[r['fid']]['color'])), [CH[c]['fullName'] for c in r['chars']], r['otype']] for r in rows])
 json.dump(out, open(sys.argv[2] if len(sys.argv) > 2 else '/dev/stdout', 'w'), ensure_ascii=False, indent=1)
 if len(sys.argv) > 2:
     print(len(rows), 'songs', out['weighted'], 'weighted', len(per), 'performers', 'gini', round(out['gini'], 3))
