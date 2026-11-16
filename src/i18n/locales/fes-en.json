@@ -99,5 +99,13 @@
   "d_billed_songs": "Songs billed to {{f}}",
   "d_dropped": "Dropped after the earlier day",
   "d_added": "New on the later day",
-  "d_both": "Played on both days"
+  "d_both": "Played on both days",
+  "change_event": "Change event",
+  "event_days": "{{n}} days",
+  "event_day": "1 day",
+  "event_franchises": "{{n}} franchises",
+  "official_lineup": "Official lineup",
+  "infographic_link_title": "Festival stats",
+  "infographic_link_text": "Song time, cast time, collab share and what changed between days for multi-franchise lives like ラブライブ！フェス.",
+  "infographic_link_cta": "Open festival stats"
 }

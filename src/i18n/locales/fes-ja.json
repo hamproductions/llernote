@@ -99,5 +99,13 @@
   "d_billed_songs": "{{f}}に計上された曲",
   "d_dropped": "翌日は演奏なし",
   "d_added": "後の日に新規",
-  "d_both": "両日演奏"
+  "d_both": "両日演奏",
+  "change_event": "イベントを変更",
+  "event_days": "{{n}}日間",
+  "event_day": "1日",
+  "event_franchises": "{{n}}シリーズ",
+  "official_lineup": "公式出演者リスト",
+  "infographic_link_title": "フェス統計",
+  "infographic_link_text": "ラブライブ！フェスのような合同ライブの曲数・出演時間・コラボ率・日替わりの違い。",
+  "infographic_link_cta": "フェス統計を開く"
 }

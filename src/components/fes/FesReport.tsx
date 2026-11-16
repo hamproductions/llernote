@@ -72,6 +72,47 @@ const Chip = ({
   </Box>
 );
 
+function Segmented<T extends string | number>({
+  value,
+  options,
+  onChange
+}: {
+  value: T;
+  options: { value: T; label: React.ReactNode }[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <HStack
+      gap="0"
+      borderColor="border.default"
+      borderRadius="l2"
+      borderWidth="1px"
+      bg="bg.default"
+      overflow="hidden"
+    >
+      {options.map((o, i) => (
+        <Box
+          as="button"
+          key={String(o.value)}
+          onClick={() => onChange(o.value)}
+          cursor="pointer"
+          borderColor="border.default"
+          borderLeftWidth={i === 0 ? '0' : '1px'}
+          py="1.5"
+          px="3.5"
+          color={value === o.value ? 'accent.fg' : 'fg.default'}
+          fontSize="sm"
+          fontWeight={value === o.value ? 'semibold' : 'normal'}
+          bg={value === o.value ? 'accent.default' : 'transparent'}
+          _hover={value === o.value ? undefined : { bg: 'bg.subtle' }}
+        >
+          {o.label}
+        </Box>
+      ))}
+    </HStack>
+  );
+}
+
 type Detail =
   | { kind: 'songs'; title: string; songs: FesSong[] }
   | { kind: 'series'; series: string }
@@ -251,25 +292,30 @@ export function FesReport({ days }: { event: FesEvent; days: FesDay[] }) {
   return (
     <Stack gap="6">
       <Stack gap="2">
-        <HStack gap="2" flexWrap="wrap">
-          {days.map((day, i) => (
-            <Chip key={day.performanceId} on={view === i} onClick={() => setView(i)}>
-              {t('fes.day_n', { n: i + 1 })}
-            </Chip>
-          ))}
-          {days.length > 1 && (
-            <Chip on={view === 'all'} onClick={() => setView('all')}>
-              {t('fes.all_days')}
-            </Chip>
-          )}
-          <Box w="3" />
-          <Chip on={!activeOnly} onClick={() => setActiveOnly(false)}>
-            {t('fes.franchises_all')}
-          </Chip>
-          <Chip on={activeOnly} onClick={() => setActiveOnly(true)}>
-            {t('fes.franchises_active')}
-          </Chip>
+        <HStack gap="3" flexWrap="wrap">
+          <Segmented<number | 'all'>
+            value={view}
+            onChange={setView}
+            options={[
+              ...days.map((_, i) => ({
+                value: i as number | 'all',
+                label: t('fes.day_n', { n: i + 1 })
+              })),
+              ...(days.length > 1
+                ? [{ value: 'all' as number | 'all', label: t('fes.all_days') }]
+                : [])
+            ]}
+          />
+          <Segmented<'all' | 'active'>
+            value={activeOnly ? 'active' : 'all'}
+            onChange={(v) => setActiveOnly(v === 'active')}
+            options={[
+              { value: 'all', label: t('fes.franchises_all') },
+              { value: 'active', label: t('fes.franchises_active') }
+            ]}
+          />
           <Chip on={noEnsemble} onClick={() => setNoEnsemble((v) => !v)}>
+            {noEnsemble ? '✓ ' : ''}
             {t('fes.hide_ensemble')}
           </Chip>
         </HStack>
