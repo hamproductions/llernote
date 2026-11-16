@@ -16,7 +16,9 @@
     "costumes": "Costumes",
     "infographic": "Infographic",
     "sort": "Sort",
-    "fes": "Fes stats"
+    "fes": "Fes stats",
+    "group_insights": "Insights",
+    "group_create": "Create"
   },
   "infographic": {
     "title": "Numbered Lives — Setlist Analysis",

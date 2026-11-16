@@ -5,11 +5,13 @@ import {
   FaCalendarDays,
   FaChartPie,
   FaChartSimple,
+  FaChevronDown,
   FaEllipsis,
   FaHouse,
   FaMapLocationDot,
   FaMusic,
   FaPeopleGroup,
+  FaWandMagicSparkles,
   FaShirt,
   FaScaleBalanced,
   FaStar,
@@ -25,6 +27,7 @@ import { Footer } from '~/components/layout/Footer';
 import { LanguageToggle } from '~/components/layout/LanguageToggle';
 import { SettingsMenu } from '~/components/layout/SettingsMenu';
 import { Drawer } from '~/components/ui/drawer';
+import { Menu } from '~/components/ui/menu';
 import { Link } from '~/components/ui/link';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/styled/button';
@@ -40,21 +43,49 @@ interface NavItem {
   exact?: boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
+interface NavGroup {
+  id: string;
+  key: string;
+  icon: React.ComponentType<{ size?: number }>;
+  items: NavItem[];
+}
+
+/** Everyday pages stay one click away. */
+const PRIMARY_ITEMS: NavItem[] = [
   { path: '/', key: 'navigation.home', exact: true, icon: FaHouse },
   { path: '/events', key: 'navigation.events', icon: FaTicket },
   { path: '/calendar', key: 'navigation.calendar', icon: FaCalendarDays },
   { path: '/venues', key: 'navigation.venues', icon: FaMapLocationDot },
-  { path: '/stats', key: 'navigation.stats', icon: FaChartSimple },
   { path: '/songs', key: 'navigation.songs', icon: FaMusic },
   { path: '/sort', key: 'navigation.sort', icon: FaScaleBalanced },
-  { path: '/costumes', key: 'navigation.costumes', icon: FaShirt },
-  { path: '/infographic', key: 'navigation.infographic', icon: FaChartPie },
-  { path: '/fes', key: 'navigation.fes', icon: FaPeopleGroup },
-  { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
-  { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy },
-  { path: '/bingo', key: 'bingo.title', icon: FaMusic }
+  { path: '/costumes', key: 'navigation.costumes', icon: FaShirt }
 ];
+
+/** Statistics and the things you make live in dropdowns so the header stays short. */
+const NAV_GROUPS: NavGroup[] = [
+  {
+    id: 'insights',
+    key: 'navigation.group_insights',
+    icon: FaChartSimple,
+    items: [
+      { path: '/stats', key: 'navigation.stats', icon: FaChartSimple },
+      { path: '/infographic', key: 'navigation.infographic', icon: FaChartPie },
+      { path: '/fes', key: 'navigation.fes', icon: FaPeopleGroup }
+    ]
+  },
+  {
+    id: 'create',
+    key: 'navigation.group_create',
+    icon: FaWandMagicSparkles,
+    items: [
+      { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
+      { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy },
+      { path: '/bingo', key: 'bingo.title', icon: FaMusic }
+    ]
+  }
+];
+
+const NAV_ITEMS: NavItem[] = [...PRIMARY_ITEMS, ...NAV_GROUPS.flatMap((g) => g.items)];
 
 const MOBILE_PRIMARY_PATHS = ['/', '/events', '/calendar', '/songs'];
 const MOBILE_PRIMARY_NAV_ITEMS = NAV_ITEMS.filter(({ path }) =>
@@ -74,7 +105,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   function HeaderNav() {
     return (
       <>
-        {NAV_ITEMS.map(({ path, key, exact, icon: Icon }) => {
+        {PRIMARY_ITEMS.map(({ path, key, exact, icon: Icon }) => {
           const isActive = isActiveRoute(path, currentPath, exact);
           return (
             <Link
@@ -88,7 +119,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               alignItems="center"
               borderRadius="md"
               py="1.5"
-              px={{ base: '0.5', lg: '1.5', xl: '2' }}
+              px={{ base: '1', lg: '1.5', xl: '2' }}
               color={isActive ? 'accent.text' : 'fg.muted'}
               textDecoration="none"
               fontSize="sm"
@@ -104,41 +135,118 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+        {NAV_GROUPS.map((group) => {
+          const GroupIcon = group.icon;
+          const groupActive = group.items.some((item) =>
+            isActiveRoute(item.path, currentPath, item.exact)
+          );
+          return (
+            <Menu.Root key={group.id} positioning={{ placement: 'bottom-start', gutter: 6 }}>
+              <Menu.Trigger asChild>
+                <Box
+                  as="button"
+                  aria-label={t(group.key)}
+                  data-active={groupActive ? true : undefined}
+                  cursor="pointer"
+                  display="flex"
+                  gap="1"
+                  alignItems="center"
+                  borderRadius="md"
+                  py="1.5"
+                  px={{ base: '1', lg: '1.5', xl: '2' }}
+                  color={groupActive ? 'accent.text' : 'fg.muted'}
+                  fontSize="sm"
+                  fontWeight={groupActive ? 'semibold' : 'medium'}
+                  bgColor={groupActive ? 'accent.subtle' : 'transparent'}
+                  whiteSpace="nowrap"
+                  _hover={{ bgColor: groupActive ? 'accent.subtle' : 'bg.subtle' }}
+                >
+                  <GroupIcon size={15} />
+                  <Text as="span" hideBelow="lg">
+                    {t(group.key)}
+                  </Text>
+                  <FaChevronDown size={9} />
+                </Box>
+              </Menu.Trigger>
+              <Menu.Positioner>
+                <Menu.Content minW="52">
+                  {group.items.map(({ path, key, exact, icon: Icon }) => {
+                    const isActive = isActiveRoute(path, currentPath, exact);
+                    return (
+                      <Menu.Item key={path} value={path} asChild>
+                        <Link
+                          href={toAppUrl(path)}
+                          aria-current={isActive ? 'page' : undefined}
+                          display="flex"
+                          gap="2.5"
+                          alignItems="center"
+                          color={isActive ? 'accent.text' : 'fg.default'}
+                          textDecoration="none"
+                          fontWeight={isActive ? 'semibold' : 'medium'}
+                          _hover={{ textDecoration: 'none' }}
+                        >
+                          <Icon size={14} />
+                          {t(key)}
+                        </Link>
+                      </Menu.Item>
+                    );
+                  })}
+                </Menu.Content>
+              </Menu.Positioner>
+            </Menu.Root>
+          );
+        })}
       </>
     );
   }
 
   function DrawerNav() {
+    const drawerLink = ({ path, key, exact, icon: Icon }: NavItem) => {
+      const isActive = isActiveRoute(path, currentPath, exact);
+      return (
+        <Link
+          key={path}
+          href={toAppUrl(path)}
+          aria-current={isActive ? 'page' : undefined}
+          data-active={isActive ? true : undefined}
+          onClick={() => setIsDrawerOpen(false)}
+          display="flex"
+          gap="3"
+          alignItems="center"
+          borderRadius="md"
+          w="full"
+          py="2.5"
+          px="3"
+          color={isActive ? 'accent.text' : 'fg.default'}
+          textDecoration="none"
+          fontSize="md"
+          fontWeight={isActive ? 'semibold' : 'medium'}
+          bgColor={isActive ? 'accent.subtle' : 'transparent'}
+          _hover={{ bgColor: isActive ? 'accent.subtle' : 'bg.subtle', textDecoration: 'none' }}
+        >
+          <Icon size={18} />
+          {t(key)}
+        </Link>
+      );
+    };
     return (
       <>
-        {NAV_ITEMS.map(({ path, key, exact, icon: Icon }) => {
-          const isActive = isActiveRoute(path, currentPath, exact);
-          return (
-            <Link
-              key={path}
-              href={toAppUrl(path)}
-              aria-current={isActive ? 'page' : undefined}
-              data-active={isActive ? true : undefined}
-              onClick={() => setIsDrawerOpen(false)}
-              display="flex"
-              gap="3"
-              alignItems="center"
-              borderRadius="md"
-              w="full"
-              py="2.5"
+        {PRIMARY_ITEMS.map(drawerLink)}
+        {NAV_GROUPS.map((group) => (
+          <Stack key={group.id} gap="1" mt="3">
+            <Text
               px="3"
-              color={isActive ? 'accent.text' : 'fg.default'}
-              textDecoration="none"
-              fontSize="md"
-              fontWeight={isActive ? 'semibold' : 'medium'}
-              bgColor={isActive ? 'accent.subtle' : 'transparent'}
-              _hover={{ bgColor: isActive ? 'accent.subtle' : 'bg.subtle', textDecoration: 'none' }}
+              color="fg.subtle"
+              fontSize="xs"
+              fontWeight="semibold"
+              letterSpacing="wide"
+              textTransform="uppercase"
             >
-              <Icon size={18} />
-              {t(key)}
-            </Link>
-          );
-        })}
+              {t(group.key)}
+            </Text>
+            {group.items.map(drawerLink)}
+          </Stack>
+        ))}
       </>
     );
   }
