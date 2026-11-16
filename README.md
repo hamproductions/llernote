@@ -12,6 +12,7 @@ Track the lives you attended, browse setlists, tally every song you've witnessed
 - **Upcoming events** — future events with countdown badges
 - **Statistics** — totals, by-year/series/venue/watch-type breakdowns, exportable as a share image (PNG)
 - **MyPick** — favorite events / groups / songs / year (multi-group supported), exportable as a share card
+- **Festival stats** (`/fes`) — for multi-franchise lives (e.g. ラブライブ！フェス): song time vs cast time per franchise, collab share, fairness / push check, and what changed between days (side-by-side running orders)
 - **Song tally** — every song you've witnessed live, ranked by count, with the exact performances where you heard it
 - **Sharing** — X (Twitter) intent, copy-as-text, EventerNote search link per event
 - **Data ownership** — JSON export/import backup (Stats page → Data Management)

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
+import { Link } from '~/components/ui/link';
 import { Text } from '~/components/ui/text';
+import { toAppUrl } from '~/utils/url';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { Metadata } from '~/components/layout/Metadata';
 import {
@@ -107,6 +109,34 @@ function Body() {
             </Box>
           ))}
         </Grid>
+
+        <Link
+          href={toAppUrl('/fes')}
+          display="block"
+          borderColor="border.subtle"
+          borderLeftWidth="4px"
+          borderLeftColor="accent.default"
+          borderRadius="l2"
+          borderWidth="1px"
+          p="3"
+          textDecoration="none"
+          bg="bg.default"
+          _hover={{ borderColor: 'accent.default' }}
+        >
+          <HStack gap="3" justifyContent="space-between" alignItems="center">
+            <Stack gap="0.5">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('fes.infographic_link_title')}
+              </Text>
+              <Text color="fg.muted" fontSize="xs">
+                {t('fes.infographic_link_text')}
+              </Text>
+            </Stack>
+            <Text color="accent.default" fontSize="sm" fontWeight="semibold" whiteSpace="nowrap">
+              {t('fes.infographic_link_cta')} →
+            </Text>
+          </HStack>
+        </Link>
 
         <Text mt="2" color="fg.muted" fontSize="xs">
           {t('infographic.cat_filter_label')}

@@ -15,7 +15,10 @@
     "venues": "会場",
     "costumes": "衣装",
     "infographic": "分析",
-    "sort": "ライブソーター"
+    "sort": "ライブソーター",
+    "fes": "フェス統計",
+    "group_insights": "統計・分析",
+    "group_create": "つくる"
   },
   "infographic": {
     "title": "ナンバリングライブ — セットリスト分析",
