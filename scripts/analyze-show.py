@@ -126,7 +126,7 @@ out = dict(name=P['tourName'], date=P['date'], songs=len(rows), weighted=sum(r['
     artists=[[k, v] for k, v in art.most_common()],
     perf=sorted([[CH[c]['fullName'], cast(c), SER[CH[c]['seriesId']]['color'], SER[CH[c]['seriesId']]['name'], p['w'], p['n'], p['collab'], p['solo']] for c, p in per.items()], key=lambda x: -x[4]),
     gini=gini([p['w'] for p in per.values()]), gini_series=gini(list(ser.values())),
-    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30], r['wb'], (('その他（複数シリーズ）', '#7a8794') if r['fid'] == 'OTHERS' else (SER[r['fid']]['name'], SER[r['fid']]['color'])), [CH[c]['fullName'] for c in r['chars']], r['otype']] for r in rows])
+    songlist=[[r['pos'], r['name'], r['remarks'], r['w'], len(r['chars']), r['src'], r['collab'], [[SER[s]['color'], n] for s, n in C.Counter(CH[c]['seriesId'] for c in r['chars']).most_common()], r['artist'][:30], r['wb'], (('その他（複数シリーズ）', '#7a8794') if r['fid'] == 'OTHERS' else (SER[r['fid']]['name'], SER[r['fid']]['color'])), [CH[c]['fullName'] for c in r['chars']], r['otype'], r['song']['id']] for r in rows])
 json.dump(out, open(sys.argv[2] if len(sys.argv) > 2 else '/dev/stdout', 'w'), ensure_ascii=False, indent=1)
 if len(sys.argv) > 2:
     print(len(rows), 'songs', out['weighted'], 'weighted', len(per), 'performers', 'gini', round(out['gini'], 3))
