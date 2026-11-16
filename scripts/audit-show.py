@@ -43,7 +43,7 @@ def weight(rm):
     if re.search(r'Movie\s?Edit', rm): return 1.0
     if 'メドレー' in rm: return 0.3
     if re.search(r'1番.*(ラスサビ|[CD]メロ)|2コーラス', rm): return 0.75
-    if re.search(r'TV\s?サイズ|TV\s?Size|ショート|Short', rm, re.I): return 0.5
+    if re.search(r'TV\s?サイズ|TV\s?Size|Movie\s?サイズ|Movie\s?Size|ショート|Short', rm, re.I): return 0.5
     return 1.0
 
 OVR = json.load(open('data/show-overrides.json')).get(pid, {})

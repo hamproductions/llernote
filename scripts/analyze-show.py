@@ -12,7 +12,7 @@ CH = {x['id']: x for x in L('character-info.json')}; SER = {x['id']: x for x in 
 TIERS = [(re.compile(r'Movie\s?Edit', re.I), 1.0),
          (re.compile(r'メドレー|medley', re.I), 0.3),
          (re.compile(r'1番.*(ラスサビ|[CDＤ]メロ)|ショート.*1番|2コーラス'), 0.75),
-         (re.compile(r'TV\s?サイズ|TV\s?Size|ショート|Short|抜粋|さわり', re.I), 0.5)]
+         (re.compile(r'TV\s?サイズ|TV\s?Size|Movie\s?サイズ|Movie\s?Size|ショート|Short|抜粋|さわり', re.I), 0.5)]
 def weight(rm, tiered=True):
     for rx, w in TIERS:
         if rx.search(rm or ''): return w if tiered else (1.0 if w == 1.0 else 0.5)
