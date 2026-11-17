@@ -1486,7 +1486,14 @@ export function Page() {
                             fontSize={{ base: '2xs', md: 'xs' }}
                             placeItems="center"
                           >
-                            <FaCheck />
+                            <FaCheck
+                              style={{
+                                position: 'absolute',
+                                left: '50%',
+                                top: '50%',
+                                transform: 'translate(-50%, -50%)'
+                              }}
+                            />
                           </Box>
                         )}
                       </styled.button>
