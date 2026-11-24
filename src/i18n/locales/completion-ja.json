@@ -1,7 +1,7 @@
 {
   "title": "楽曲回収率",
   "create": "つくる",
-  "description": "公演を選ぶと、自動で回収。",
+  "description": "公演を選んで、聴いた楽曲を記録。",
   "franchise": "シリーズ",
   "all": "全シリーズ",
   "remote": "配信・TVも含める",
@@ -10,7 +10,7 @@
   "collected": "{{total}}曲中 {{heard}}曲を回収",
   "shows": "集計した公演",
   "plays": "聴いた曲（延べ）",
-  "remaining": "あと{{count}}曲",
+  "remaining": "未回収 {{count}}曲",
   "complete": "全曲回収！",
   "start": "最初の1公演から、コレクションをはじめよう。",
   "method": "{{date}}時点のシリーズ全発売曲に対する、記録済みセットリストで聴いた楽曲IDの割合です。歌唱メンバー違い・ショート版は同じ楽曲IDとして数えます。",
@@ -30,7 +30,7 @@
   "exporting": "画像を作成中…",
   "privacy": "リンクには選択した公演と集計条件が含まれます。メモ・評価は含まれません。",
   "events": "公演を選ぶ",
-  "songs": "楽曲コレクション",
+  "songs": "楽曲",
   "search_events": "公演名・日付・会場で検索",
   "search_songs": "曲名で検索",
   "search": "検索",
@@ -56,5 +56,11 @@
   "method_label": "集計方法・共有について",
   "sharing": "共有",
   "counts_summary": "{{shows}}公演 · 延べ{{plays}}曲",
-  "highlights": "よく聴いた楽曲"
+  "highlights": "よく聴いた楽曲",
+  "view": "表示切替",
+  "never_performed": "披露記録なし",
+  "performance_ratio": "{{total}}公演中 {{heard}}公演で回収",
+  "performance_method": "楽曲ごとの回数は、この集計条件での回収公演数 / 確定披露公演数です。同じ公演内の重複は1回として数え、延べ曲数には重複も含みます。",
+  "unheard_highlights": "まだ聴いていない楽曲",
+  "ratio_legend": "回収公演数 / 確定披露公演数"
 }

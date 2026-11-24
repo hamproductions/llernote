@@ -37,6 +37,10 @@ export function CompletionCard({
         (b.releasedOn ?? '').localeCompare(a.releasedOn ?? '')
     )
     .slice(0, 4);
+  const unheard = result.catalog
+    .filter((song) => !result.heard.has(song.id))
+    .sort((a, b) => (result.performed.get(b.id) ?? 0) - (result.performed.get(a.id) ?? 0))
+    .slice(0, 4);
 
   return (
     <Stack
@@ -97,15 +101,8 @@ export function CompletionCard({
               h="full"
             />
           </Box>
-          <Text hideBelow={compact ? 'lg' : undefined} fontSize="xs">
-            {t(
-              result.heard.size === 0
-                ? 'completion.start'
-                : result.heard.size === result.catalog.length
-                  ? 'completion.complete'
-                  : 'completion.remaining',
-              { count: result.catalog.length - result.heard.size }
-            )}
+          <Text fontSize="xs">
+            {t('completion.remaining', { count: result.catalog.length - result.heard.size })}
           </Text>
         </Stack>
       </Stack>
@@ -121,12 +118,34 @@ export function CompletionCard({
                   {localizedName(i18n.language, song.name, song.englishName)}
                 </Text>
                 <Text flexShrink={0} color="fg.muted" fontSize="xs">
-                  {t('completion.times', { count: result.heard.get(song.id) })}
+                  {result.heard.get(song.id)} / {result.performed.get(song.id)}
                 </Text>
               </HStack>
             ))}
           </Stack>
         )}
+        {unheard.length > 0 && (
+          <Stack hideBelow={compact ? 'lg' : undefined} gap="2">
+            <Text color="fg.muted" fontSize="xs">
+              {t('completion.unheard_highlights')}
+            </Text>
+            {unheard.map((song) => (
+              <HStack key={song.id} gap="3" justifyContent="space-between" alignItems="start">
+                <Text minW="0" fontSize="sm" fontWeight="medium">
+                  {localizedName(i18n.language, song.name, song.englishName)}
+                </Text>
+                <Text flexShrink={0} maxW="32" color="fg.muted" fontSize="xs" textAlign="right">
+                  {result.performed.has(song.id)
+                    ? `0 / ${result.performed.get(song.id)}`
+                    : t('completion.never_performed')}
+                </Text>
+              </HStack>
+            ))}
+          </Stack>
+        )}
+        <Text hideBelow={compact ? 'lg' : undefined} color="fg.muted" fontSize="xs">
+          {t('completion.ratio_legend')}
+        </Text>
         <Grid
           hideBelow={compact ? 'lg' : undefined}
           gap="3"

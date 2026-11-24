@@ -66,6 +66,23 @@ export const computeCompletion = (
       (!song.releasedOn || song.releasedOn <= date)
   );
   const catalogIds = new Set(catalog.map((song) => song.id));
+  const performed = new Map<string, number>();
+  for (const performance of performanceById.values()) {
+    if (
+      performance.canceled ||
+      performance.date > date ||
+      (!includeRemote && performance.category !== 'live')
+    )
+      continue;
+    const setlist = setlists[performance.id];
+    if (!setlist?.isActual) continue;
+    const songIds = new Set(
+      setlist.items
+        .filter((item) => item.type === 'song' && item.songId && catalogIds.has(item.songId))
+        .map((item) => item.songId!)
+    );
+    for (const songId of songIds) performed.set(songId, (performed.get(songId) ?? 0) + 1);
+  }
   const heard = new Map<string, number>();
   const includedRecords: AttendanceRecord[] = [];
   let shows = 0;
@@ -90,14 +107,15 @@ export const computeCompletion = (
     if (!items.length) continue;
     shows += 1;
     includedRecords.push(record);
-    for (const item of items) {
-      heard.set(item.songId!, (heard.get(item.songId!) ?? 0) + 1);
-      plays += 1;
+    for (const songId of new Set(items.map((item) => item.songId!))) {
+      heard.set(songId, (heard.get(songId) ?? 0) + 1);
     }
+    plays += items.length;
   }
   return {
     catalog,
     heard,
+    performed,
     shows,
     plays,
     includedRecords,

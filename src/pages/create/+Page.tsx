@@ -1,11 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaDownload, FaLink, FaMusic, FaPlus } from 'react-icons/fa6';
+import { FaCheck, FaDownload, FaLink, FaPlus } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap, styled } from 'styled-system/jsx';
 import { CompletionCard } from '~/components/completion/CompletionCard';
 import { Metadata } from '~/components/layout/Metadata';
-import { SectionHeading } from '~/components/layout/SectionHeading';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
@@ -146,7 +145,10 @@ export default function Page() {
     result?.catalog.filter(
       (song) =>
         fuzzySearch(song, query) &&
-        (!songStatus || result.heard.has(song.id) === (songStatus === 'heard'))
+        (!songStatus ||
+          (songStatus === 'never'
+            ? !result.performed.has(song.id)
+            : result.heard.has(song.id) === (songStatus === 'heard')))
     ) ?? [];
   const unknown = shared?.attendance.filter(([id]) => !performanceById.has(id)).length ?? 0;
   const sharePath = result
@@ -213,25 +215,14 @@ export default function Page() {
     <>
       <Metadata title={`${t('completion.title')} - LLerNote`} helmet />
       <Stack gap="4" borderRadius="l3" p={{ base: '3', md: '5' }} bgColor="bg.default">
-        <HStack gap="3" justifyContent="space-between" alignItems="start" flexWrap="wrap">
-          <Stack flex="1 1 8rem" gap="1" minW="0">
-            <SectionHeading size="2xl">{t('completion.title')}</SectionHeading>
-            <Text color="fg.muted" fontSize="sm">
-              {t('completion.description')}
-            </Text>
-          </Stack>
-          <Button
-            variant="outline"
-            aria-expanded={sharingOpen}
-            onClick={() => setSharingOpen((open) => !open)}
-            hideFrom="lg"
-            flexShrink={0}
-            minH="11"
-          >
-            <FaLink />
-            {t('completion.sharing')}
-          </Button>
-        </HStack>
+        <Stack gap="1">
+          <styled.h1 textStyle="display" fontSize={{ base: 'xl', md: '2xl' }} lineHeight="1.3">
+            {t('completion.title')}
+          </styled.h1>
+          <Text color="fg.muted" fontSize="sm">
+            {t('completion.description')}
+          </Text>
+        </Stack>
         {(shared || invalid) && (
           <HStack
             justifyContent="space-between"
@@ -241,7 +232,15 @@ export default function Page() {
             flexWrap="wrap"
           >
             <Text fontSize="sm">{t(invalid ? 'completion.invalid' : 'completion.shared')}</Text>
-            <Button variant="outline" onClick={useMine} minH="11">
+            <Button
+              variant="outline"
+              onClick={useMine}
+              maxW="full"
+              h="auto"
+              minH="11"
+              py="2"
+              whiteSpace="normal"
+            >
               {t('completion.mine')}
             </Button>
           </HStack>
@@ -300,32 +299,42 @@ export default function Page() {
                     pb="3"
                     bgColor="bg.default"
                   >
-                    <HStack
-                      gap="4"
+                    <Grid
+                      role="group"
+                      aria-label={t('completion.view')}
+                      gap="2"
+                      gridTemplateColumns="repeat(2, minmax(0, 1fr))"
                       borderColor="border.default"
                       borderBottomWidth="1px"
-                      flexWrap="wrap"
                     >
                       {(['events', 'songs'] as const).map((value) => (
-                        <Button
+                        <styled.button
                           key={value}
-                          variant="ghost"
+                          type="button"
                           aria-pressed={tab === value}
                           onClick={() => {
                             setTab(value);
                             resetList();
                           }}
+                          cursor="pointer"
                           borderBottomWidth="3px"
                           borderBottomColor={tab === value ? 'accent.default' : 'transparent'}
-                          borderRadius="0"
-                          maxW="full"
-                          minH="11"
-                          px="0"
-                          color="fg.default"
-                          fontWeight={tab === value ? 'bold' : 'medium'}
-                          whiteSpace="normal"
+                          minW="0"
+                          minH="12"
+                          py="2"
+                          px="3"
+                          color={tab === value ? 'fg.default' : 'fg.muted'}
+                          fontSize="sm"
+                          fontWeight={tab === value ? 'semibold' : 'medium'}
+                          lineHeight="1.5"
+                          bgColor={tab === value ? 'bg.subtle' : 'transparent'}
+                          _focusVisible={{
+                            outline: '2px solid',
+                            outlineColor: 'accent.default',
+                            outlineOffset: '2px'
+                          }}
+                          _hover={{ bgColor: 'bg.subtle' }}
                         >
-                          {value === 'songs' && <FaMusic />}
                           {t(
                             value === 'songs'
                               ? 'completion.songs'
@@ -333,9 +342,9 @@ export default function Page() {
                                 ? 'completion.shared_events'
                                 : 'completion.events'
                           )}
-                        </Button>
+                        </styled.button>
                       ))}
-                    </HStack>
+                    </Grid>
                     <HStack gap="2" flexWrap="wrap">
                       <Input
                         id="completion-search"
@@ -370,7 +379,8 @@ export default function Page() {
                           placeholder={t('completion.any_status')}
                           options={[
                             { value: 'heard', label: t('completion.heard') },
-                            { value: 'unheard', label: t('completion.unheard') }
+                            { value: 'unheard', label: t('completion.unheard') },
+                            { value: 'never', label: t('completion.never_performed') }
                           ]}
                           onChange={(value) => {
                             setSongStatus(value);
@@ -553,7 +563,7 @@ export default function Page() {
                       columnGap="5"
                       gridTemplateColumns={{
                         base: 'minmax(0, 1fr)',
-                        xl: 'repeat(2, minmax(0, 1fr))'
+                        '2xl': 'repeat(2, minmax(0, 1fr))'
                       }}
                     >
                       {visibleSongs.slice(0, limit).map((song) => (
@@ -562,9 +572,9 @@ export default function Page() {
                           variant="ghost"
                           onClick={() => (shared ? setSharedSongId(song.id) : openSong(song.id))}
                           display="grid"
-                          gap="3"
-                          alignItems="center"
-                          gridTemplateColumns="minmax(0, 1fr) auto"
+                          gap="1"
+                          alignItems="start"
+                          gridTemplateColumns="minmax(0, 1fr)"
                           borderColor="border.default"
                           borderBottomWidth="1px"
                           borderRadius="0"
@@ -585,18 +595,26 @@ export default function Page() {
                             >
                               {localizedName(i18n.language, song.name, song.englishName)}
                             </Text>
-                            <Text color="fg.muted" fontSize="xs" whiteSpace="normal">
-                              {song.releasedOn}
-                            </Text>
                           </Stack>
-                          <HStack gap="1.5" flexShrink={0} color="fg.muted" fontSize="xs">
-                            {result.heard.has(song.id) && (
-                              <FaCheck aria-label={t('completion.heard')} />
-                            )}
-                            <Text>
-                              {result.heard.has(song.id)
-                                ? t('completion.times', { count: result.heard.get(song.id) })
-                                : t('completion.unheard')}
+                          <HStack
+                            gap="2"
+                            justifyContent="space-between"
+                            color="fg.muted"
+                            fontSize="xs"
+                            flexWrap="wrap"
+                          >
+                            <Text>{song.releasedOn}</Text>
+                            <Text
+                              color={result.heard.has(song.id) ? 'fg.default' : 'fg.muted'}
+                              fontVariantNumeric="tabular-nums"
+                              whiteSpace="normal"
+                            >
+                              {result.performed.has(song.id)
+                                ? t('completion.performance_ratio', {
+                                    heard: result.heard.get(song.id) ?? 0,
+                                    total: result.performed.get(song.id)
+                                  })
+                                : t('completion.never_performed')}
                             </Text>
                           </HStack>
                         </Button>
@@ -646,7 +664,22 @@ export default function Page() {
                       )}
                     </Stack>
                   )}
-                  <Stack display={{ base: sharingOpen ? 'flex' : 'none', lg: 'flex' }} gap="2">
+                  <Button
+                    variant="outline"
+                    aria-expanded={sharingOpen}
+                    aria-controls="completion-sharing"
+                    onClick={() => setSharingOpen((open) => !open)}
+                    hideFrom="lg"
+                    minH="11"
+                  >
+                    <FaLink />
+                    {t('completion.sharing')}
+                  </Button>
+                  <Stack
+                    id="completion-sharing"
+                    display={{ base: sharingOpen ? 'flex' : 'none', lg: 'flex' }}
+                    gap="2"
+                  >
                     <Grid gap="2" gridTemplateColumns="minmax(0, 1fr) auto">
                       <Button
                         onClick={saveImage}
@@ -683,6 +716,7 @@ export default function Page() {
                       </styled.summary>
                       <Stack gap="2" pb="3">
                         <Text>{t('completion.method', { date })}</Text>
+                        <Text>{t('completion.performance_method')}</Text>
                         <Text>{t('completion.privacy')}</Text>
                       </Stack>
                     </styled.details>
