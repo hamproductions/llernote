@@ -12,7 +12,7 @@ export function SearchButton() {
     <Button
       variant="outline"
       size="sm"
-      onClick={open}
+      onClick={() => open()}
       aria-label={t('search.open', { defaultValue: 'Search' })}
     >
       <FaMagnifyingGlass />

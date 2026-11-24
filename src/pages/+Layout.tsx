@@ -78,6 +78,7 @@ const NAV_GROUPS: NavGroup[] = [
     key: 'navigation.group_create',
     icon: FaWandMagicSparkles,
     items: [
+      { path: '/create', key: 'completion.title', icon: FaMusic },
       { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
       { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy },
       { path: '/bingo', key: 'bingo.title', icon: FaMusic }
@@ -254,8 +255,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   function MobileBottomNav() {
     return (
       <Stack
-        hideFrom="md"
-        zIndex="overlay"
+        hideFrom="lg"
+        zIndex="30"
         position="fixed"
         left="0"
         right="0"
@@ -325,7 +326,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           position="relative"
           w="full"
           minH="100vh"
-          pb={{ base: 'calc(env(safe-area-inset-bottom) + 64px)', md: '0' }}
+          pb={{ base: 'calc(env(safe-area-inset-bottom) + 64px)', lg: '0' }}
           bgColor="bg.default"
         >
           <Container zIndex="1" position="relative" flex={1} w="full" px={4} pt={4} pb="4">
@@ -337,14 +338,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       LLerNote
                     </Text>
                   </Link>
-                  <HStack hideBelow="md" gap="0.5">
+                  <HStack hideBelow="lg" gap="0.5">
                     <HeaderNav />
                   </HStack>
                 </HStack>
 
                 <HStack gap="3" alignItems="center" justifySelf="flex-end">
                   <SearchButton />
-                  <HStack hideBelow="md" gap="2">
+                  <HStack hideBelow="lg" gap="2">
                     <LanguageToggle />
                     <ColorModeToggle />
                     <SettingsMenu />

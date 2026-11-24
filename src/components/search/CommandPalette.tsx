@@ -77,7 +77,15 @@ function ResultThumb({
   );
 }
 
-export default function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function CommandPalette({
+  open,
+  initialQuery = '',
+  onClose
+}: {
+  open: boolean;
+  initialQuery?: string;
+  onClose: () => void;
+}) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const performances = usePerformances();
@@ -105,11 +113,11 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
 
   useEffect(() => {
     if (open) {
-      setQuery('');
+      setQuery(initialQuery);
       setActive(0);
       requestAnimationFrame(() => inputRef.current?.focus());
     }
-  }, [open]);
+  }, [open, initialQuery]);
 
   const groups = useMemo<Group[]>(() => {
     const q = query.trim();

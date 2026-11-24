@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChevronLeft, FaXmark } from 'react-icons/fa6';
-import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
+import { Box, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { SongThumb } from './SongThumb';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import { Dialog } from '~/components/ui/dialog';
@@ -80,11 +80,27 @@ export function SongDetailDialog({
     <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
       <Dialog.Backdrop zIndex={layer} />
       <Dialog.Positioner zIndex={layer + 1}>
-        <Dialog.Content w="full" maxW="lg" maxH="85vh" mx="4" overflowY="auto">
-          <Stack gap="4" p={{ base: '4', md: '6' }}>
+        <Dialog.Content
+          w="calc(100% - 2rem)"
+          minW="0"
+          maxW={{ base: 'lg', md: '3xl', xl: '5xl' }}
+          maxH="90dvh"
+          mx="4"
+          overflowY="auto"
+        >
+          <Grid
+            gap="4"
+            alignItems="start"
+            gridTemplateColumns={{
+              base: 'minmax(0, 1fr)',
+              lg: videoId ? 'minmax(0, 0.8fr) minmax(0, 1.2fr)' : 'minmax(0, 1fr)'
+            }}
+            p={{ base: '4', md: '6' }}
+          >
             <HStack
               gap="3"
               alignItems="flex-start"
+              gridColumn="1 / -1"
               borderColor="border.subtle"
               borderBottomWidth="1px"
               pl={onBack ? '8' : undefined}
@@ -118,6 +134,7 @@ export function SongDetailDialog({
               <Box
                 style={{ aspectRatio: '16 / 9' }}
                 position="relative"
+                gridRow={{ lg: '2 / span 6' }}
                 borderRadius="l2"
                 w="full"
                 overflow="hidden"
@@ -139,11 +156,11 @@ export function SongDetailDialog({
               </Box>
             )}
 
-            <HStack justifyContent="flex-end">
+            <HStack justifyContent="flex-end" gridColumn={videoId ? { lg: '2' } : undefined}>
               <ScopeTabs value={scope} onChange={setScope} size="xs" />
             </HStack>
 
-            <Stack gap="2">
+            <Stack gap="2" gridColumn={videoId ? { lg: '2' } : undefined}>
               <HStack gap="2" alignItems="baseline">
                 <Text fontWeight="semibold">{t('songs.song_history')}</Text>
               </HStack>
@@ -195,6 +212,7 @@ export function SongDetailDialog({
                       borderRadius="l1"
                       py="1"
                       px="1.5"
+                      flexWrap={{ base: 'wrap', md: 'nowrap' }}
                       _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
                     >
                       <Badge size="sm" variant={variant} flexShrink={0}>
@@ -208,7 +226,13 @@ export function SongDetailDialog({
                       >
                         {perf.date}
                       </Text>
-                      <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={1}>
+                      <Text
+                        lang="ja"
+                        flex={{ base: '0 0 100%', md: '1' }}
+                        minW="0"
+                        color="accent.text"
+                        fontSize="sm"
+                      >
                         {perf.tourName}
                       </Text>
                     </HStack>
@@ -217,7 +241,7 @@ export function SongDetailDialog({
             </Stack>
 
             {scope !== 'remote' && (
-              <Stack gap="2">
+              <Stack gap="2" gridColumn={videoId ? { lg: '2' } : undefined}>
                 <HStack gap="2" alignItems="baseline">
                   <Text fontWeight="semibold">{t('songs.witnessed_at')}</Text>
                   <Text color="fg.muted" fontSize="sm">
@@ -275,7 +299,7 @@ export function SongDetailDialog({
             )}
 
             {scope !== 'inperson' && watchedAt.length > 0 && (
-              <Stack gap="2">
+              <Stack gap="2" gridColumn={videoId ? { lg: '2' } : undefined}>
                 <HStack gap="2" alignItems="baseline">
                   <Text color="blue.11" fontWeight="semibold">
                     {t('songs.watched_at')}
@@ -325,7 +349,7 @@ export function SongDetailDialog({
               </Stack>
             )}
 
-            <Stack gap="2">
+            <Stack gap="2" gridColumn={videoId ? { lg: '2' } : undefined}>
               <HStack gap="2" alignItems="baseline">
                 <Text fontWeight="semibold">{t('songs.performed_at')}</Text>
                 <Text color="fg.muted" fontSize="sm">
@@ -369,7 +393,7 @@ export function SongDetailDialog({
                 ))}
               </Stack>
             </Stack>
-          </Stack>
+          </Grid>
           {onBack && (
             <IconButton
               aria-label={t('common.back')}

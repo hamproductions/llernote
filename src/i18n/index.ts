@@ -7,15 +7,17 @@ import bingoEn from './locales/bingo-en.json';
 import bingoJa from './locales/bingo-ja.json';
 import fesEn from './locales/fes-en.json';
 import fesJa from './locales/fes-ja.json';
+import completionEn from './locales/completion-en.json';
+import completionJa from './locales/completion-ja.json';
 // don't want to use this?
 // have a look at the Quick start guide
 // for passing in lng and translations on init
 export const resources = {
   en: {
-    translation: { ...en, bingo: bingoEn, fes: fesEn }
+    translation: { ...en, bingo: bingoEn, fes: fesEn, completion: completionEn }
   },
   ja: {
-    translation: { ...ja, bingo: bingoJa, fes: fesJa }
+    translation: { ...ja, bingo: bingoJa, fes: fesJa, completion: completionJa }
   }
 };
 
