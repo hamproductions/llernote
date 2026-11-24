@@ -59,6 +59,7 @@ export default function Page() {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [exporting, setExporting] = useState(false);
   const [sharingOpen, setSharingOpen] = useState(false);
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [sharedSongId, setSharedSongId] = useState<string>();
   const imageRef = useRef<HTMLDivElement>(null);
@@ -710,6 +711,28 @@ export default function Page() {
                         {notice}
                       </Text>
                     </HStack>
+                    <styled.details
+                      onToggle={(event) => setImagePreviewOpen(event.currentTarget.open)}
+                    >
+                      <styled.summary
+                        cursor="pointer"
+                        display="flex"
+                        alignItems="center"
+                        minH="11"
+                        fontSize="sm"
+                      >
+                        {t('completion.image_preview')}
+                      </styled.summary>
+                      {imagePreviewOpen && (
+                        <CompletionCard
+                          title={title}
+                          date={date}
+                          includeRemote={includeRemote}
+                          result={result}
+                          color={seriesColor}
+                        />
+                      )}
+                    </styled.details>
                     <styled.details color="fg.muted" fontSize="xs">
                       <styled.summary cursor="pointer" display="flex" alignItems="center" minH="11">
                         {t('completion.method_label')}
@@ -741,7 +764,7 @@ export default function Page() {
           position="fixed"
           top="0"
           left="-9999px"
-          w="400px"
+          w="540px"
           pointerEvents="none"
         >
           <CompletionCard

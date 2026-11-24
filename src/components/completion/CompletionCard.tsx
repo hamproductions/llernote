@@ -28,7 +28,7 @@ export function CompletionCard({
     return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
   }) ?? [0, 0, 0];
   const luminance = rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
-  const foreground = luminance > 0.179 ? '#170e11' : '#ffffff';
+  const foreground = luminance > 0.179 ? '#000000' : '#ffffff';
   const collected = result.catalog.filter((song) => result.heard.has(song.id));
   const highlights = [...(collected.length ? collected : result.catalog)]
     .sort(
@@ -41,6 +41,168 @@ export function CompletionCard({
     .filter((song) => !result.heard.has(song.id))
     .sort((a, b) => (result.performed.get(b.id) ?? 0) - (result.performed.get(a.id) ?? 0))
     .slice(0, 4);
+
+  if (!compact) {
+    const columns = Math.max(12, Math.ceil(Math.sqrt(result.catalog.length * 3.5)));
+    return (
+      <Stack
+        ref={imageRef}
+        style={{ containerType: 'inline-size', color: foreground }}
+        gap="0"
+        borderRadius="l3"
+        overflow="hidden"
+      >
+        <Stack
+          style={{ backgroundColor: color }}
+          gap="4"
+          borderTopLeftRadius="l3"
+          borderTopRightRadius="l3"
+          p="6"
+        >
+          <HStack gap="3" justifyContent="space-between" alignItems="start" flexWrap="wrap">
+            <Text fontSize="sm" fontWeight="bold">
+              LLerNote
+            </Text>
+            <Text fontSize="sm" fontWeight="semibold" overflowWrap="anywhere">
+              {title}
+            </Text>
+          </HStack>
+          <Text
+            textStyle="display"
+            fontSize="clamp(1.5rem, 8cqw, 2.75rem)"
+            fontWeight="bold"
+            lineHeight="1.05"
+            whiteSpace="pre-line"
+          >
+            {t(includeRemote ? 'completion.share_heading_remote' : 'completion.share_heading')}
+          </Text>
+          <HStack gap="4" alignItems="end" flexWrap="wrap">
+            <Text
+              fontSize="clamp(4rem, 25cqw, 8rem)"
+              fontWeight="bold"
+              fontVariantNumeric="tabular-nums"
+              letterSpacing="-0.07em"
+              lineHeight="0.9"
+            >
+              {result.heard.size}
+            </Text>
+            <Text maxW="10ch" fontSize="lg" fontWeight="semibold" lineHeight="1.2">
+              {t('completion.share_catalog', { total: result.catalog.length })}
+            </Text>
+          </HStack>
+          <HStack gap="3" justifyContent="space-between" alignItems="end" flexWrap="wrap">
+            <Text fontSize="sm">
+              {t('completion.remaining', { count: result.catalog.length - result.heard.size })}
+            </Text>
+            <Text fontSize="3xl" fontWeight="bold" fontVariantNumeric="tabular-nums" lineHeight="1">
+              {result.percent}%
+            </Text>
+          </HStack>
+        </Stack>
+        <Box
+          style={{ backgroundColor: color, borderColor: foreground }}
+          borderBottomWidth="2px"
+          h="3"
+          borderBottomStyle="dashed"
+        />
+        <Stack style={{ backgroundColor: foreground, color }} gap="4" p="6">
+          <Stack gap="2">
+            <Grid
+              aria-hidden="true"
+              style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+              gap="2px"
+            >
+              {result.catalog.map((song) => (
+                <Box
+                  key={song.id}
+                  style={{ backgroundColor: color, opacity: result.heard.has(song.id) ? 1 : 0.2 }}
+                  aspectRatio="1"
+                  borderRadius="full"
+                />
+              ))}
+            </Grid>
+            <HStack gap="3" justifyContent="space-between" flexWrap="wrap">
+              <Text fontSize="xs">{t('completion.map_heard', { count: result.heard.size })}</Text>
+              <Text fontSize="xs">
+                {t('completion.map_unheard', { count: result.catalog.length - result.heard.size })}
+              </Text>
+            </HStack>
+          </Stack>
+          <Grid gap="4" gridTemplateColumns="repeat(2, minmax(0, 1fr))">
+            <Stack gap="0">
+              <Text fontSize="3xl" fontWeight="bold" fontVariantNumeric="tabular-nums">
+                {result.shows}
+              </Text>
+              <Text fontSize="xs">{t('completion.share_shows')}</Text>
+            </Stack>
+            <Stack gap="0">
+              <Text fontSize="3xl" fontWeight="bold" fontVariantNumeric="tabular-nums">
+                {result.plays}
+              </Text>
+              <Text fontSize="xs">{t('completion.share_plays')}</Text>
+            </Stack>
+          </Grid>
+          {collected.length > 0 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('completion.highlights')}
+              </Text>
+              {highlights.slice(0, 3).map((song) => (
+                <HStack key={song.id} gap="4" justifyContent="space-between" alignItems="start">
+                  <Text minW="0" fontSize="sm" fontWeight="medium" overflowWrap="anywhere">
+                    {localizedName(i18n.language, song.name, song.englishName)}
+                  </Text>
+                  <Text flexShrink={0} fontSize="xs" fontVariantNumeric="tabular-nums">
+                    {result.heard.get(song.id)} / {result.performed.get(song.id)}
+                  </Text>
+                </HStack>
+              ))}
+            </Stack>
+          )}
+          {unheard.length > 0 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('completion.unheard_highlights')}
+              </Text>
+              {unheard.slice(0, 3).map((song) => (
+                <HStack key={song.id} gap="4" justifyContent="space-between" alignItems="start">
+                  <Text minW="0" fontSize="sm" fontWeight="medium" overflowWrap="anywhere">
+                    {localizedName(i18n.language, song.name, song.englishName)}
+                  </Text>
+                  <Text
+                    flexShrink={0}
+                    maxW="32"
+                    fontSize="xs"
+                    fontVariantNumeric="tabular-nums"
+                    textAlign="right"
+                  >
+                    {result.performed.has(song.id)
+                      ? `0 / ${result.performed.get(song.id)}`
+                      : t('completion.never_performed')}
+                  </Text>
+                </HStack>
+              ))}
+            </Stack>
+          )}
+          <Text fontSize="xs">{t('completion.ratio_legend')}</Text>
+          <HStack
+            style={{ borderColor: `${color}66` }}
+            gap="3"
+            justifyContent="space-between"
+            alignItems="start"
+            borderTopWidth="1px"
+            pt="4"
+            flexWrap="wrap"
+          >
+            <Text fontSize="xs">
+              {t(includeRemote ? 'completion.all_scope' : 'completion.live_scope')}
+            </Text>
+            <Text fontSize="xs">{t('completion.snapshot', { date })}</Text>
+          </HStack>
+        </Stack>
+      </Stack>
+    );
+  }
 
   return (
     <Stack

@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - main
+  pull_request_target:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
   workflow_run:
-    workflows: ["Update Data"]
+    workflows: ['Update Data']
     types: [completed]
+
+env:
+  DO_NOT_TRACK: '1'
 
 concurrency:
   group: pages
@@ -15,15 +21,42 @@ concurrency:
 jobs:
   build:
     name: Build Project
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') &&
+      (github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
       - name: Install Dependencies
         uses: ./.github/composite-actions/setup
       - name: Build
         run: PUBLIC_ENV__BASE_URL=/${{ github.event.repository.name }} PUBLIC_ENV__EVENTERNOTE_API_URL=${{ secrets.PUBLIC_ENV__EVENTERNOTE_API_URL }} bun run ci:build
+      - name: Build PR previews
+        id: previews
+        uses: ./.github/actions/pr-previews
+        with:
+          site-dir: dist/client
+          build-output: dist/client
+          install: bun install --frozen-lockfile && bun panda codegen
+          build: bun run ci:build
+          base-env: PUBLIC_ENV__BASE_URL
+          base-path: /${{ github.event.repository.name }}/
+          lock-file: bun.lockb
+      - name: Preview links
+        env:
+          PREVIEWS: ${{ steps.previews.outputs.built }}
+          PAGE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          for number in $PREVIEWS; do
+            echo "[PR #$number]($PAGE_URL/pr/$number/)" >> "$GITHUB_STEP_SUMMARY"
+          done
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -46,6 +79,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   lighthouse:
+    if: github.event_name != 'pull_request_target'
     runs-on: ubuntu-latest
     needs: deploy
     env:

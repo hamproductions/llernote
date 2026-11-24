@@ -64,5 +64,13 @@
   "performance_ratio": "{{heard}} / {{total}} performances heard",
   "performance_method": "Per-song counts show performances heard / all confirmed performances in this scope. Each song counts once per show; repeated plays remain in the song-play total.",
   "unheard_highlights": "Not heard yet",
-  "ratio_legend": "Heard / confirmed performances"
+  "ratio_legend": "Heard / confirmed performances",
+  "share_heading": "I was\nthere for",
+  "share_heading_remote": "I tuned\nin for",
+  "share_catalog": "of {{total}} songs",
+  "map_heard": "{{count}} heard",
+  "map_unheard": "{{count}} not heard",
+  "image_preview": "Preview image",
+  "share_shows": "shows",
+  "share_plays": "song plays"
 }

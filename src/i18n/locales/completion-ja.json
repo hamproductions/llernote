@@ -62,5 +62,13 @@
   "performance_ratio": "{{total}}公演中 {{heard}}公演で回収",
   "performance_method": "楽曲ごとの回数は、この集計条件での回収公演数 / 確定披露公演数です。同じ公演内の重複は1回として数え、延べ曲数には重複も含みます。",
   "unheard_highlights": "まだ聴いていない楽曲",
-  "ratio_legend": "回収公演数 / 確定披露公演数"
+  "ratio_legend": "回収公演数 / 確定披露公演数",
+  "share_heading": "現地で\n聴いた、",
+  "share_heading_remote": "ライブで\n聴いた、",
+  "share_catalog": "曲 / 全{{total}}曲",
+  "map_heard": "回収 {{count}}曲",
+  "map_unheard": "未回収 {{count}}曲",
+  "image_preview": "画像をプレビュー",
+  "share_shows": "公演",
+  "share_plays": "延べ曲数"
 }
