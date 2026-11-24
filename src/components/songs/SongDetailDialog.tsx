@@ -21,6 +21,70 @@ interface SongWithVideo extends Song {
   musicVideo?: { videoId: string } | null;
 }
 
+function PerformanceRow({
+  performance: p,
+  relative,
+  onSelect,
+  accent
+}: {
+  performance: Performance;
+  relative?: string;
+  onSelect?: (performance: Performance) => void;
+  accent?: boolean;
+}) {
+  const details = [p.concertName, p.performanceName, p.venue].filter(Boolean).join('・');
+  return (
+    <HStack
+      {...(onSelect ? clickable(() => onSelect(p)) : {})}
+      cursor={onSelect ? 'pointer' : undefined}
+      gap="2"
+      alignItems="baseline"
+      borderRadius="l1"
+      py="1"
+      px="1.5"
+      transition="colors"
+      _hover={onSelect ? { bgColor: 'bg.subtle' } : undefined}
+    >
+      <Text
+        display={{ base: 'none', md: 'block' }}
+        flexShrink={0}
+        color="fg.muted"
+        fontSize="xs"
+        fontVariantNumeric="tabular-nums"
+      >
+        {p.date}
+      </Text>
+      <Stack flex="1" gap="0" minW="0">
+        <Text
+          lang="ja"
+          color={accent || onSelect ? 'accent.text' : undefined}
+          fontSize="sm"
+          lineClamp={2}
+        >
+          {p.tourName}
+        </Text>
+        <Text color="fg.muted" fontSize="xs" lineClamp={1}>
+          <Box as="span" display={{ md: 'none' }} fontVariantNumeric="tabular-nums">
+            {[p.date, relative].filter(Boolean).join(' ')}
+            {details && '・'}
+          </Box>
+          {details}
+        </Text>
+      </Stack>
+      {relative && (
+        <Text
+          display={{ base: 'none', md: 'block' }}
+          flexShrink={0}
+          color="fg.subtle"
+          fontSize="xs"
+        >
+          {relative}
+        </Text>
+      )}
+    </HStack>
+  );
+}
+
 export function SongDetailDialog({
   song,
   heardAt,
@@ -255,43 +319,12 @@ export function SongDetailDialog({
                 ) : (
                   <Stack gap="0.5">
                     {heardAt.map((p) => (
-                      <HStack
+                      <PerformanceRow
                         key={p.id}
-                        {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}
-                        cursor={onSelectEvent ? 'pointer' : undefined}
-                        gap="2"
-                        alignItems="baseline"
-                        borderRadius="l1"
-                        py="1"
-                        px="1.5"
-                        transition="colors"
-                        _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
-                      >
-                        <Text
-                          flexShrink={0}
-                          color="fg.muted"
-                          fontSize="xs"
-                          fontVariantNumeric="tabular-nums"
-                        >
-                          {p.date}
-                        </Text>
-                        <Stack flex="1" gap="0" minW="0">
-                          <Text
-                            lang="ja"
-                            color={onSelectEvent ? 'accent.text' : undefined}
-                            fontSize="sm"
-                            lineClamp={2}
-                          >
-                            {p.tourName}
-                          </Text>
-                          <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-                            {[p.concertName, p.performanceName, p.venue].filter(Boolean).join('・')}
-                          </Text>
-                        </Stack>
-                        <Text flexShrink={0} color="fg.subtle" fontSize="xs">
-                          {relativeDate(p.date)}
-                        </Text>
-                      </HStack>
+                        performance={p}
+                        relative={relativeDate(p.date)}
+                        onSelect={onSelectEvent}
+                      />
                     ))}
                   </Stack>
                 )}
@@ -310,40 +343,7 @@ export function SongDetailDialog({
                 </HStack>
                 <Stack gap="0.5">
                   {watchedAt.map((p) => (
-                    <HStack
-                      key={p.id}
-                      {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}
-                      cursor={onSelectEvent ? 'pointer' : undefined}
-                      gap="2"
-                      alignItems="baseline"
-                      borderRadius="l1"
-                      py="1"
-                      px="1.5"
-                      transition="colors"
-                      _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
-                    >
-                      <Text
-                        flexShrink={0}
-                        color="fg.muted"
-                        fontSize="xs"
-                        fontVariantNumeric="tabular-nums"
-                      >
-                        {p.date}
-                      </Text>
-                      <Stack flex="1" gap="0" minW="0">
-                        <Text
-                          lang="ja"
-                          color={onSelectEvent ? 'accent.text' : undefined}
-                          fontSize="sm"
-                          lineClamp={2}
-                        >
-                          {p.tourName}
-                        </Text>
-                        <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-                          {[p.concertName, p.performanceName, p.venue].filter(Boolean).join('・')}
-                        </Text>
-                      </Stack>
-                    </HStack>
+                    <PerformanceRow key={p.id} performance={p} onSelect={onSelectEvent} />
                   ))}
                 </Stack>
               </Stack>
@@ -358,38 +358,13 @@ export function SongDetailDialog({
               </HStack>
               <Stack gap="0.5" maxH="56" overflowY="auto">
                 {visiblePerformed.map((p) => (
-                  <HStack
+                  <PerformanceRow
                     key={p.id}
-                    {...(onSelectEvent ? clickable(() => onSelectEvent(p)) : {})}
-                    cursor={onSelectEvent ? 'pointer' : undefined}
-                    gap="2"
-                    alignItems="baseline"
-                    borderRadius="l1"
-                    py="1"
-                    px="1.5"
-                    transition="colors"
-                    _hover={onSelectEvent ? { bgColor: 'bg.subtle' } : undefined}
-                  >
-                    <Text
-                      flexShrink={0}
-                      color="fg.muted"
-                      fontSize="xs"
-                      fontVariantNumeric="tabular-nums"
-                    >
-                      {p.date}
-                    </Text>
-                    <Stack flex="1" gap="0" minW="0">
-                      <Text lang="ja" color="accent.text" fontSize="sm" lineClamp={2}>
-                        {p.tourName}
-                      </Text>
-                      <Text color="fg.muted" fontSize="xs" lineClamp={1}>
-                        {[p.concertName, p.performanceName, p.venue].filter(Boolean).join('・')}
-                      </Text>
-                    </Stack>
-                    <Text flexShrink={0} color="fg.subtle" fontSize="xs">
-                      {relativeDate(p.date)}
-                    </Text>
-                  </HStack>
+                    performance={p}
+                    relative={relativeDate(p.date)}
+                    onSelect={onSelectEvent}
+                    accent
+                  />
                 ))}
               </Stack>
             </Stack>
