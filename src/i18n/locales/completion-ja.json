@@ -1,7 +1,7 @@
 {
   "title": "楽曲回収率",
   "create": "つくる",
-  "description": "参加した公演を選んで、聴いた楽曲をコレクションしよう。",
+  "description": "公演を選ぶと、自動で回収。",
   "franchise": "シリーズ",
   "all": "全シリーズ",
   "remote": "配信・TVも含める",
@@ -52,5 +52,9 @@
   "shared_events": "共有された公演",
   "brand": "ラブライブ！楽曲コレクション · LLerNote",
   "snapshot": "{{date}}時点",
-  "unknown": "共有された{{count}}公演は現在のカタログにありません。"
+  "unknown": "共有された{{count}}公演は現在のカタログにありません。",
+  "method_label": "集計方法・共有について",
+  "sharing": "共有",
+  "counts_summary": "{{shows}}公演 · 延べ{{plays}}曲",
+  "highlights": "よく聴いた楽曲"
 }

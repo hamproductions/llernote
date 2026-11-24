@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { FaCheck, FaDownload, FaLink, FaMusic, FaPlus } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap, styled } from 'styled-system/jsx';
+import { CompletionCard } from '~/components/completion/CompletionCard';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { NativeSelect } from '~/components/events/NativeSelect';
@@ -11,7 +12,6 @@ import { Checkbox } from '~/components/ui/checkbox';
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { Link } from '~/components/ui/link';
-import { SongThumb } from '~/components/songs/SongThumb';
 import { useDetail } from '~/components/detail/DetailStack';
 import { useAttendance } from '~/hooks/useAttendance';
 import { performanceById, series, sortedPerformances } from '~/data/core';
@@ -30,6 +30,7 @@ import { getSeriesShortName } from '~/utils/series-short';
 import { localizedName } from '~/utils/names';
 import { fuzzySearch } from '~/utils/search';
 import { toAppUrl } from '~/utils/url';
+import { getActiveRecords } from '~/utils/attendance/storage';
 import { isWatched, isWitnessed } from '~/utils/attendance/witness';
 import type { Setlist, Song } from '~/types';
 import type { WatchType } from '~/types/attendance';
@@ -41,7 +42,7 @@ const SongDetailDialog = lazy(() =>
 
 export default function Page() {
   const { t, i18n } = useTranslation();
-  const { records, get, setAttendance, removeAttendance } = useAttendance();
+  const { map, get, setAttendance, removeAttendance } = useAttendance();
   const { openEvent, openSong } = useDetail();
   const [data, setData] = useState<{ songs: Song[]; setlists: Record<string, Setlist> }>();
   const [loadError, setLoadError] = useState(false);
@@ -50,11 +51,15 @@ export default function Page() {
   const [shared, setShared] = useState<CompletionShare | null>(null);
   const [invalid, setInvalid] = useState(false);
   const [tab, setTab] = useState<'events' | 'songs'>('events');
-  const [query, setQuery] = useState('');
+  const [queries, setQueries] = useState({ events: '', songs: '' });
+  const query = queries[tab];
+  const setQuery = (value: string) => setQueries((previous) => ({ ...previous, [tab]: value }));
+  const [year, setYear] = useState('');
   const [songStatus, setSongStatus] = useState('');
   const [selectedOnly, setSelectedOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [exporting, setExporting] = useState(false);
+  const [sharingOpen, setSharingOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [sharedSongId, setSharedSongId] = useState<string>();
   const imageRef = useRef<HTMLDivElement>(null);
@@ -79,6 +84,7 @@ export default function Page() {
       setShared(valid ? value : null);
       if (valid) {
         setSeriesId(value.seriesId);
+        setYear('');
         setIncludeRemote(value.includeRemote);
       }
     };
@@ -88,7 +94,10 @@ export default function Page() {
   }, []);
 
   const date = shared?.date ?? todayString();
-  const activeRecords = shared ? completionRecords(shared) : records;
+  const activeRecords = useMemo(
+    () => (shared ? completionRecords(shared) : getActiveRecords(map)),
+    [shared, map]
+  );
   const result = useMemo(
     () =>
       data &&
@@ -121,6 +130,7 @@ export default function Page() {
   }, [data, result, date, includeRemote, seriesId]);
   const visibleEvents = events.filter(
     (p) =>
+      (!year || p.date.startsWith(year)) &&
       ((!selectedOnly && !shared) || activeIds.has(p.id)) &&
       fuzzySearch(
         {
@@ -164,6 +174,9 @@ export default function Page() {
     ? getSeriesShortName(seriesId, series.find((s) => s.id === seriesId)?.name ?? '')
     : t('completion.all');
 
+  const seriesColor = series.find((s) => s.id === seriesId)?.color ?? '#e4007f';
+  const years = [...new Set(events.map((p) => p.date.slice(0, 4)))].sort().reverse();
+
   const resetList = () => {
     setLimit(PAGE_SIZE);
     setNotice('');
@@ -184,11 +197,11 @@ export default function Page() {
     }
   };
   const saveImage = async () => {
-    if (!imageRef.current) return;
-    setExporting(true);
+    if (!result) return;
+    flushSync(() => setExporting(true));
     setNotice('');
     try {
-      await downloadElementAsImage(imageRef.current, 'llernote-completion.png');
+      await downloadElementAsImage(imageRef.current!, 'llernote-completion.png');
     } catch {
       setNotice(t('completion.export_error'));
     } finally {
@@ -199,31 +212,35 @@ export default function Page() {
   return (
     <>
       <Metadata title={`${t('completion.title')} - LLerNote`} helmet />
-      <Stack gap="5">
-        <HStack justifyContent="space-between" alignItems="start" flexWrap="wrap">
-          <Stack gap="1">
+      <Stack gap="4" borderRadius="l3" p={{ base: '3', md: '5' }} bgColor="bg.default">
+        <HStack gap="3" justifyContent="space-between" alignItems="start" flexWrap="wrap">
+          <Stack flex="1 1 8rem" gap="1" minW="0">
             <SectionHeading size="2xl">{t('completion.title')}</SectionHeading>
-            <Text color="fg.muted">{t('completion.description')}</Text>
+            <Text color="fg.muted" fontSize="sm">
+              {t('completion.description')}
+            </Text>
           </Stack>
-          <Wrap gap="3">
-            <Link href={toAppUrl('/mypick')} minH="11">
-              {t('navigation.mypick')}
-            </Link>
-            <Link href={toAppUrl('/bingo')} minH="11">
-              {t('bingo.title')}
-            </Link>
-          </Wrap>
+          <Button
+            variant="outline"
+            aria-expanded={sharingOpen}
+            onClick={() => setSharingOpen((open) => !open)}
+            hideFrom="lg"
+            flexShrink={0}
+            minH="11"
+          >
+            <FaLink />
+            {t('completion.sharing')}
+          </Button>
         </HStack>
-
         {(shared || invalid) && (
           <HStack
             justifyContent="space-between"
             borderRadius="l2"
-            p="4"
-            bgColor="accent.a2"
+            p="3"
+            bgColor="bg.subtle"
             flexWrap="wrap"
           >
-            <Text>{t(invalid ? 'completion.invalid' : 'completion.shared')}</Text>
+            <Text fontSize="sm">{t(invalid ? 'completion.invalid' : 'completion.shared')}</Text>
             <Button variant="outline" onClick={useMine} minH="11">
               {t('completion.mine')}
             </Button>
@@ -241,26 +258,22 @@ export default function Page() {
         ) : (
           !invalid && (
             <>
-              <Wrap gap="4" alignItems="end">
-                <Stack gap="1">
-                  <styled.label htmlFor="completion-series" fontSize="sm">
-                    {t('completion.franchise')}
-                  </styled.label>
-                  <NativeSelect
-                    id="completion-series"
-                    value={seriesId}
-                    aria-label={t('completion.franchise')}
-                    options={series.map((s) => ({
-                      value: s.id,
-                      label: getSeriesShortName(s.id, s.name)
-                    }))}
-                    placeholder={t('completion.all')}
-                    onChange={(id) => {
-                      setSeriesId(id);
-                      resetList();
-                    }}
-                  />
-                </Stack>
+              <Wrap gap="3" alignItems="center">
+                <NativeSelect
+                  id="completion-series"
+                  value={seriesId}
+                  aria-label={t('completion.franchise')}
+                  options={series.map((s) => ({
+                    value: s.id,
+                    label: getSeriesShortName(s.id, s.name)
+                  }))}
+                  placeholder={t('completion.all')}
+                  onChange={(id) => {
+                    setSeriesId(id);
+                    setYear('');
+                    resetList();
+                  }}
+                />
                 <Checkbox
                   checked={includeRemote}
                   onCheckedChange={(e) => {
@@ -272,246 +285,162 @@ export default function Page() {
                   {t('completion.remote')}
                 </Checkbox>
               </Wrap>
-
-              <Box
-                ref={imageRef}
-                borderColor="border.default"
-                borderRadius="l3"
-                borderWidth="1px"
-                p={{ base: '4', md: '6' }}
-                bgColor="bg.default"
+              <Grid
+                gap={{ base: '4', lg: '6' }}
+                alignItems="start"
+                gridTemplateColumns={{ base: 'minmax(0, 1fr)', lg: 'minmax(0, 1fr) 20rem' }}
               >
-                <Stack gap="3">
-                  <Grid gap="4" alignItems="start" gridTemplateColumns="minmax(0, 1fr) auto">
-                    <Stack gap="1" minW="0">
-                      <Text color="fg.muted" fontSize="xs">
-                        {t('completion.brand')}
-                      </Text>
-                      <Text textStyle="display" fontSize={{ base: '2xl', md: '3xl' }}>
-                        {title}
-                      </Text>
-                      <Text fontSize="sm">
-                        {t(includeRemote ? 'completion.all_scope' : 'completion.live_scope')}
-                      </Text>
-                    </Stack>
-                    <Text
-                      color="fg.default"
-                      fontSize={{ base: '3xl', md: '5xl' }}
-                      fontWeight="bold"
-                      lineHeight="1"
-                      whiteSpace="nowrap"
+                <Stack gap="0" minW="0" order={{ base: '2', lg: '1' }}>
+                  <Stack
+                    zIndex="5"
+                    position="sticky"
+                    top="0"
+                    gap="3"
+                    pt="1"
+                    pb="3"
+                    bgColor="bg.default"
+                  >
+                    <HStack
+                      gap="4"
+                      borderColor="border.default"
+                      borderBottomWidth="1px"
+                      flexWrap="wrap"
                     >
-                      {result.percent}%
-                    </Text>
-                  </Grid>
-                  <Stack gap="2">
-                    <Text fontWeight="semibold">
-                      {t('completion.collected', {
-                        heard: result.heard.size,
-                        total: result.catalog.length
-                      })}
-                    </Text>
-                    <Box
-                      role="progressbar"
-                      aria-label={t('completion.title')}
-                      aria-valuenow={result.heard.size}
-                      aria-valuemin={0}
-                      aria-valuemax={result.catalog.length || 1}
-                      borderRadius="full"
-                      h="3"
-                      bgColor="bg.emphasized"
-                      overflow="hidden"
-                    >
-                      <Box
-                        style={{ width: `${result.percent}%` }}
-                        borderRadius="full"
-                        h="full"
-                        bgColor="accent.default"
+                      {(['events', 'songs'] as const).map((value) => (
+                        <Button
+                          key={value}
+                          variant="ghost"
+                          aria-pressed={tab === value}
+                          onClick={() => {
+                            setTab(value);
+                            resetList();
+                          }}
+                          borderBottomWidth="3px"
+                          borderBottomColor={tab === value ? 'accent.default' : 'transparent'}
+                          borderRadius="0"
+                          maxW="full"
+                          minH="11"
+                          px="0"
+                          color="fg.default"
+                          fontWeight={tab === value ? 'bold' : 'medium'}
+                          whiteSpace="normal"
+                        >
+                          {value === 'songs' && <FaMusic />}
+                          {t(
+                            value === 'songs'
+                              ? 'completion.songs'
+                              : shared
+                                ? 'completion.shared_events'
+                                : 'completion.events'
+                          )}
+                        </Button>
+                      ))}
+                    </HStack>
+                    <HStack gap="2" flexWrap="wrap">
+                      <Input
+                        id="completion-search"
+                        aria-label={t('completion.search')}
+                        value={query}
+                        placeholder={t(
+                          tab === 'events' ? 'completion.search_events' : 'completion.search_songs'
+                        )}
+                        onChange={(e) => {
+                          setQuery(e.target.value);
+                          resetList();
+                        }}
+                        flex="1 1 8rem"
+                        minW="0"
+                        minH="11"
                       />
-                    </Box>
-                    <Text color="fg.muted" fontSize="sm">
-                      {t(
-                        result.heard.size === 0
-                          ? 'completion.start'
-                          : result.heard.size === result.catalog.length
-                            ? 'completion.complete'
-                            : 'completion.remaining',
-                        { count: result.catalog.length - result.heard.size }
+                      {tab === 'events' ? (
+                        <NativeSelect
+                          aria-label={t('events.year')}
+                          value={year}
+                          placeholder={t('events.year')}
+                          options={years.map((value) => ({ value, label: value }))}
+                          onChange={(value) => {
+                            setYear(value);
+                            resetList();
+                          }}
+                        />
+                      ) : (
+                        <NativeSelect
+                          aria-label={t('completion.status')}
+                          value={songStatus}
+                          placeholder={t('completion.any_status')}
+                          options={[
+                            { value: 'heard', label: t('completion.heard') },
+                            { value: 'unheard', label: t('completion.unheard') }
+                          ]}
+                          onChange={(value) => {
+                            setSongStatus(value);
+                            resetList();
+                          }}
+                        />
                       )}
-                    </Text>
+                    </HStack>
+                    <HStack gap="2" justifyContent="space-between" flexWrap="wrap">
+                      <Text color="fg.muted" fontSize="xs">
+                        {t(tab === 'events' ? 'events.results_count' : 'songs.results_count', {
+                          count: tab === 'events' ? visibleEvents.length : visibleSongs.length
+                        })}
+                      </Text>
+                      {tab === 'events' && (
+                        <Checkbox
+                          checked={selectedOnly || Boolean(shared)}
+                          disabled={Boolean(shared)}
+                          onCheckedChange={(e) => {
+                            setSelectedOnly(e.checked === true);
+                            resetList();
+                          }}
+                          minH="11"
+                        >
+                          {t('completion.selected_only')}
+                        </Checkbox>
+                      )}
+                    </HStack>
                   </Stack>
-                  <Wrap gap="6">
-                    <HStack gap="2">
-                      <Text fontSize="xl" fontWeight="bold">
-                        {result.shows}
-                      </Text>
-                      <Text color="fg.muted" fontSize="sm">
-                        {t('completion.shows')}
-                      </Text>
-                    </HStack>
-                    <HStack gap="2">
-                      <Text fontSize="xl" fontWeight="bold">
-                        {result.plays}
-                      </Text>
-                      <Text color="fg.muted" fontSize="sm">
-                        {t('completion.plays')}
-                      </Text>
-                    </HStack>
-                  </Wrap>
-                  <Text color="fg.muted" fontSize="xs">
-                    {t('completion.method', { date })}
-                  </Text>
-                  {result.missingSetlists > 0 && (
-                    <Text fontSize="sm">
-                      {t('completion.missing', { count: result.missingSetlists })}
+                  {tab === 'events' && !shared && (
+                    <Text pb="3" color="fg.muted" fontSize="xs">
+                      {t('completion.sync')}
                     </Text>
                   )}
-                  {unknown > 0 && (
-                    <Text fontSize="sm">{t('completion.unknown', { count: unknown })}</Text>
-                  )}
-                </Stack>
-              </Box>
-              <Stack gap="2">
-                <Wrap gap="2">
-                  <Button
-                    onClick={saveImage}
-                    disabled={exporting}
-                    minH="11"
-                    color="white"
-                    bgColor="accent.10"
-                    _hover={{ bgColor: 'accent.9' }}
-                  >
-                    <FaDownload />
-                    {t(exporting ? 'completion.exporting' : 'completion.download')}
-                  </Button>
-                  <Button variant="outline" onClick={copyLink} minH="11">
-                    <FaLink />
-                    {t('completion.copy')}
-                  </Button>
-                  <Link href={sharePath} minH="11">
-                    {t('completion.preview')}
-                  </Link>
-                </Wrap>
-                <Text color="fg.muted" fontSize="xs">
-                  {t('completion.privacy')}
-                </Text>
-                <Text role="status" fontSize="sm">
-                  {notice}
-                </Text>
-              </Stack>
-
-              <HStack aria-label={t('completion.title')} gap="2" flexWrap="wrap">
-                <Button
-                  variant={tab === 'events' ? 'solid' : 'outline'}
-                  aria-pressed={tab === 'events'}
-                  onClick={() => {
-                    setTab('events');
-                    setQuery('');
-                    resetList();
-                  }}
-                  minH="11"
-                  color={tab === 'events' ? 'white' : undefined}
-                  bgColor={tab === 'events' ? 'accent.10' : undefined}
-                  _hover={{ bgColor: tab === 'events' ? 'accent.9' : 'bg.subtle' }}
-                >
-                  {t(shared ? 'completion.shared_events' : 'completion.events')}
-                </Button>
-                <Button
-                  variant={tab === 'songs' ? 'solid' : 'outline'}
-                  aria-pressed={tab === 'songs'}
-                  onClick={() => {
-                    setTab('songs');
-                    setQuery('');
-                    resetList();
-                  }}
-                  minH="11"
-                  color={tab === 'songs' ? 'white' : undefined}
-                  bgColor={tab === 'songs' ? 'accent.10' : undefined}
-                  _hover={{ bgColor: tab === 'songs' ? 'accent.9' : 'bg.subtle' }}
-                >
-                  <FaMusic />
-                  {t('completion.songs')}
-                </Button>
-              </HStack>
-              <Wrap gap="3" alignItems="end">
-                <Stack flex="1" gap="1" w={{ base: 'full', sm: 'auto' }} minW="0">
-                  <styled.label htmlFor="completion-search" fontSize="sm">
-                    {t('completion.search')}
-                  </styled.label>
-                  <Input
-                    id="completion-search"
-                    value={query}
-                    placeholder={t(
-                      tab === 'events' ? 'completion.search_events' : 'completion.search_songs'
-                    )}
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                      resetList();
-                    }}
-                  />
-                </Stack>
-                {tab === 'events' ? (
-                  <Checkbox
-                    checked={selectedOnly || Boolean(shared)}
-                    disabled={Boolean(shared)}
-                    onCheckedChange={(e) => {
-                      setSelectedOnly(e.checked === true);
-                      resetList();
-                    }}
-                    minH="11"
-                  >
-                    {t('completion.selected_only')}
-                  </Checkbox>
-                ) : (
-                  <Stack gap="1">
-                    <Text fontSize="sm">{t('completion.status')}</Text>
-                    <NativeSelect
-                      aria-label={t('completion.status')}
-                      value={songStatus}
-                      placeholder={t('completion.any_status')}
-                      options={[
-                        { value: 'heard', label: t('completion.heard') },
-                        { value: 'unheard', label: t('completion.unheard') }
-                      ]}
-                      onChange={(s) => {
-                        setSongStatus(s);
-                        resetList();
-                      }}
-                    />
-                  </Stack>
-                )}
-              </Wrap>
-              {tab === 'events' && !shared && (
-                <Text color="fg.muted" fontSize="sm">
-                  {t('completion.sync')}
-                </Text>
-              )}
-              <Stack gap="2">
-                {tab === 'events'
-                  ? visibleEvents
-                      .filter((p) => !shared || activeIds.has(p.id))
-                      .slice(0, limit)
-                      .map((p) => {
+                  {tab === 'events' ? (
+                    <Stack gap="0" borderColor="border.default" borderTopWidth="1px">
+                      {visibleEvents.slice(0, limit).map((p) => {
                         const record = get(p.id);
+                        const selected = activeIds.has(p.id);
                         return (
-                          <HStack
+                          <Grid
                             key={p.id}
-                            gap="3"
-                            justifyContent="space-between"
+                            gap="2"
                             alignItems="center"
+                            gridTemplateColumns={{
+                              base: 'minmax(0, 1fr) auto',
+                              md: '5.5rem minmax(0, 1fr) auto'
+                            }}
                             borderColor="border.default"
-                            borderRadius="l2"
-                            borderWidth="1px"
-                            p="3"
-                            bgColor={activeIds.has(p.id) ? 'accent.a2' : 'bg.default'}
-                            flexWrap={{ base: 'wrap', md: 'nowrap' }}
+                            borderBottomWidth="1px"
+                            py="2"
+                            px="2"
+                            bgColor={selected ? 'bg.subtle' : 'transparent'}
                           >
-                            <Stack flex="1" gap="1" minW="0">
-                              <Text color="fg.muted" fontSize="xs">
+                            <Text
+                              hideBelow="md"
+                              color="fg.muted"
+                              fontSize="xs"
+                              fontVariantNumeric="tabular-nums"
+                            >
+                              {p.date}
+                            </Text>
+                            <Stack gap="0.5" minW="0">
+                              <Text hideFrom="md" color="fg.muted" fontSize="xs">
                                 {p.date}
                               </Text>
                               {shared ? (
-                                <Text fontWeight="semibold">{p.tourName}</Text>
+                                <Text fontSize="sm" fontWeight="semibold">
+                                  {p.performanceName || p.concertName || p.tourName}
+                                </Text>
                               ) : (
                                 <Button
                                   variant="ghost"
@@ -520,73 +449,54 @@ export default function Page() {
                                   h="auto"
                                   minH="11"
                                   p="0"
+                                  fontSize="sm"
+                                  lineHeight="1.5"
                                   textAlign="left"
                                   whiteSpace="normal"
                                 >
-                                  {p.tourName}
+                                  {p.performanceName || p.concertName || p.tourName}
                                 </Button>
                               )}
-                              <Text color="fg.muted" fontSize="sm">
-                                {[p.performanceName, p.concertName, p.venue]
+                              <Text color="fg.muted" fontSize="xs">
+                                {[(p.performanceName || p.concertName) && p.tourName, p.venue]
                                   .filter(Boolean)
                                   .join(' · ')}
                               </Text>
                               {!data?.setlists[p.id]?.isActual && (
-                                <Text fontSize="xs">{t('completion.no_setlist')}</Text>
+                                <Text color="fg.muted" fontSize="xs">
+                                  {t('completion.no_setlist')}
+                                </Text>
                               )}
                             </Stack>
                             {shared ? (
-                              <Text>
+                              <Text color="fg.default">
                                 <FaCheck aria-label={t('completion.heard')} />
                               </Text>
                             ) : (
-                              <Stack gap="2" flexShrink={0}>
-                                <Button
-                                  variant={record?.status === 'attended' ? 'solid' : 'outline'}
-                                  aria-pressed={record?.status === 'attended'}
-                                  aria-label={t('completion.attendance', {
-                                    name: p.tourName,
-                                    date: p.date
-                                  })}
-                                  onClick={() =>
-                                    record?.status === 'attended'
-                                      ? removeAttendance(p.id)
-                                      : setAttendance(p.id, 'attended', {
-                                          watchType: p.category === 'live' ? 'live' : 'stream'
-                                        })
-                                  }
-                                  minH="11"
-                                  color={record?.status === 'attended' ? 'white' : undefined}
-                                  bgColor={record?.status === 'attended' ? 'accent.10' : undefined}
-                                  _hover={{
-                                    bgColor:
-                                      record?.status === 'attended' ? 'accent.9' : 'bg.subtle'
-                                  }}
+                              <HStack
+                                gap="1"
+                                justifyContent="end"
+                                gridColumn={{ base: '1 / -1', md: 'auto' }}
+                                maxW="full"
+                                flexWrap="wrap"
+                              >
+                                <Box
+                                  visibility={selected ? 'visible' : 'hidden'}
+                                  w="40"
+                                  minW="0"
+                                  maxW="full"
                                 >
-                                  {record?.status === 'attended' ? <FaCheck /> : <FaPlus />}
-                                  {t(
-                                    record?.status === 'attended'
-                                      ? 'completion.heard'
-                                      : p.category === 'live'
-                                        ? 'completion.inperson'
-                                        : 'completion.stream'
-                                  )}
-                                </Button>
-                                {record?.status === 'attended' && (
                                   <NativeSelect
                                     aria-label={t('completion.attendance', {
                                       name: p.tourName,
                                       date: p.date
                                     })}
                                     value={
-                                      record?.status === 'attended'
-                                        ? p.category !== 'live' &&
-                                          (!record.watchType || record.watchType === 'live')
-                                          ? 'stream'
-                                          : (record.watchType ?? 'live')
-                                        : ''
+                                      p.category !== 'live' &&
+                                      (!record?.watchType || record.watchType === 'live')
+                                        ? 'stream'
+                                        : (record?.watchType ?? 'live')
                                     }
-                                    placeholder={t('completion.not_selected')}
                                     options={[
                                       ...(p.category === 'live'
                                         ? [{ value: 'live', label: t('completion.inperson') }]
@@ -594,70 +504,222 @@ export default function Page() {
                                       { value: 'stream', label: t('completion.stream') },
                                       { value: 'delay', label: t('completion.delay') }
                                     ]}
-                                    onChange={(watchType) => {
-                                      if (watchType)
-                                        setAttendance(p.id, 'attended', {
-                                          watchType: watchType as WatchType
-                                        });
-                                      else removeAttendance(p.id);
-                                      setNotice('');
-                                    }}
+                                    onChange={(watchType) =>
+                                      setAttendance(p.id, 'attended', {
+                                        watchType: watchType as WatchType
+                                      })
+                                    }
                                   />
-                                )}
-                              </Stack>
+                                </Box>
+                                <Button
+                                  variant={selected ? 'solid' : 'outline'}
+                                  aria-pressed={selected}
+                                  aria-label={t('completion.attendance', {
+                                    name: p.tourName,
+                                    date: p.date
+                                  })}
+                                  title={t(
+                                    selected
+                                      ? 'completion.heard'
+                                      : p.category === 'live'
+                                        ? 'completion.inperson'
+                                        : 'completion.stream'
+                                  )}
+                                  onClick={() =>
+                                    selected
+                                      ? removeAttendance(p.id)
+                                      : setAttendance(p.id, 'attended', {
+                                          watchType: p.category === 'live' ? 'live' : 'stream'
+                                        })
+                                  }
+                                  minW="11"
+                                  minH="11"
+                                  px="3"
+                                  color={selected ? 'white' : 'fg.default'}
+                                  bgColor={selected ? 'accent.10' : undefined}
+                                  _hover={{ bgColor: selected ? 'accent.9' : 'bg.subtle' }}
+                                >
+                                  {selected ? <FaCheck /> : <FaPlus />}
+                                </Button>
+                              </HStack>
                             )}
-                          </HStack>
+                          </Grid>
                         );
-                      })
-                  : visibleSongs.slice(0, limit).map((song) => (
-                      <Button
-                        key={song.id}
-                        variant="ghost"
-                        onClick={() => (shared ? setSharedSongId(song.id) : openSong(song.id))}
-                        justifyContent="start"
-                        h="auto"
-                        minH="14"
-                        p="2"
-                      >
-                        <SongThumb songId={song.id} />
-                        <Stack flex="1" gap="0" minW="0" textAlign="left">
-                          <Text whiteSpace="normal">
-                            {localizedName(i18n.language, song.name, song.englishName)}
-                          </Text>
-                          <Text color="fg.muted" fontSize="xs">
-                            {t(
-                              result.heard.has(song.id) ? 'completion.heard' : 'completion.unheard'
+                      })}
+                    </Stack>
+                  ) : (
+                    <Grid
+                      gap="0"
+                      columnGap="5"
+                      gridTemplateColumns={{
+                        base: 'minmax(0, 1fr)',
+                        xl: 'repeat(2, minmax(0, 1fr))'
+                      }}
+                    >
+                      {visibleSongs.slice(0, limit).map((song) => (
+                        <Button
+                          key={song.id}
+                          variant="ghost"
+                          onClick={() => (shared ? setSharedSongId(song.id) : openSong(song.id))}
+                          display="grid"
+                          gap="3"
+                          alignItems="center"
+                          gridTemplateColumns="minmax(0, 1fr) auto"
+                          borderColor="border.default"
+                          borderBottomWidth="1px"
+                          borderRadius="0"
+                          minW="0"
+                          h="auto"
+                          minH="16"
+                          py="3"
+                          px="2"
+                          textAlign="left"
+                        >
+                          <Stack gap="0.5" minW="0">
+                            <Text
+                              fontSize="md"
+                              fontWeight="semibold"
+                              lineHeight="1.5"
+                              overflowWrap="anywhere"
+                              whiteSpace="normal"
+                            >
+                              {localizedName(i18n.language, song.name, song.englishName)}
+                            </Text>
+                            <Text color="fg.muted" fontSize="xs" whiteSpace="normal">
+                              {song.releasedOn}
+                            </Text>
+                          </Stack>
+                          <HStack gap="1.5" flexShrink={0} color="fg.muted" fontSize="xs">
+                            {result.heard.has(song.id) && (
+                              <FaCheck aria-label={t('completion.heard')} />
                             )}
-                          </Text>
-                        </Stack>
-                        {result.heard.has(song.id) && (
-                          <Text flexShrink={0}>
-                            {t('completion.times', { count: result.heard.get(song.id) })}
-                          </Text>
-                        )}
+                            <Text>
+                              {result.heard.has(song.id)
+                                ? t('completion.times', { count: result.heard.get(song.id) })
+                                : t('completion.unheard')}
+                            </Text>
+                          </HStack>
+                        </Button>
+                      ))}
+                    </Grid>
+                  )}
+                  {(tab === 'events' ? visibleEvents.length : visibleSongs.length) === 0 && (
+                    <Text p="4" color="fg.muted">
+                      {t('completion.none')}
+                    </Text>
+                  )}
+                  {(tab === 'events' ? visibleEvents.length : visibleSongs.length) > limit && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setLimit((n) => n + PAGE_SIZE)}
+                      minH="11"
+                      mt="4"
+                    >
+                      {t('completion.more')}
+                    </Button>
+                  )}
+                </Stack>
+                <Stack
+                  position={{ base: 'static', lg: 'sticky' }}
+                  top="4"
+                  gap="3"
+                  minW="0"
+                  order={{ base: '1', lg: '2' }}
+                >
+                  <CompletionCard
+                    compact
+                    title={title}
+                    date={date}
+                    includeRemote={includeRemote}
+                    result={result}
+                    color={seriesColor}
+                  />
+                  {(result.missingSetlists > 0 || unknown > 0) && (
+                    <Stack role="status" gap="1" borderRadius="l2" p="3" bgColor="bg.subtle">
+                      {result.missingSetlists > 0 && (
+                        <Text fontSize="xs">
+                          {t('completion.missing', { count: result.missingSetlists })}
+                        </Text>
+                      )}
+                      {unknown > 0 && (
+                        <Text fontSize="xs">{t('completion.unknown', { count: unknown })}</Text>
+                      )}
+                    </Stack>
+                  )}
+                  <Stack display={{ base: sharingOpen ? 'flex' : 'none', lg: 'flex' }} gap="2">
+                    <Grid gap="2" gridTemplateColumns="minmax(0, 1fr) auto">
+                      <Button
+                        onClick={saveImage}
+                        disabled={exporting}
+                        minH="11"
+                        color="white"
+                        bgColor="accent.10"
+                        _hover={{ bgColor: 'accent.9' }}
+                      >
+                        <FaDownload />
+                        {t(exporting ? 'completion.exporting' : 'completion.download')}
                       </Button>
-                    ))}
-                {(tab === 'events'
-                  ? visibleEvents.filter((p) => !shared || activeIds.has(p.id)).length
-                  : visibleSongs.length) === 0 && (
-                  <Text p="4" color="fg.muted">
-                    {t('completion.none')}
-                  </Text>
-                )}
-                {(tab === 'events' ? visibleEvents.length : visibleSongs.length) > limit && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setLimit((n) => n + PAGE_SIZE)}
-                    minH="11"
-                  >
-                    {t('completion.more')}
-                  </Button>
-                )}
-              </Stack>
+                      <Button
+                        variant="outline"
+                        onClick={copyLink}
+                        aria-label={t('completion.copy')}
+                        title={t('completion.copy')}
+                        minH="11"
+                      >
+                        <FaLink />
+                      </Button>
+                    </Grid>
+                    <HStack gap="2" justifyContent="space-between">
+                      <Link href={sharePath} minH="11" fontSize="sm">
+                        {t('completion.preview')}
+                      </Link>
+                      <Text role="status" fontSize="xs">
+                        {notice}
+                      </Text>
+                    </HStack>
+                    <styled.details color="fg.muted" fontSize="xs">
+                      <styled.summary cursor="pointer" display="flex" alignItems="center" minH="11">
+                        {t('completion.method_label')}
+                      </styled.summary>
+                      <Stack gap="2" pb="3">
+                        <Text>{t('completion.method', { date })}</Text>
+                        <Text>{t('completion.privacy')}</Text>
+                      </Stack>
+                    </styled.details>
+                  </Stack>
+                </Stack>
+              </Grid>
             </>
           )
         )}
+        <Wrap gap="4" borderColor="border.subtle" borderTopWidth="1px" pt="3">
+          <Link href={toAppUrl('/mypick')} minH="11" fontSize="sm">
+            {t('navigation.mypick')}
+          </Link>
+          <Link href={toAppUrl('/bingo')} minH="11" fontSize="sm">
+            {t('bingo.title')}
+          </Link>
+        </Wrap>
       </Stack>
+      {exporting && result && (
+        <Box
+          aria-hidden="true"
+          position="fixed"
+          top="0"
+          left="-9999px"
+          w="400px"
+          pointerEvents="none"
+        >
+          <CompletionCard
+            imageRef={imageRef}
+            title={title}
+            date={date}
+            includeRemote={includeRemote}
+            result={result}
+            color={seriesColor}
+          />
+        </Box>
+      )}
       {sharedSong?.song &&
         createPortal(
           <Suspense fallback={<Text role="status">{t('completion.loading')}</Text>}>

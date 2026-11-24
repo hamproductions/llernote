@@ -1,7 +1,7 @@
 {
   "title": "Song completion",
   "create": "Create",
-  "description": "Pick the shows you attended. Watch your song collection grow.",
+  "description": "Pick shows. Your song collection updates automatically.",
   "franchise": "Franchise",
   "all": "All franchises",
   "remote": "Include streams & TV",
@@ -54,5 +54,9 @@
   "shared_events": "Shared shows",
   "brand": "My LoveLive! song collection · LLerNote",
   "snapshot": "As of {{date}}",
-  "unknown": "{{count}} shared shows are not available in this catalog."
+  "unknown": "{{count}} shared shows are not available in this catalog.",
+  "method_label": "Counting & sharing",
+  "sharing": "Share",
+  "counts_summary": "{{shows}} shows · {{plays}} song plays",
+  "highlights": "Most heard songs"
 }
