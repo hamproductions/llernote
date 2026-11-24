@@ -26,6 +26,7 @@ import { useAppSettings } from '~/hooks/useAppSettings';
 import { useAttendance } from '~/hooks/useAttendance';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { useDetail } from '~/components/detail/DetailStack';
+import { useCommandPalette } from '~/components/search/CommandPaletteProvider';
 import { todayString } from '~/utils/event-filter';
 import type { AttendanceRecord } from '~/types/attendance';
 import type { Scope } from '~/utils/attendance/witness';
@@ -137,6 +138,7 @@ export default function Page() {
   const { scope } = useAppSettings();
   const { records } = useAttendance();
   const { openEvent } = useDetail();
+  const { open: openSearch } = useCommandPalette();
   const [search, setSearch] = useState('');
   const [eventernoteOpen, setEventernoteOpen] = useState(false);
   const [eventernoteMounted, setEventernoteMounted] = useState(false);
@@ -170,7 +172,7 @@ export default function Page() {
   const hasData = useMemo(() => records.some((r) => r.status === 'attended'), [records]);
 
   const submitSearch = () => {
-    window.location.href = `${href('/events')}?q=${encodeURIComponent(search)}`;
+    openSearch(search);
   };
 
   return (
@@ -207,7 +209,8 @@ export default function Page() {
             <Input
               size="lg"
               value={search}
-              placeholder={t('events.search_placeholder')}
+              aria-label={t('common.search')}
+              placeholder={t('search.placeholder')}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
               borderRadius="full"

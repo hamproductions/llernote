@@ -10,8 +10,9 @@
  *   `1期生〜3期生`), or the range written in the note when the data has a variant with that label.
  * - Everything after ゲスト出演 is a guest.
  * Only tours with 3+ franchises and a 出演者 note are written, so the file stays small.
+ * Existing entries are kept, so a note LLFans later removes does not wipe a known lineup.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 type Character = {
   id: string;
@@ -83,7 +84,11 @@ const lineupOf = (note: string) => {
   return { main: [...main], guests: named(guestText).filter((id) => !main.has(id)) };
 };
 
-const out: Record<string, { main: string[]; guests: string[] }> = {};
+const out: Record<string, { main: string[]; guests: string[] }> = existsSync(
+  'data/performance-lineups.json'
+)
+  ? read('data/performance-lineups.json')
+  : {};
 for (const tour of tours) {
   if (!tour.note?.includes('出演者') || new Set(tour.seriesIds).size < 3) continue;
   const lineup = lineupOf(tour.note);

@@ -3,17 +3,19 @@ import type { ReactNode } from 'react';
 
 const CommandPalette = lazy(() => import('./CommandPalette'));
 
-type Api = { open: () => void };
+type Api = { open: (query?: string) => void };
 const Ctx = createContext<Api>({ open() {} });
 export const useCommandPalette = () => useContext(Ctx);
 
 export function CommandPaletteProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
 
   const api = useMemo<Api>(
     () => ({
-      open: () => {
+      open: (query = '') => {
+        setQuery(query);
         setMounted(true);
         setOpen(true);
       }
@@ -37,7 +39,7 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
       {children}
       {mounted && (
         <Suspense fallback={null}>
-          <CommandPalette open={open} onClose={() => setOpen(false)} />
+          <CommandPalette open={open} initialQuery={query} onClose={() => setOpen(false)} />
         </Suspense>
       )}
     </Ctx.Provider>
