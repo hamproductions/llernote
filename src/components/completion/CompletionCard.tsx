@@ -80,7 +80,6 @@ export function CompletionCard({
             <Text
               fontSize="clamp(4rem, 25cqw, 8rem)"
               fontWeight="bold"
-              fontVariantNumeric="tabular-nums"
               letterSpacing="-0.07em"
               lineHeight="0.9"
             >
@@ -94,7 +93,7 @@ export function CompletionCard({
             <Text fontSize="sm">
               {t('completion.remaining', { count: result.catalog.length - result.heard.size })}
             </Text>
-            <Text fontSize="3xl" fontWeight="bold" fontVariantNumeric="tabular-nums" lineHeight="1">
+            <Text fontSize="3xl" fontWeight="bold" lineHeight="1">
               {result.percent}%
             </Text>
           </HStack>
@@ -130,13 +129,13 @@ export function CompletionCard({
           </Stack>
           <Grid gap="4" gridTemplateColumns="repeat(2, minmax(0, 1fr))">
             <Stack gap="0">
-              <Text fontSize="3xl" fontWeight="bold" fontVariantNumeric="tabular-nums">
+              <Text fontSize="3xl" fontWeight="bold">
                 {result.shows}
               </Text>
               <Text fontSize="xs">{t('completion.share_shows')}</Text>
             </Stack>
             <Stack gap="0">
-              <Text fontSize="3xl" fontWeight="bold" fontVariantNumeric="tabular-nums">
+              <Text fontSize="3xl" fontWeight="bold">
                 {result.plays}
               </Text>
               <Text fontSize="xs">{t('completion.share_plays')}</Text>
@@ -152,7 +151,7 @@ export function CompletionCard({
                   <Text minW="0" fontSize="sm" fontWeight="medium" overflowWrap="anywhere">
                     {localizedName(i18n.language, song.name, song.englishName)}
                   </Text>
-                  <Text flexShrink={0} fontSize="xs" fontVariantNumeric="tabular-nums">
+                  <Text flexShrink={0} fontSize="xs">
                     {result.heard.get(song.id)} / {result.performed.get(song.id)}
                   </Text>
                 </HStack>
@@ -169,13 +168,7 @@ export function CompletionCard({
                   <Text minW="0" fontSize="sm" fontWeight="medium" overflowWrap="anywhere">
                     {localizedName(i18n.language, song.name, song.englishName)}
                   </Text>
-                  <Text
-                    flexShrink={0}
-                    maxW="32"
-                    fontSize="xs"
-                    fontVariantNumeric="tabular-nums"
-                    textAlign="right"
-                  >
+                  <Text flexShrink={0} maxW="32" fontSize="xs" textAlign="right">
                     {result.performed.has(song.id)
                       ? `0 / ${result.performed.get(song.id)}`
                       : t('completion.never_performed')}
