@@ -223,4 +223,69 @@ describe('/sort', () => {
     expect(screen.getAllByText(/^Tied$/)).toHaveLength(2);
     expect(screen.getAllByText(/^1$/)).toHaveLength(1);
   });
+
+  describe('retiring', () => {
+    const titles = ['Tour Alpha', 'Tour Bravo', 'Tour Charlie'];
+    const onScreen = () => titles.filter((title) => screen.queryByText(title) !== null);
+    const finishSort = async (user: ReturnType<typeof userEvent.setup>) => {
+      let guard = 0;
+      while (screen.queryByText(/Which live do you prefer/i) && guard++ < 50) {
+        await user.keyboard('{ArrowLeft}');
+      }
+    };
+
+    it('drops a retired live from the ranking and from later sorts', async () => {
+      const user = userEvent.setup();
+      const first = render(<Page />);
+      await startSort(user);
+
+      const [victim] = onScreen();
+      await user.click(screen.getByRole('button', { name: `Retire: ${victim}` }));
+      await finishSort(user);
+
+      expect(screen.getByText(/Your ranking/i)).not.toBeNull();
+      expect(screen.queryByText(victim!)).toBeNull();
+      expect(onScreen()).toHaveLength(2);
+
+      // Still retired after starting over and reloading.
+      await user.click(screen.getByRole('button', { name: /Start over/i }));
+      first.unmount();
+      render(<Page />);
+      await waitFor(() => expect(screen.getByText(/2 lives to rank/i)).not.toBeNull());
+      expect(screen.getByRole('button', { name: /1 retired/i })).not.toBeNull();
+    });
+
+    it('brings a retired live back on undo without un-retiring anything else', async () => {
+      const user = userEvent.setup();
+      render(<Page />);
+      await startSort(user);
+
+      const [victim] = onScreen();
+      await user.click(screen.getByRole('button', { name: `Retire: ${victim}` }));
+      expect(JSON.parse(localStorage.getItem('lives-retired') ?? '[]')).toHaveLength(1);
+
+      await user.click(screen.getByRole('button', { name: /^Undo$/i }));
+
+      expect(screen.getByText(victim!)).not.toBeNull();
+      expect(JSON.parse(localStorage.getItem('lives-retired') ?? '[]')).toEqual([]);
+    });
+
+    it('restores retired lives from the setup screen', async () => {
+      localStorage.setItem(
+        'lives-retired',
+        JSON.stringify(['live:2026-03-01:Tour Alpha', 'live:2026-02-01:Tour Bravo'])
+      );
+      const user = userEvent.setup();
+      render(<Page />);
+
+      await waitFor(() => expect(screen.getByText(/at least two lives/i)).not.toBeNull());
+      await user.click(screen.getByRole('button', { name: /2 retired/i }));
+      await user.click(screen.getByRole('button', { name: 'Restore: Tour Alpha' }));
+      expect(screen.getByText(/2 lives to rank/i)).not.toBeNull();
+
+      await user.click(screen.getByRole('button', { name: /Restore all/i }));
+      expect(screen.getByText(/3 lives to rank/i)).not.toBeNull();
+      expect(screen.queryByRole('button', { name: /retired/i })).toBeNull();
+    });
+  });
 });

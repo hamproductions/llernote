@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa6';
+import { FaBoxArchive, FaChevronDown, FaChevronUp } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/styled/text';
@@ -14,6 +14,8 @@ import { clickable } from '~/utils/clickable';
 interface LiveSortCardProps {
   candidate: SortCandidate;
   onPick: () => void;
+  /** Take this candidate out of the ranking — this one and future ones. */
+  onRetire?: () => void;
   setlistOpen: boolean;
   onToggleSetlist: () => void;
   songOrdinals: Map<string, Map<string, number>>;
@@ -27,6 +29,7 @@ const dateRange = (candidate: SortCandidate) =>
 export function LiveSortCard({
   candidate,
   onPick,
+  onRetire,
   setlistOpen,
   onToggleSetlist,
   songOrdinals
@@ -123,18 +126,37 @@ export function LiveSortCard({
         minH="0"
         overflow="hidden"
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleSetlist}
-          aria-expanded={setlistOpen}
-          flexShrink={0}
-          borderRadius="0"
-          width="full"
-        >
-          {setlistOpen ? <FaChevronUp /> : <FaChevronDown />}
-          {setlistOpen ? t('sort.hide_setlist') : t('sort.show_setlist')}
-        </Button>
+        {/* Retire lives here rather than in the details block above, which is one big
+            pick target — a stray click there would count as a vote. */}
+        <HStack gap="0" flexShrink={0}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleSetlist}
+            aria-expanded={setlistOpen}
+            flex="1"
+            borderRadius="0"
+          >
+            {setlistOpen ? <FaChevronUp /> : <FaChevronDown />}
+            {setlistOpen ? t('sort.hide_setlist') : t('sort.show_setlist')}
+          </Button>
+          {onRetire && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRetire}
+              title={t('sort.retire_hint')}
+              aria-label={`${t('sort.retire')}: ${candidate.title}`}
+              borderColor="border.subtle"
+              borderLeftWidth="1px"
+              borderRadius="0"
+              color="fg.muted"
+            >
+              <FaBoxArchive />
+              {t('sort.retire')}
+            </Button>
+          )}
+        </HStack>
         {setlistOpen && (
           <Box flex="1" minH="0" maxH="26rem" px="4" pb="4" overflowY="auto">
             <SortSetlistPanel candidate={candidate} songOrdinals={songOrdinals} />

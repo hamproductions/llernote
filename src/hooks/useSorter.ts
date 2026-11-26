@@ -2,7 +2,14 @@ import shuffle from 'lodash-es/shuffle';
 import { useEffect, useCallback, useRef } from 'react';
 import cloneDeep from 'lodash-es/cloneDeep';
 import type { SortState } from '../utils/sort';
-import { step, initSort, calculateMaxComparisons, estimateComparisonsMade } from '../utils/sort';
+import {
+  step,
+  initSort,
+  calculateMaxComparisons,
+  collectItems,
+  estimateComparisonsMade,
+  removeItems
+} from '../utils/sort';
 import { useLocalStorage } from './useLocalStorage';
 
 export const useSorter = <T>(items: T[], statePrefix?: string) => {
@@ -47,22 +54,43 @@ export const useSorter = <T>(items: T[], statePrefix?: string) => {
   historyRef.current = history;
   comparisonsCountRef.current = comparisonsCount;
 
+  const pushHistory = useCallback(
+    (currentState: SortState<T>) => {
+      let newHistory = [...(historyRef.current ?? []), cloneDeep(currentState)];
+      if (newHistory.length > 50) {
+        newHistory = newHistory.slice(-50);
+      }
+      setHistory(newHistory);
+    },
+    [setHistory]
+  );
+
   const handleStep = useCallback(
     (value: 'left' | 'right' | 'tie') => () => {
       const currentState = stateRef.current;
       if (currentState) {
-        let newHistory = [...(historyRef.current ?? []), cloneDeep(currentState)];
-        if (newHistory.length > 50) {
-          newHistory = newHistory.slice(-50);
-        }
-        setHistory(newHistory);
+        pushHistory(currentState);
         const currentCount = comparisonsCountRef.current ?? estimateComparisonsMade(currentState);
         setComparisonsCount(currentCount + 1);
         const nextStep = step(value, currentState);
         setState(nextStep);
       }
     },
-    [setHistory, setState, setComparisonsCount]
+    [pushHistory, setState, setComparisonsCount]
+  );
+
+  /**
+   * Take items out of the sort in progress. Undoable like a comparison, but not counted
+   * as one — nothing was compared.
+   */
+  const handleRemove = useCallback(
+    (shouldRemove: (item: T) => boolean) => {
+      const currentState = stateRef.current;
+      if (!currentState) return;
+      pushHistory(currentState);
+      setState(removeItems(cloneDeep(currentState), shouldRemove));
+    },
+    [pushHistory, setState]
   );
 
   const reset = useCallback(() => {
@@ -71,15 +99,24 @@ export const useSorter = <T>(items: T[], statePrefix?: string) => {
     setComparisonsCount(1);
   }, [items, setState, setHistory, setComparisonsCount]);
 
-  const handleUndo = useCallback(() => {
+  /**
+   * Step back one action. Returns the items the undone action had removed, so a caller
+   * tracking removals can restore them — empty when it was an ordinary comparison.
+   */
+  const handleUndo = useCallback((): T[] => {
     const currentHistory = historyRef.current;
-    if (!currentHistory || currentHistory?.length === 0) return;
+    if (!currentHistory || currentHistory?.length === 0) return [];
     const previousState = currentHistory.at(-1);
-    if (previousState) {
-      setState(previousState);
-      setHistory(currentHistory.slice(0, -1));
+    if (!previousState) return [];
+    // Comparisons only ever reorder items, so any item that reappears was removed.
+    const current = stateRef.current ? collectItems(stateRef.current) : new Set<T>();
+    const restored = [...collectItems(previousState)].filter((item) => !current.has(item));
+    setState(previousState);
+    setHistory(currentHistory.slice(0, -1));
+    if (restored.length === 0) {
       setComparisonsCount(Math.max(0, (comparisonsCountRef.current ?? 1) - 1));
     }
+    return restored;
   }, [setState, setHistory, setComparisonsCount]);
 
   const sortedN = state?.arr.length ?? items.length;
@@ -110,6 +147,7 @@ export const useSorter = <T>(items: T[], statePrefix?: string) => {
     right: handleStep('right'),
     tie: handleStep('tie'),
     undo: () => handleUndo(),
+    remove: handleRemove,
     progress,
     isEnded,
     reset,

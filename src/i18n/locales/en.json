@@ -692,7 +692,13 @@
     "copy_image": "Copy image",
     "image_copied": "Image copied",
     "copy_text": "Copy text",
-    "text_copied": "Text copied"
+    "text_copied": "Text copied",
+    "retire": "Retire",
+    "retire_hint": "Remove from this ranking and future ones. Undo or restore it from the setup screen.",
+    "retired_toast": "Retired “{{ title }}”",
+    "retired_count": "{{ count }} retired",
+    "restore": "Restore",
+    "restore_all": "Restore all"
   },
   "setlistdle": {
     "daily": "Daily",

@@ -262,3 +262,47 @@ export const getCurrentItem = <T>(state: SortState<T>) => {
     right
   };
 };
+
+/** Every item a sort state still holds, wherever the merge in progress has put it. */
+export const collectItems = <I>(state: SortState<I>): Set<I> => {
+  // Mid-merge, `arr` alone is not enough: a slot is overwritten as soon as the merge
+  // writes into it, so an item not yet placed may survive only in the temp arrays.
+  const buckets = [
+    ...state.arr,
+    ...(state.mergeState?.leftArr ?? []),
+    ...(state.mergeState?.rightArr ?? [])
+  ];
+  return new Set(buckets.flat());
+};
+
+/**
+ * Drop items from a sort without asking about them again — like suspending a card.
+ *
+ * Emptied buckets are the same sentinel a tie leaves behind, which `merge` already skips,
+ * so slot positions (and with them the comparison estimate) stay put. If the removal
+ * empties a side of the pending comparison, the merge carries on to the next pair that
+ * genuinely needs a decision — possibly through to the end of the sort.
+ */
+export const removeItems = <I>(
+  state: SortState<I>,
+  shouldRemove: (item: I) => boolean
+): SortState<I> => {
+  const prune = (buckets: I[][]) =>
+    buckets.map((bucket) => bucket.filter((item) => !shouldRemove(item)));
+  const arr = prune(state.arr);
+  const { mergeState } = state;
+  if (state.status === 'end' || !mergeState?.leftArr || !mergeState.rightArr) {
+    return { ...state, arr };
+  }
+
+  const next = merge({
+    ...state,
+    arr,
+    mergeState: {
+      ...mergeState,
+      leftArr: prune(mergeState.leftArr),
+      rightArr: prune(mergeState.rightArr)
+    }
+  });
+  return next.mergeState ? next : mergeSort(next);
+};

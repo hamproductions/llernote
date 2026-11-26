@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSorter } from './useSorter';
 import { useSortTimer } from './useSortTimer';
+import { useLocalStorage } from './useLocalStorage';
 import { useAttendance } from './useAttendance';
 import { usePerformances } from './useData';
 import { useAllSetlists } from './useSetlists';
@@ -93,14 +94,21 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
     [attendanceMap]
   );
 
+  const prefix = LIVE_SORT_PREFIX[unit];
+
+  // Retired candidates sit out every ranking until restored, the way a suspended Anki card
+  // sits out reviews. Kept per unit: a tour and one of its shows are different candidates.
+  const [storedRetired, setRetired] = useLocalStorage<string[]>(`${prefix}-retired`, []);
+  const retiredIds = useMemo(() => new Set(storedRetired ?? []), [storedRetired]);
+
   const candidates = useMemo(
     () =>
       buildSortCandidates(
         performances.filter((performance) => matchesFilters(performance, filters, attendedIds)),
         unit,
         sortedPerformances
-      ),
-    [performances, filters, attendedIds, unit]
+      ).filter((candidate) => !retiredIds.has(candidate.id)),
+    [performances, filters, attendedIds, unit, retiredIds]
   );
 
   const catalogCandidates = useMemo(() => buildSortCandidates(sortedPerformances, unit), [unit]);
@@ -119,11 +127,10 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
     [allSetlists]
   );
 
-  const prefix = LIVE_SORT_PREFIX[unit];
   const sorter = useSorter<string>(candidateIds, prefix);
   const timer = useSortTimer(prefix);
 
-  const { state, isEnded, left, right, tie, undo, init, clear } = sorter;
+  const { state, isEnded, left, right, tie, undo, remove, init, clear } = sorter;
   const { startTimer, clearTimer, recordTick, removeLastTick, markEnded } = timer;
 
   const currentPair = useMemo(() => {
@@ -155,9 +162,41 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
   }, [recordTick, tie, toast, t]);
 
   const pickUndo = useCallback(() => {
-    removeLastTick();
-    undo();
-  }, [removeLastTick, undo]);
+    const restored = undo();
+    if (restored.length > 0) {
+      // Undid a retirement, not a comparison: bring it back for future rankings too, and
+      // leave the timing alone since no comparison tick was recorded for it.
+      setRetired((prev) => (prev ?? []).filter((id) => !restored.includes(id)));
+    } else {
+      removeLastTick();
+    }
+  }, [removeLastTick, undo, setRetired]);
+
+  const retire = useCallback(
+    (candidate: SortCandidate) => {
+      setRetired((prev) => [...new Set([...(prev ?? []), candidate.id])]);
+      remove((id) => id === candidate.id);
+      toast({ title: t('sort.retired_toast', { title: candidate.title }), duration: 2500 });
+    },
+    [setRetired, remove, toast, t]
+  );
+
+  const restore = useCallback(
+    (id: string) => setRetired((prev) => (prev ?? []).filter((retiredId) => retiredId !== id)),
+    [setRetired]
+  );
+
+  const restoreAll = useCallback(() => setRetired([]), [setRetired]);
+
+  /** Retired candidates still in the catalogue, newest retirement first. */
+  const retired = useMemo(
+    () =>
+      [...retiredIds]
+        .reverse()
+        .map((id) => candidateById.get(id))
+        .filter((candidate): candidate is SortCandidate => candidate !== undefined),
+    [retiredIds, candidateById]
+  );
 
   const start = useCallback(() => {
     startTimer();
@@ -228,6 +267,10 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
     pickRight,
     pickTie,
     pickUndo,
+    retire,
+    retired,
+    restore,
+    restoreAll,
     start,
     reset
   };

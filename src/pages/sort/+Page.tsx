@@ -14,6 +14,7 @@ import { SortTimer } from '~/components/sorter/SortTimer';
 import { LiveSortCard } from '~/components/sorter/LiveSortCard';
 import { LiveSortFiltersBar } from '~/components/sorter/LiveSortFiltersBar';
 import { LiveSortResults } from '~/components/sorter/LiveSortResults';
+import { RetiredCandidatesPanel } from '~/components/sorter/RetiredCandidatesPanel';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
 import {
   EMPTY_LIVE_SORT_FILTERS,
@@ -66,6 +67,10 @@ function SortPage({
     pickRight,
     pickTie,
     pickUndo,
+    retire,
+    retired,
+    restore,
+    restoreAll,
     start,
     reset
   } = useLiveSortData(filters, unit);
@@ -160,6 +165,12 @@ function SortPage({
 
             <LiveSortFiltersBar filters={filters} onChange={setFilters} />
 
+            <RetiredCandidatesPanel
+              retired={retired}
+              onRestore={restore}
+              onRestoreAll={restoreAll}
+            />
+
             <HStack gap="3" flexWrap="wrap">
               <Button onClick={start} disabled={candidates.length < 2}>
                 {t('sort.start')}
@@ -204,6 +215,7 @@ function SortPage({
               <LiveSortCard
                 candidate={currentPair.left}
                 onPick={pickLeft}
+                onRetire={() => retire(currentPair.left)}
                 setlistOpen={setlistOpen}
                 onToggleSetlist={() => setSetlistOpen((v) => !v)}
                 songOrdinals={songOrdinals}
@@ -211,6 +223,7 @@ function SortPage({
               <LiveSortCard
                 candidate={currentPair.right}
                 onPick={pickRight}
+                onRetire={() => retire(currentPair.right)}
                 setlistOpen={setlistOpen}
                 onToggleSetlist={() => setSetlistOpen((v) => !v)}
                 songOrdinals={songOrdinals}
