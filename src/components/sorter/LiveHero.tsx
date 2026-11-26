@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FaTicket } from 'react-icons/fa6';
 import { Box, Center, Grid } from 'styled-system/jsx';
 import { useLiveThumb, useSeriesById } from '~/hooks/useData';
+import { useIsLandscape } from '~/hooks/useIsLandscape';
 import { useAllSetlists } from '~/hooks/useSetlists';
 import { heroSongIds, mosaicLayout, type SortCandidate } from '~/utils/live-sort';
 import { getPicUrl } from '~/utils/assets';
@@ -53,6 +54,7 @@ export function LiveHero({
   // Prefer the downloaded copy. Fandom 404s hotlinked requests that carry a Referer, so
   // the remote URL is only a fallback for posters not yet pulled down.
   const posterSrc = thumb?.file ? getPicUrl(thumb.file, 'live') : thumb?.image;
+  const { landscape, imgProps } = useIsLandscape(posterSrc);
 
   useEffect(() => setPosterFailed(false), [posterSrc]);
 
@@ -62,16 +64,18 @@ export function LiveHero({
     return (
       <Box position="relative" {...frame} bgColor="bg.subtle" overflow="hidden">
         {/* Posters are close to 3:4 but not exactly, so `cover` trims a little rather than
-            leaving bars. The series wash only shows on the few that are squarer. */}
+            leaving bars. Some lives only have a wide logo, which `cover` would crop to its
+            middle letters, so those are shown whole on the series wash instead. */}
         <Box aria-hidden style={{ background: gradient }} inset="0" position="absolute" />
         <img
           src={posterSrc}
           alt=""
           loading="lazy"
           referrerPolicy="no-referrer"
+          {...imgProps}
           style={{
             position: 'relative',
-            objectFit: 'cover',
+            objectFit: landscape ? 'contain' : 'cover',
             width: '100%',
             height: '100%'
           }}
