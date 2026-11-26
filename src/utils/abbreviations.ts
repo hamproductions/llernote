@@ -1,5 +1,6 @@
 import { toHiragana } from 'wanakana';
 import { localizedName } from '~/utils/names';
+import { shortPerformanceLabel } from '~/utils/performance-label';
 import type { Performance, Song } from '~/types';
 
 export interface EventAbbreviation {
@@ -18,6 +19,7 @@ export interface AbbreviationData {
 export interface ShortNames {
   song: (song: Pick<Song, 'id' | 'name' | 'englishName'>) => string;
   event: (performance: Pick<Performance, 'eventId' | 'tourName'>) => string;
+  performance: (performance: Pick<Performance, 'concertName' | 'performanceName'>) => string;
   name: (name: string, fullName?: string) => string;
 }
 
@@ -94,6 +96,8 @@ export const createAbbreviations = (data: AbbreviationData) => {
         ),
       event: ({ eventId, tourName }) =>
         shorter(eventId ? data.events[eventId]?.[locale] : undefined, tourName),
+      performance: ({ concertName, performanceName }) =>
+        shortPerformanceLabel(concertName, performanceName, locale, shortName),
       name: (name, fullName = name) => shortName(name) ?? fullName
     };
   };

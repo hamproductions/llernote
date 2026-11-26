@@ -35,10 +35,17 @@ export const shortLiveBoard = (
     const song = costume?.songId ? songById.get(costume.songId) : undefined;
     return song ? shortPick(card, { sub: short.song(song) }) : card;
   };
+  const [first, ...others] = performances;
   return {
-    liveName: liveHeader(
-      performances.map((performance) => ({ ...performance, tourName: short.event(performance) }))
-    ).name,
+    liveName:
+      first && others.length === 0
+        ? [short.event(first), short.performance(first)].filter(Boolean).join(' ')
+        : liveHeader(
+            performances.map((performance) => ({
+              ...performance,
+              tourName: short.event(performance)
+            }))
+          ).name,
     awards: board.awards.map((card) => {
       const value = liveState?.awards[card.id.slice('award:'.length)];
       return value?.type === 'costume' ? shortCostume(card, value.id) : shortSong(card, value?.id);

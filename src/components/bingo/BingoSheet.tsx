@@ -121,7 +121,11 @@ export function BingoSheet({
             opacity="0.75"
             whiteSpace="nowrap"
           >
-            {performance.date} {performance.performanceName ?? performance.concertName ?? ''}
+            {performance.date}{' '}
+            {short?.performance(performance) ??
+              performance.performanceName ??
+              performance.concertName ??
+              ''}
           </Text>
         )}
         <Text

@@ -46,8 +46,8 @@ export function LiveSortResults({ ranking, unit, readOnly }: LiveSortResultsProp
     toast({ title: t('sort.link_copied'), type: 'success' });
   };
 
-  const onCopyText = async (rows: SortCandidate[][]) => {
-    await copyTextToClipboard(formatLiveSortText(rows));
+  const onCopyText = async (rows: SortCandidate[][], separator?: string) => {
+    await copyTextToClipboard(formatLiveSortText(rows, separator));
     toast({ title: t('sort.text_copied'), type: 'success' });
   };
 
@@ -96,7 +96,7 @@ export function LiveSortResults({ ranking, unit, readOnly }: LiveSortResultsProp
               variant="outline"
               size="sm"
               disabled={!ready}
-              onClick={() => void onCopyText(shortRanking(ranking, short))}
+              onClick={() => void onCopyText(shortRanking(ranking, short), ' ')}
             >
               <FaRegFileLines />
               {t('sort.copy_text_short')}
