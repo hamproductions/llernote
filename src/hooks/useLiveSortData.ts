@@ -14,6 +14,7 @@ import { isFutureEvent } from '~/utils/event-filter';
 import {
   LIVE_SORT_PREFIX,
   buildSortCandidates,
+  candidateLabel,
   type SortCandidate,
   type SortUnit
 } from '~/utils/live-sort';
@@ -176,7 +177,10 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
     (candidate: SortCandidate) => {
       setRetired((prev) => [...new Set([...(prev ?? []), candidate.id])]);
       remove((id) => id === candidate.id);
-      toast({ title: t('sort.retired_toast', { title: candidate.title }), duration: 2500 });
+      toast({
+        title: t('sort.retired_toast', { title: candidateLabel(candidate) }),
+        duration: 2500
+      });
     },
     [setRetired, remove, toast, t]
   );

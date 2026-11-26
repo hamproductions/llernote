@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildSortCandidates,
+  candidateLabel,
   candidateSongIds,
   heroSongIds,
   legTabLabel,
@@ -264,6 +265,40 @@ describe('legTabLabel', () => {
 
     expect(result.secondary).toBeUndefined();
     expect(result.full).toBe('Day.1');
+  });
+});
+
+describe('candidateLabel', () => {
+  it('appends the leg name so performances of one tour stay distinguishable', () => {
+    const [day1, day2] = buildSortCandidates(
+      [
+        makePerformance({
+          id: 'a',
+          date: '2026-09-05',
+          tourName: '結女体育祭',
+          performanceName: '1日目'
+        }),
+        makePerformance({
+          id: 'b',
+          date: '2026-09-06',
+          tourName: '結女体育祭',
+          performanceName: '2日目'
+        })
+      ],
+      'performance'
+    );
+
+    expect(candidateLabel(day1!)).toBe('結女体育祭 — 1日目');
+    expect(candidateLabel(day2!)).toBe('結女体育祭 — 2日目');
+  });
+
+  it('is just the title for a whole live', () => {
+    const [live] = buildSortCandidates(
+      [makePerformance({ id: 'a', date: '2026-09-05', tourName: '結女体育祭' })],
+      'live'
+    );
+
+    expect(candidateLabel(live!)).toBe('結女体育祭');
   });
 });
 

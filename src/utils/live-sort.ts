@@ -60,6 +60,13 @@ export const legTabLabel = (performance: Performance): LegTabLabel => {
   };
 };
 
+/**
+ * One-line name for a candidate, for labels and toasts that can't show the card's second
+ * line. Performances of the same tour share a title, so the leg name tells them apart.
+ */
+export const candidateLabel = (candidate: Pick<SortCandidate, 'title' | 'subtitle'>) =>
+  [candidate.title, candidate.subtitle].filter(Boolean).join(' — ');
+
 export const buildSortCandidates = (
   performances: Performance[],
   unit: SortUnit,
