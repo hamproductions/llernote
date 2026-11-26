@@ -1,5 +1,6 @@
 import type { EventCategory, Performance } from '~/types';
 import type { AttendanceMap } from '~/utils/attendance/storage';
+import { getAliasScore, type EventAliases } from '~/utils/abbreviations';
 
 export interface EventFilters {
   search: string;
@@ -46,7 +47,8 @@ export const filterEvents = (
   performances: Performance[],
   filters: EventFilters,
   attendanceMap: AttendanceMap,
-  performanceCharacters?: Map<string, Set<string>>
+  performanceCharacters?: Map<string, Set<string>>,
+  aliasesOf: EventAliases = () => []
 ): Performance[] => {
   const searchTokens = normalizeSearch(filters.search).split(' ').filter(Boolean);
 
@@ -55,7 +57,11 @@ export const filterEvents = (
       const haystack = normalizeSearch(
         `${p.tourName} ${p.venue} ${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`
       );
-      if (!searchTokens.every((token) => haystack.includes(token))) return false;
+      if (
+        !searchTokens.every((token) => haystack.includes(token)) &&
+        !getAliasScore(aliasesOf(p.eventId), filters.search)
+      )
+        return false;
     }
     if (filters.multiSeries || filters.seriesIds.length > 0) {
       const matchesMulti = filters.multiSeries && p.seriesIds.length > 1;

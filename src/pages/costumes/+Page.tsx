@@ -38,6 +38,8 @@ import { tallyAllSongPerformances } from '~/utils/song-tally';
 import { partitionAttendance, scopeMatches } from '~/utils/attendance/witness';
 import { useAppSettings } from '~/hooks/useAppSettings';
 import { foldKana } from '~/utils/event-filter';
+import { getAliasScore } from '~/utils/abbreviations';
+import { useAbbreviations } from '~/hooks/useAbbreviations';
 import { localizedName } from '~/utils/names';
 import { hasSongThumb } from '~/utils/song-thumbs';
 
@@ -49,6 +51,7 @@ export default function Page() {
   const { scope, setAppSettings } = useAppSettings();
   const { openCostume } = useDetail();
   const songById = useSongById();
+  const { songAliases } = useAbbreviations();
   const songByName = useSongByName();
   const artistById = useArtistById();
   const setlists = useSetlists();
@@ -137,7 +140,10 @@ export default function Page() {
       if (filters.witnessed === 'witnessed' && costume.attendedCount === 0) return false;
       if (filters.witnessed === 'unwitnessed' && costume.attendedCount > 0) return false;
       if (!q) return true;
-      return (searchText.get(costume.id) ?? '').includes(q);
+      return (
+        (searchText.get(costume.id) ?? '').includes(q) ||
+        getAliasScore(costume.songIds.flatMap(songAliases), q) > 0
+      );
     });
     const byName = (a: CostumeSummary, b: CostumeSummary) => a.name.localeCompare(b.name, 'ja');
     if (sort === 'witnessed') {
@@ -154,7 +160,7 @@ export default function Page() {
       list.sort((a, b) => b.liveCount - a.liveCount || byName(a, b));
     }
     return list;
-  }, [costumes, filters, sort, searchText, songById, artistById]);
+  }, [costumes, filters, sort, searchText, songById, artistById, songAliases]);
 
   const seenCount = costumes.filter((costume) => costume.attendedCount > 0).length;
   const percent = costumes.length ? Math.round((seenCount / costumes.length) * 100) : 0;

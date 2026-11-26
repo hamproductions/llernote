@@ -5,6 +5,8 @@ import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { f2, fesColor, fesSeriesName } from './fes-style';
 import type { FesDerived, FesSong } from '~/utils/fes-report';
+import { getAliasScore } from '~/utils/abbreviations';
+import { useAbbreviations } from '~/hooks/useAbbreviations';
 
 type Tab = 'p' | 's';
 
@@ -32,6 +34,7 @@ export function FesDataTable({
   onSong: (s: FesSong) => void;
 }) {
   const { t } = useTranslation();
+  const { songAliases } = useAbbreviations();
   const [tab, setTab] = useState<Tab>('p');
   const [q, setQ] = useState('');
   const [key, setKey] = useState<string>('weight');
@@ -52,8 +55,10 @@ export function FesDataTable({
     return sortBy(rows, get as (r: (typeof rows)[number]) => string | number, dir);
   })();
   const songs = (() => {
-    const rows = d.songs.filter((s) =>
-      `${s.name} ${series(s.billed)}`.toLowerCase().includes(q.toLowerCase())
+    const rows = d.songs.filter(
+      (s) =>
+        `${s.name} ${series(s.billed)}`.toLowerCase().includes(q.toLowerCase()) ||
+        getAliasScore(songAliases(s.songId), q) > 0
     );
     const get = (s: FesSong) =>
       key === 'billed'

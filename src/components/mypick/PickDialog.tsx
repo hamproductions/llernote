@@ -15,6 +15,7 @@ export interface PickItem {
   image?: string;
   englishName?: string;
   phoneticName?: string;
+  aliases?: string[];
   searchText?: string;
   categories?: string[];
   disabled?: boolean;
@@ -209,7 +210,8 @@ export function PickDialog({
           id: item.id,
           name: item.label,
           englishName: [item.englishName, item.sub, item.searchText].filter(Boolean).join(' '),
-          phoneticName: item.phoneticName
+          phoneticName: item.phoneticName,
+          aliases: item.aliases
         };
         return { item, searchable };
       })

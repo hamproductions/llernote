@@ -6,6 +6,7 @@ import {
   FaChartPie,
   FaChartSimple,
   FaChevronDown,
+  FaCircleQuestion,
   FaEllipsis,
   FaHouse,
   FaMapLocationDot,
@@ -81,7 +82,8 @@ const NAV_GROUPS: NavGroup[] = [
       { path: '/create', key: 'completion.title', icon: FaMusic },
       { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
       { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy },
-      { path: '/bingo', key: 'bingo.title', icon: FaMusic }
+      { path: '/bingo', key: 'bingo.title', icon: FaMusic },
+      { path: '/nickname-quiz', key: 'nicknameQuiz.title', icon: FaCircleQuestion }
     ]
   }
 ];

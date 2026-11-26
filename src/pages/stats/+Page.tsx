@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaChevronDown, FaChevronUp, FaCopy, FaDownload } from 'react-icons/fa6';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Heading } from '~/components/ui/heading';
 import { Text } from '~/components/ui/text';
@@ -8,17 +8,17 @@ import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Skeleton } from '~/components/ui/skeleton';
 import { StatsCard } from '~/components/stats/StatsCard';
+import { StatsExportActions } from '~/components/stats/StatsExportActions';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { ScopeTabs } from '~/components/events/ScopeTabs';
 import { Metadata } from '~/components/layout/Metadata';
 import { SectionHeading } from '~/components/layout/SectionHeading';
 import { useAppSettings } from '~/hooks/useAppSettings';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useEventYears, useSeries, useSeriesById, usePerformances } from '~/hooks/useData';
+import { useEventYears, useSeries, useSeriesById } from '~/hooks/useData';
 import { useDerivedDataWorker } from '~/hooks/useDerivedDataWorker';
 import { getSeriesShortName } from '~/utils/series-short';
-import { copyTextToClipboard, downloadElementAsImage, formatEventShareText } from '~/utils/share';
-import { useToaster } from '~/context/ToasterContext';
+import { useAbbreviatedExport } from '~/hooks/useAbbreviations';
 
 const MULTI_SERIES_FILTER = '__multi_series__';
 
@@ -396,9 +396,8 @@ function ChartCard({
 
 export default function Page() {
   const { t } = useTranslation();
-  const { toast } = useToaster();
   const { records } = useAttendance();
-  const performances = usePerformances();
+  const exportNames = useAbbreviatedExport();
   const series = useSeries();
   const seriesById = useSeriesById();
   const years = useEventYears();
@@ -413,11 +412,6 @@ export default function Page() {
   useEffect(() => {
     if (scope === 'inperson' && category) setCategory('');
   }, [scope, category]);
-
-  const performanceById = useMemo(
-    () => new Map(performances.map((p) => [p.id, p])),
-    [performances]
-  );
 
   const derived = useDerivedDataWorker(
     'stats',
@@ -443,50 +437,11 @@ export default function Page() {
         <HStack gap="3" justifyContent="space-between" alignItems="center" flexWrap="wrap">
           <SectionHeading size="2xl">{t('stats.title')}</SectionHeading>
           {!empty && (
-            <Wrap gap="2">
-              <Button
-                size="sm"
-                onClick={async () => {
-                  if (cardRef.current) {
-                    await downloadElementAsImage(cardRef.current, 'llernote-stats.png');
-                    toast({ title: t('share.image_generated'), type: 'success' });
-                  }
-                }}
-              >
-                <FaDownload />
-                {t('share.download_image')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={async () => {
-                  const attended = records
-                    .filter((r) => r.status === 'attended')
-                    .map((r) => performanceById.get(r.performanceId))
-                    .filter((p) => p !== undefined)
-                    .filter((p) => {
-                      if (year && !p.date.startsWith(year)) return false;
-                      if (seriesId && !p.seriesIds.includes(seriesId)) return false;
-                      if (multiSeries && p.seriesIds.length < 2) return false;
-                      if (category && p.category !== category) return false;
-                      return true;
-                    })
-                    .sort((a, b) => a.date.localeCompare(b.date))
-                    .map((p) => formatEventShareText(p));
-                  try {
-                    await copyTextToClipboard(
-                      [t('stats.share_title'), ...attended, '', t('stats.generated_by')].join('\n')
-                    );
-                    toast({ title: t('share.copied'), type: 'success' });
-                  } catch {
-                    toast({ title: t('share.copy_failed'), type: 'error' });
-                  }
-                }}
-              >
-                <FaCopy />
-                {t('settings.copy_history')}
-              </Button>
-            </Wrap>
+            <StatsExportActions
+              cardRef={cardRef}
+              exportNames={exportNames}
+              filters={{ year, seriesId, category, multiSeries }}
+            />
           )}
         </HStack>
 
@@ -682,7 +637,7 @@ export default function Page() {
             </Grid>
 
             <Box aria-hidden="true" position="absolute" top="0" left="-9999px">
-              <StatsCard ref={cardRef} stats={stats} />
+              <StatsCard ref={cardRef} stats={stats} short={exportNames.exportShort} />
             </Box>
           </>
         ) : null}

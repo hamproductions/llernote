@@ -1,4 +1,4 @@
-import { Fragment, forwardRef, type ReactNode, useState } from 'react';
+import { Fragment, forwardRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FaArrowDown,
@@ -6,7 +6,6 @@ import {
   FaArrowRight,
   FaArrowUp,
   FaEllipsis,
-  FaMusic,
   FaPlus,
   FaXmark
 } from 'react-icons/fa6';
@@ -15,10 +14,10 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { IconButton } from '~/components/ui/icon-button';
 import { Menu } from '~/components/ui/menu';
-import { getLiveThumb, useArtistById, usePerformanceById, useSeriesById } from '~/hooks/useData';
-import { useSongById } from '~/hooks/useSongData';
-import { useCharacters } from '~/hooks/useCharacterData';
-import { getPicUrl } from '~/utils/assets';
+import { useArtistById, useSeriesById } from '~/hooks/useData';
+import { CellContent } from './MyPickCellContent';
+import { EXPORT_THEME } from './mypick-theme';
+import type { ShortNames } from '~/utils/abbreviations';
 import { localizedName } from '~/utils/names';
 import { clickable } from '~/utils/clickable';
 import { isGroupArtist } from '~/utils/mypick-options';
@@ -51,18 +50,6 @@ const rowTone = (color: string) => {
     border: `rgba(${r}, ${g}, ${b}, 0.3)`,
     text: `color-mix(in srgb, rgb(${r}, ${g}, ${b}) 34%, var(--colors-mypick-text))`
   };
-};
-
-export const EXPORT_BG = '#16131b';
-
-const EXPORT_THEME = {
-  bg: EXPORT_BG,
-  ink: '#f4f1ea',
-  tile: '#ffffff',
-  tileBorder: 'rgba(244, 241, 234, 0.24)',
-  emptyText: 'rgba(244, 241, 234, 0.45)',
-  divider: 'rgba(244, 241, 234, 0.18)',
-  serif: "'Didot', 'Bodoni 72', Georgia, 'Hiragino Mincho ProN', 'Yu Mincho', serif"
 };
 
 const exportTone = (color: string) => {
@@ -153,168 +140,6 @@ function ActionMenu({
   );
 }
 
-function CellImage({
-  src,
-  dim = false,
-  top = false
-}: {
-  src: string;
-  dim?: boolean;
-  top?: boolean;
-}) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <Box
-      inset="0"
-      position="absolute"
-      bgColor="bg.subtle"
-      opacity={dim ? 0.5 : 1}
-      overflow="hidden"
-    >
-      {failed ? (
-        <Center w="full" h="full" color="fg.subtle">
-          <FaMusic />
-        </Center>
-      ) : (
-        <img
-          src={src}
-          alt=""
-          width="200"
-          height="200"
-          style={{
-            objectFit: 'cover',
-            objectPosition: top ? 'top' : 'center',
-            width: '100%',
-            height: '100%'
-          }}
-          onError={() => setFailed(true)}
-        />
-      )}
-    </Box>
-  );
-}
-
-function CellContent({
-  column,
-  pickedId,
-  exporting = false
-}: {
-  column: MyPickColumn;
-  pickedId: string;
-  exporting?: boolean;
-}) {
-  const { i18n } = useTranslation();
-  const characters = useCharacters();
-  const songById = useSongById();
-  const performanceById = usePerformanceById();
-
-  if (column.type === 'member' || (column.type === 'slot' && column.slot === 'cast')) {
-    const character = characters.find((c) => c.id === pickedId);
-    if (!character) return null;
-    return (
-      <>
-        <CellImage src={getPicUrl(character.id, 'character')} top />
-        <Box insetX="0" position="absolute" bottom="0" p="2" bgColor="black.a8">
-          <Text
-            color="white"
-            fontSize={exporting ? 'xs' : '2xs'}
-            fontWeight="bold"
-            textAlign="center"
-            lineClamp={2}
-          >
-            {localizedName(i18n.language, character.fullName, character.englishName)}
-          </Text>
-        </Box>
-      </>
-    );
-  }
-  if (
-    (column.type === 'year' && column.slot === 'song') ||
-    (column.type === 'slot' && column.slot === 'song')
-  ) {
-    const song = songById.get(pickedId);
-    if (!song) return null;
-    return (
-      <>
-        <CellImage src={getPicUrl(song.id, 'thumbnail')} />
-        <Box insetX="0" position="absolute" bottom="0" p="2" bgColor="black.a8">
-          <Text
-            color="white"
-            fontSize={exporting ? 'xs' : '2xs'}
-            fontWeight="bold"
-            textAlign="center"
-            lineClamp={2}
-          >
-            {localizedName(i18n.language, song.name, song.englishName)}
-          </Text>
-        </Box>
-      </>
-    );
-  }
-  const performance = performanceById.get(pickedId);
-  if (!performance) return null;
-  const thumb = getLiveThumb(performance);
-  if (thumb) {
-    return (
-      <>
-        <CellImage src={thumb.image} />
-        <Box insetX="0" position="absolute" bottom="0" p="2" bgColor="black.a8">
-          <Text
-            lang="ja"
-            color="white"
-            fontSize={exporting ? 'xs' : '2xs'}
-            fontWeight="bold"
-            textAlign="center"
-            lineClamp={2}
-          >
-            {performance.tourName}
-          </Text>
-        </Box>
-      </>
-    );
-  }
-  return (
-    <Stack
-      style={exporting ? { backgroundColor: EXPORT_THEME.tile, color: '#232c4a' } : undefined}
-      inset="0"
-      position="absolute"
-      gap="2"
-      justifyContent="center"
-      alignItems="center"
-      p="3"
-      color={exporting ? undefined : 'mypick.text'}
-      textAlign="center"
-      bgColor={exporting ? undefined : 'mypick.tile'}
-    >
-      <Text
-        lang="ja"
-        style={{
-          wordBreak: 'auto-phrase' as 'normal',
-          color: exporting ? '#232c4a' : undefined
-        }}
-        minW="0"
-        maxW="full"
-        color={exporting ? undefined : 'mypick.text'}
-        fontSize={exporting ? 'sm' : 'xs'}
-        fontWeight="bold"
-        lineHeight="1.25"
-        lineClamp={4}
-        overflowWrap="anywhere"
-      >
-        {performance.tourName}
-      </Text>
-      <Text
-        color="accent.default"
-        fontSize={exporting ? 'xs' : '2xs'}
-        fontWeight="semibold"
-        lineHeight="1"
-      >
-        {performance.date}
-      </Text>
-    </Stack>
-  );
-}
-
 export const MyPickGrid = forwardRef<
   HTMLDivElement,
   {
@@ -334,6 +159,7 @@ export const MyPickGrid = forwardRef<
     onChangeRows?: () => void;
     isCellDisabled?: (row: MyPickRow, column: MyPickColumn) => boolean;
     exporting?: boolean;
+    short?: ShortNames;
   }
 >(function MyPickGrid(
   {
@@ -352,7 +178,8 @@ export const MyPickGrid = forwardRef<
     onAddColumn,
     onChangeRows,
     isCellDisabled,
-    exporting = false
+    exporting = false,
+    short
   },
   ref
 ) {
@@ -393,7 +220,7 @@ export const MyPickGrid = forwardRef<
       const series = seriesById.get(row.id);
       const color = series?.color ?? '#e4007f';
       return {
-        label: series?.name ?? row.id,
+        label: series ? (short?.name(series.name) ?? series.name) : row.id,
         sub: t('mypick.row_series'),
         color,
         tone: rowTone(color)
@@ -423,8 +250,9 @@ export const MyPickGrid = forwardRef<
           : artist.characters.filter((id) => typeof id === 'string' && id.length > 0).length === 1
             ? t('mypick.row_solo')
             : t('mypick.row_unit');
+    const artistName = artist && localizedName(i18n.language, artist.name, artist.englishName);
     return {
-      label: artist ? localizedName(i18n.language, artist.name, artist.englishName) : row.id,
+      label: artist ? (short?.name(artist.name, artistName) ?? artistName!) : row.id,
       sub: rowType,
       color,
       tone: rowTone(color)
@@ -801,7 +629,12 @@ export const MyPickGrid = forwardRef<
                       }
                     >
                       {pickedId ? (
-                        <CellContent column={col} pickedId={pickedId} exporting={exporting} />
+                        <CellContent
+                          column={col}
+                          pickedId={pickedId}
+                          exporting={exporting}
+                          short={short}
+                        />
                       ) : (
                         <Center h="full">
                           <Stack

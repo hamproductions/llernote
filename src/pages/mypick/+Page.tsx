@@ -17,7 +17,8 @@ import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
-import { EXPORT_BG, MyPickGrid } from '~/components/mypick/MyPickGrid';
+import { MyPickGrid } from '~/components/mypick/MyPickGrid';
+import { EXPORT_BG } from '~/components/mypick/mypick-theme';
 import { MyPickSlotsDialog } from '~/components/mypick/MyPickSlotsDialog';
 import { Metadata } from '~/components/layout/Metadata';
 import { Dialog } from '~/components/ui/dialog';
@@ -25,22 +26,14 @@ import { Field } from '~/components/ui/field';
 import { IconButton } from '~/components/ui/icon-button';
 import { Input } from '~/components/ui/input';
 import { Tabs } from '~/components/ui/tabs';
-import { useAttendance, useMyPick } from '~/hooks/useAttendance';
-import {
-  getLiveThumb,
-  useArtistById,
-  useArtists,
-  usePerformances,
-  useSeries
-} from '~/hooks/useData';
-import { useSongById, useSongs } from '~/hooks/useSongData';
-import { useCharacters } from '~/hooks/useCharacterData';
-import { useSetlists } from '~/hooks/useSetlists';
+import { useMyPick } from '~/hooks/useAttendance';
+import { useArtists, usePerformances, useSeries } from '~/hooks/useData';
+import { useSongs } from '~/hooks/useSongData';
+import { useMyPickItems } from '~/hooks/useMyPickItems';
+import { useAbbreviatedExport } from '~/hooks/useAbbreviations';
+import { AbbreviateSwitch } from '~/components/export/AbbreviateSwitch';
 import { setMyPick, setMyPickCell, setMyPickConfig } from '~/utils/attendance/storage';
-import { buildPerformanceCharacterMap } from '~/utils/performance-cast';
-import { getPicUrl } from '~/utils/assets';
-import { hasSongThumb } from '~/utils/song-thumbs';
-import { castName, localizedName } from '~/utils/names';
+import { localizedName } from '~/utils/names';
 import { decodeMyPick, encodeMyPick, myPickShareUrl } from '~/utils/mypick-share';
 import { clickable } from '~/utils/clickable';
 import { cellKey, columnKey, rowKey } from '~/types/attendance';
@@ -48,16 +41,7 @@ import type { MyPickColumn, MyPickConfig, MyPickRow } from '~/types/attendance';
 import { fuzzySearch, getSearchScore, type SearchableItem } from '~/utils/search';
 import { downloadElementAsImage } from '~/utils/share';
 import { getMyPickColumnYears } from '~/utils/mypick-years';
-import {
-  artistsForRow,
-  buildArtistBuckets,
-  isGroupSong,
-  isSoloSong,
-  isUnitSong,
-  songArtistIds,
-  songMatchesMyPickRow,
-  type MyPickRowCategory
-} from '~/utils/mypick-options';
+import { buildArtistBuckets, type MyPickRowCategory } from '~/utils/mypick-options';
 import { useToaster } from '~/context/ToasterContext';
 
 type RowCategory = MyPickRowCategory;
@@ -90,15 +74,11 @@ export default function Page() {
   const { t, i18n } = useTranslation();
   const { toast } = useToaster();
   const { myPick } = useMyPick();
-  const { map: attendanceMap } = useAttendance();
   const series = useSeries();
   const artists = useArtists();
-  const artistById = useArtistById();
-  const characters = useCharacters();
   const songs = useSongs();
-  const songById = useSongById();
   const performances = usePerformances();
-  const setlists = useSetlists();
+  const exportNames = useAbbreviatedExport();
   const [picking, setPicking] = useState<{ row: MyPickRow; column: MyPickColumn }>();
   const [addingRow, setAddingRow] = useState(false);
   const [addingColumn, setAddingColumn] = useState(false);
@@ -140,10 +120,6 @@ export default function Page() {
         : DEFAULT_CONFIG
   );
 
-  const performanceCharacters = useMemo(
-    () => buildPerformanceCharacterMap(setlists, songById, artistById),
-    [setlists, songById, artistById]
-  );
   const songCount = songs.length;
   const hasValues = Object.values(myPick?.cells ?? {}).some((value) => value != null);
   const columnsChanged =
@@ -153,123 +129,12 @@ export default function Page() {
   const configChanged = rowsChanged || columnsChanged;
   const artistBuckets = useMemo(() => buildArtistBuckets(artists), [artists]);
 
-  const rowArtistsFor = (row: MyPickRow) => {
-    return artistsForRow(row, artistById, artistBuckets);
-  };
+  const getPickItems = useMyPickItems(artistBuckets);
 
-  const getPickItems = (row: MyPickRow, column: MyPickColumn): PickItem[] => {
-    const scopedArtists = rowArtistsFor(row);
-    const rowCharacterIds =
-      scopedArtists.length > 0
-        ? new Set(
-            scopedArtists.flatMap((artist) =>
-              (artist?.characters ?? []).filter(
-                (id): id is string => typeof id === 'string' && id.length > 0
-              )
-            )
-          )
-        : null;
-    const rowArtistIds = new Set(scopedArtists.map((artist) => artist?.id).filter(Boolean));
-    const year = column.type === 'year' ? String(column.year) : null;
-    const matchesRowPerformance = (performanceId: string, seriesIds: string[]) => {
-      if (rowCharacterIds) {
-        const cast = performanceCharacters.get(performanceId);
-        if (!cast) return false;
-        return [...rowCharacterIds].some((id) => cast.has(id));
-      }
-      if (row.type === 'category') return false;
-      return seriesIds.includes(row.id);
-    };
-
-    if (column.type === 'member' || (column.type === 'slot' && column.slot === 'cast')) {
-      return characters
-        .filter((c) => (rowCharacterIds ? rowCharacterIds.has(c.id) : c.seriesId === row.id))
-        .map((c) => ({
-          id: c.id,
-          label: localizedName(i18n.language, c.fullName, c.englishName),
-          sub: c.casts
-            .map((cast) => castName(i18n.language, cast.seiyuu, cast.englishName))
-            .join('・'),
-          englishName: c.englishName,
-          searchText: c.casts
-            .map(
-              (cast) =>
-                `${cast.seiyuu} ${cast.englishName ?? ''} ${castName('en', cast.seiyuu, cast.englishName)}`
-            )
-            .join(' '),
-          image: getPicUrl(c.id, c.hasIcon ? 'icons' : 'character')
-        }));
-    }
-    if (
-      (column.type === 'year' && column.slot === 'song') ||
-      (column.type === 'slot' && column.slot === 'song')
-    ) {
-      return songs
-        .filter((s) => {
-          if (year && !(s.releasedOn ?? '').startsWith(year)) return false;
-          if (rowArtistIds.size > 0 || row.type === 'category' || row.type === 'series') {
-            return songMatchesMyPickRow(s, row, artistById, artistBuckets.aliasIds);
-          }
-          return false;
-        })
-        .map((s) => {
-          const ids = songArtistIds(s, artistById);
-          return {
-            id: s.id,
-            label: localizedName(i18n.language, s.name, s.englishName),
-            sub: s.releasedOn,
-            englishName: s.englishName,
-            phoneticName: s.phoneticName,
-            searchText: s.artists
-              ?.map((artist) => artistById.get(artist.id)?.name)
-              .filter(Boolean)
-              .join(' '),
-            image: hasSongThumb(s.id) ? getPicUrl(s.id, 'thumbnail') : undefined,
-            categories: [
-              isGroupSong(ids, artistById)
-                ? 'group'
-                : isUnitSong(ids, artistById)
-                  ? 'unit'
-                  : isSoloSong(ids, artistById)
-                    ? 'solo'
-                    : 'others'
-            ]
-          };
-        });
-    }
-    return performances
-      .filter((p) => {
-        if (year && !p.date.startsWith(year)) return false;
-        return matchesRowPerformance(p.id, p.seriesIds);
-      })
-      .map((p) => {
-        const image = getLiveThumb(p)?.image;
-        const record = attendanceMap[p.id];
-        const attended = record && !record.deleted && record.status === 'attended';
-        return {
-          id: p.id,
-          label: p.tourName,
-          sub: `${p.date} ${p.venue}`,
-          searchText: `${p.concertName ?? ''} ${p.performanceName ?? ''} ${p.tourType ?? ''}`,
-          image,
-          categories: [...(image ? ['with_image'] : []), ...(attended ? ['attended'] : [])]
-        };
-      });
-  };
-
-  const dialogItems: PickItem[] = useMemo(() => {
-    if (!picking) return [];
-    return getPickItems(picking.row, picking.column);
-  }, [
-    picking,
-    characters,
-    songs,
-    performances,
-    artistById,
-    performanceCharacters,
-    attendanceMap,
-    i18n.language
-  ]);
+  const dialogItems: PickItem[] = useMemo(
+    () => (picking ? getPickItems(picking.row, picking.column) : []),
+    [picking, getPickItems]
+  );
 
   const existingRows = new Set(config.rows.map(rowKey));
 
@@ -580,10 +445,14 @@ export default function Page() {
                 {t('mypick.share_x')}
               </Button>
             )}
+            <AbbreviateSwitch
+              checked={exportNames.abbreviate}
+              onChange={exportNames.setAbbreviate}
+            />
             <Button
               size="sm"
               variant="outline"
-              disabled={exporting}
+              disabled={exporting || exportNames.pending}
               onClick={downloadImage}
               gap="2"
               borderColor="mypick.actionBorder"
@@ -863,6 +732,7 @@ export default function Page() {
               myPick={shared ? shared.myPick : myPick}
               rows={config.rows}
               exporting
+              short={exportNames.exportShort}
               isCellDisabled={(row, column) => getPickItems(row, column).length === 0}
               columns={config.columns}
             />

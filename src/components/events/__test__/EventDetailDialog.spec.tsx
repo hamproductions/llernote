@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import '~/i18n';
-import { SetlistItemRow } from '../EventDetailDialog';
+import { SetlistItemRow } from '../SetlistItemRow';
 import type { Song } from '~/types';
 
 vi.mock('~/hooks/useData', () => ({

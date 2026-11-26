@@ -1,10 +1,12 @@
 import { toHiragana, toRomaji } from 'wanakana';
+import { getAliasScore } from '~/utils/abbreviations';
 
 export interface SearchableItem {
   id: string | number;
   name: string;
   englishName?: string;
   phoneticName?: string;
+  aliases?: string[];
 }
 
 const stripPunctuation = (value: string) =>
@@ -64,6 +66,7 @@ const searchTerms = (item: SearchableItem, query: string) => {
 
 export function fuzzySearch(item: SearchableItem, query: string): boolean {
   if (!query.trim()) return true;
+  if (getAliasScore(item.aliases ?? [], query)) return true;
 
   const {
     q,
@@ -117,7 +120,10 @@ export function fuzzySearch(item: SearchableItem, query: string): boolean {
 
 export function getSearchScore(item: SearchableItem, query: string): number {
   if (!query.trim()) return 0;
+  return Math.max(getAliasScore(item.aliases ?? [], query), getNameScore(item, query));
+}
 
+function getNameScore(item: SearchableItem, query: string): number {
   const {
     q,
     queryHiragana,

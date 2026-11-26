@@ -1,4 +1,5 @@
 import { foldKana } from '~/utils/event-filter';
+import { getAliasScore, type SongAliases } from '~/utils/abbreviations';
 import {
   isGroupSong,
   isOtherSong,
@@ -52,7 +53,8 @@ export const filterSongs = (
   songs: Song[],
   filters: SongFilters,
   artistById: Map<string, Artist>,
-  heardCount: (songId: string) => number
+  heardCount: (songId: string) => number,
+  aliasesOf: SongAliases = () => []
 ): Song[] => {
   const q = foldKana(filters.search.trim());
 
@@ -61,7 +63,7 @@ export const filterSongs = (
       const haystack = foldKana(
         `${song.name} ${song.phoneticName ?? ''} ${song.englishName ?? ''}`
       );
-      if (!haystack.includes(q)) return false;
+      if (!haystack.includes(q) && !getAliasScore(aliasesOf(song.id), q)) return false;
     }
     if (filters.multiSeries || filters.seriesIds.length > 0) {
       const matchesMulti = filters.multiSeries && song.seriesIds.length > 1;

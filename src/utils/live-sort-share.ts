@@ -1,5 +1,6 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
-import type { SortUnit } from './live-sort';
+import type { SortCandidate, SortUnit } from './live-sort';
+import type { ShortNames } from './abbreviations';
 
 export interface LiveSortShareData {
   unit: SortUnit;
@@ -58,6 +59,14 @@ export const formatLiveSortText = (ranking: { title: string; subtitle?: string }
   }
   return lines.join('\n');
 };
+
+export const shortRanking = (ranking: SortCandidate[][], short: ShortNames) =>
+  ranking.map((bucket) =>
+    bucket.map((candidate) => ({
+      ...candidate,
+      title: short.event(candidate.performances[0]!)
+    }))
+  );
 
 export const liveSortShareUrl = (encoded: string) =>
   `${window.location.origin}${window.location.pathname}?d=${encodeURIComponent(encoded)}`;

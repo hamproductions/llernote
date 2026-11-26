@@ -6,11 +6,13 @@ import { useLocalStorage } from './useLocalStorage';
 import { useAttendance } from './useAttendance';
 import { usePerformances } from './useData';
 import { useAllSetlists } from './useSetlists';
+import { useAbbreviations } from './useAbbreviations';
 import { sortedPerformances } from '~/data/core';
 import { useToaster } from '~/context/ToasterContext';
 import { getCurrentItem } from '~/utils/sort';
 import { buildSongPerformanceOrdinals } from '~/utils/setlist-insights';
 import { isFutureEvent } from '~/utils/event-filter';
+import { getAliasScore, type EventAliases } from '~/utils/abbreviations';
 import {
   LIVE_SORT_PREFIX,
   buildSortCandidates,
@@ -48,7 +50,8 @@ const EXCLUDED_TOUR_TYPE = '外部のフェス';
 const matchesFilters = (
   performance: Performance,
   filters: LiveSortFilters,
-  attendedIds: Set<string>
+  attendedIds: Set<string>,
+  aliasesOf: EventAliases
 ) => {
   if (performance.tourType === EXCLUDED_TOUR_TYPE) return false;
   // A live you have not seen yet cannot be ranked, and imported attendance covers
@@ -72,7 +75,8 @@ const matchesFilters = (
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-    if (!haystack.includes(needle)) return false;
+    if (!haystack.includes(needle) && !getAliasScore(aliasesOf(performance.eventId), needle))
+      return false;
   }
   return true;
 };
@@ -82,6 +86,7 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
   const { toast } = useToaster();
   const performances = usePerformances();
   const allSetlists = useAllSetlists();
+  const { eventAliases } = useAbbreviations();
   const { map: attendanceMap } = useAttendance();
 
   const attendedIds = useMemo(
@@ -104,11 +109,13 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
   const candidates = useMemo(
     () =>
       buildSortCandidates(
-        performances.filter((performance) => matchesFilters(performance, filters, attendedIds)),
+        performances.filter((performance) =>
+          matchesFilters(performance, filters, attendedIds, eventAliases)
+        ),
         unit,
         sortedPerformances
       ).filter((candidate) => !retiredIds.has(candidate.id)),
-    [performances, filters, attendedIds, unit, retiredIds]
+    [performances, filters, attendedIds, unit, retiredIds, eventAliases]
   );
 
   const catalogCandidates = useMemo(() => buildSortCandidates(sortedPerformances, unit), [unit]);

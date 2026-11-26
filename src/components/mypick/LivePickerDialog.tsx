@@ -15,6 +15,8 @@ import { useSongById } from '~/hooks/useSongData';
 import { groupByTour } from '~/utils/tour';
 import { localizedName } from '~/utils/names';
 import { getLiveSongEntriesForPerformances } from '~/utils/mypick-live';
+import { getAliasScore } from '~/utils/abbreviations';
+import { useAbbreviations } from '~/hooks/useAbbreviations';
 import type { Performance } from '~/types';
 
 export interface LivePickerDialogProps {
@@ -39,6 +41,7 @@ export function LivePickerDialog({
   const performances = usePerformances();
   const setlists = useSetlists();
   const songById = useSongById();
+  const { eventAliases } = useAbbreviations();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -50,17 +53,22 @@ export function LivePickerDialog({
   const groups = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return allGroups;
-    return allGroups.filter((group) =>
-      [
-        group.tourName,
-        ...group.legs.flatMap((performance) => [
-          performance.concertName ?? '',
-          performance.performanceName ?? '',
-          performance.venue ?? ''
-        ])
-      ].some((value) => value.toLowerCase().includes(query))
+    return allGroups.filter(
+      (group) =>
+        [
+          group.tourName,
+          ...group.legs.flatMap((performance) => [
+            performance.concertName ?? '',
+            performance.performanceName ?? '',
+            performance.venue ?? ''
+          ])
+        ].some((value) => value.toLowerCase().includes(query)) ||
+        getAliasScore(
+          group.legs.flatMap((performance) => eventAliases(performance.eventId)),
+          query
+        ) > 0
     );
-  }, [allGroups, search]);
+  }, [allGroups, search, eventAliases]);
 
   const isSearching = search.trim().length > 0;
 

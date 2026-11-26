@@ -21,6 +21,7 @@ import { fuzzySearch, getSearchScore, type SearchableItem } from '~/utils/search
 import { displayVenueLocation } from '~/utils/venues';
 import { getPicUrl } from '~/utils/assets';
 import { localizedName } from '~/utils/names';
+import { useAbbreviations } from '~/hooks/useAbbreviations';
 
 type Kind = 'event' | 'song' | 'venue' | 'costume';
 type Result = {
@@ -93,6 +94,7 @@ export default function CommandPalette({
   const venues = useVenues();
   const songs = useSongs();
   const songById = useSongById();
+  const { songAliases, eventAliases } = useAbbreviations();
   const { openEvent, openSong, openVenue, openCostume } = useDetail();
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -127,7 +129,8 @@ export default function CommandPalette({
     for (const e of rank(
       performances.map((p) => ({
         id: p.id,
-        name: p.performanceName ? `${p.tourName} ${p.performanceName}` : p.tourName
+        name: p.performanceName ? `${p.tourName} ${p.performanceName}` : p.tourName,
+        aliases: eventAliases(p.eventId)
       })),
       q,
       PER_GROUP
@@ -144,7 +147,12 @@ export default function CommandPalette({
     }
 
     for (const s of rank(
-      songs.map((s) => ({ id: s.id, name: s.name, englishName: s.englishName })),
+      songs.map((s) => ({
+        id: s.id,
+        name: s.name,
+        englishName: s.englishName,
+        aliases: songAliases(s.id)
+      })),
       q,
       PER_GROUP
     )) {
@@ -211,7 +219,9 @@ export default function CommandPalette({
     openEvent,
     openSong,
     openVenue,
-    openCostume
+    openCostume,
+    songAliases,
+    eventAliases
   ]);
 
   const flat = useMemo(() => groups.flatMap((g) => g.items), [groups]);
