@@ -7,7 +7,7 @@ import { CategoryBadge } from '~/components/events/CategoryBadge';
 import { SeriesBadge } from '~/components/events/SeriesBadge';
 import { SortSetlistPanel } from './SortSetlistPanel';
 import { LiveHero } from './LiveHero';
-import { candidateSongIds, type SortCandidate } from '~/utils/live-sort';
+import { candidateLabel, candidateSongIds, type SortCandidate } from '~/utils/live-sort';
 import { useAllSetlists } from '~/hooks/useSetlists';
 import { clickable } from '~/utils/clickable';
 
@@ -146,7 +146,7 @@ export function LiveSortCard({
               size="sm"
               onClick={onRetire}
               title={t('sort.retire_hint')}
-              aria-label={`${t('sort.retire')}: ${candidate.title}`}
+              aria-label={`${t('sort.retire')}: ${candidateLabel(candidate)}`}
               borderColor="border.subtle"
               borderLeftWidth="1px"
               borderRadius="0"
