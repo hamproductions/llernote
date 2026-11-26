@@ -150,6 +150,15 @@ describe('buildThumbEntries', () => {
     expect(entries['tour:ラブライブ！サンシャイン!! ユニットライブツアー']).toBeUndefined();
   });
 
+  test('a null alias suppresses fuzzy matching for a live with no page of its own', () => {
+    const tourName = 'ラブライブ！サンシャイン!! Aqours 4th LoveLive! ～Sailing to the Sunshine～';
+    const { entries, stats } = buildThumbEntries([{ id: '40', tourName }], pages, {
+      [tourName]: null
+    });
+    expect(entries).toEqual({});
+    expect(stats.tourMatched).toBe(0);
+  });
+
   test('ignores pages without an image', () => {
     const { entries } = buildThumbEntries([{ id: '30', tourName: 'Love Live! Fest' }], pages);
     expect(entries).toEqual({});

@@ -248,7 +248,8 @@ export function matchWikiTitle(name: string, wikiTitles: string[]): TitleMatch |
 export function buildThumbEntries(
   performances: RawPerformance[],
   pages: WikiThumbPage[],
-  aliases: Record<string, string> = {}
+  /** tourName -> wiki page title, or `null` to assert the live has no page and skip matching. */
+  aliases: Record<string, string | null> = {}
 ) {
   const pagesByTitle = new Map(pages.map((page) => [page.title, page]));
   const pagesWithImages = pages.filter((page) => page.imageUrl);
@@ -261,12 +262,15 @@ export function buildThumbEntries(
     if (!tourMatches.has(performance.tourName)) {
       stats.tours += 1;
       const aliased = aliases[performance.tourName];
-      const match: TitleMatch | undefined = aliased
-        ? pagesByTitle.get(aliased)?.imageUrl
-          ? { title: aliased, confidence: 1, method: 'exact' }
-          : undefined
-        : (matchWikiTitle(performance.tourName, titles) ??
-          matchJapaneseTitle(performance.tourName, pagesWithImages));
+      const match: TitleMatch | undefined =
+        aliased === null
+          ? undefined
+          : aliased !== undefined
+            ? pagesByTitle.get(aliased)?.imageUrl
+              ? { title: aliased, confidence: 1, method: 'exact' }
+              : undefined
+            : (matchWikiTitle(performance.tourName, titles) ??
+              matchJapaneseTitle(performance.tourName, pagesWithImages));
       tourMatches.set(performance.tourName, match);
       if (match) {
         stats.tourMatched += 1;
@@ -504,9 +508,9 @@ async function main() {
   const aliases = existsSync(aliasPath)
     ? (Object.fromEntries(
         Object.entries(
-          JSON.parse(readFileSync(aliasPath, 'utf-8')) as Record<string, string>
+          JSON.parse(readFileSync(aliasPath, 'utf-8')) as Record<string, string | null>
         ).filter(([key]) => !key.startsWith('_'))
-      ) as Record<string, string>)
+      ) as Record<string, string | null>)
     : {};
   const { entries, stats } = buildThumbEntries(performances, pages, aliases);
   await downloadPosters(entries, force);

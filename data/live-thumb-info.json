@@ -1,4 +1,18 @@
 {
+  "819": {
+    "scope": "performance",
+    "image": "https://static.wikia.nocookie.net/love-live/images/b/b4/LoveLive%21_Series_15th_Anniversary_Love_Live%21_Fest_Encore_in_TOKYO_DOME_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20261125095831",
+    "source": "LoveLive! Series 15th Anniversary Love Live! Fest Encore in TOKYO DOME",
+    "confidence": 0.88,
+    "file": "60fe155a1267a8ec"
+  },
+  "820": {
+    "scope": "performance",
+    "image": "https://static.wikia.nocookie.net/love-live/images/b/b4/LoveLive%21_Series_15th_Anniversary_Love_Live%21_Fest_Encore_in_TOKYO_DOME_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20261125095831",
+    "source": "LoveLive! Series 15th Anniversary Love Live! Fest Encore in TOKYO DOME",
+    "confidence": 0.88,
+    "file": "60fe155a1267a8ec"
+  },
   "tour:ラブライブ！サンシャイン!! Aqours First LoveLive! ～Step! ZERO to ONE!!～": {
     "scope": "tour",
     "image": "https://static.wikia.nocookie.net/love-live/images/7/7f/Aqours_First_Love_Live%21_~Step%21_ZERO_to_ONE~_BD_BOX_Cover.png/revision/latest/scale-to-width-down/400?cb=20170924213302",
@@ -76,11 +90,11 @@
     "confidence": 0.88,
     "file": "ae6de1b7b250faed"
   },
-  "tour:ラブライブ！フェス": {
+  "tour:LoveLive! Series 9th Anniversary ラブライブ！フェス": {
     "scope": "tour",
     "image": "https://static.wikia.nocookie.net/love-live/images/9/93/Love_Live%21_Fest_Key_Visual.png/revision/latest/scale-to-width-down/283?cb=20200126030400",
     "source": "Love Live! Fest",
-    "confidence": 1,
+    "confidence": 0.95,
     "file": "53dcf790d8476be8"
   },
   "tour:LOVELIVE! SUNSHINE!! UNIT LIVE ADVENTURE 2020": {
@@ -640,14 +654,14 @@
     "scope": "tour",
     "image": "https://static.wikia.nocookie.net/love-live/images/a/aa/LoveLive%21_Series_15th_Anniversary_Love_Live%21_Fest_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20260624094909",
     "source": "LoveLive! Series 15th Anniversary Love Live! Fest",
-    "confidence": 0.88,
+    "confidence": 0.95,
     "file": "76b23ca620e53c96"
   },
-  "tour:ラブライブ！サンシャイン!! 沼津地元愛まつり 2027": {
+  "tour:ラブライブ！サンシャイン!! 第５回沼津地元愛まつり": {
     "scope": "tour",
     "image": "https://static.wikia.nocookie.net/love-live/images/d/db/Love_Live%21_Sunshine%21%21_Numazu_Jimo_Ai_Festival_2027_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20260629150307",
     "source": "Love Live! Sunshine!! Numazu Jimo Ai Festival 2027",
-    "confidence": 0.95,
+    "confidence": 1,
     "file": "7bdbb1e738eb3f7d"
   },
   "tour:Liella!のちゅーとりえら!! 2期": {
@@ -656,5 +670,54 @@
     "source": "Liella! no TUTOLiella!! LIVE",
     "confidence": 0.867,
     "file": "25b5b3f91b1b9075"
+  },
+  "tour:ラブライブ！蓮ノ空女学院スクールアイドルクラブ Link Live Dream ～103期卒業公演～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/b/b3/Love_Live%21_Hasunosora_Girls%27_High_School_Idol_Club_Link_Live_Dream_~103_Ki_Sotsugyou_Kouen~_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20261015030903",
+    "source": "Hasunosora Girls' High School Idol Club Link Live Dream ~103 Ki Sotsugyou Kouen~",
+    "confidence": 0.88,
+    "file": "397ec20ec2bd0778"
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 結女体育祭": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/2/29/Liella%21_Yuijo_Taiikusai_Key_Visual.jpg/revision/latest/scale-to-width-down/283?cb=20260529123010",
+    "source": "Liella! Yuijo Taiikusai",
+    "confidence": 0.95,
+    "file": "e157448a5209ae33"
+  },
+  "tour:ラブライブ！スーパースター!! Liella! 8th LoveLive! Tour ～Our Song, Our Dreams～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/a/a8/Liella%21_8th_LoveLive%21_Tour_~Our_Song%2C_Our_Dreams~_Logo.jpg/revision/latest/scale-to-width-down/400?cb=20260906115608",
+    "source": "Liella! 8th LoveLive! Tour ~Our Song, Our Dreams~",
+    "confidence": 0.95,
+    "file": "b98f6820521099d7"
+  },
+  "tour:いきづらい部！3rd LIVE～いつかみんなで叶いそう～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/7/73/Ikizurai-Bu%21_3rd_LIVE_~Itsuka_Minna_de_Kanaisou~_Logo.jpg/revision/latest/scale-to-width-down/400?cb=20260920103753",
+    "source": "Ikizurai-Bu! 3rd LIVE ~Itsuka Minna de Kanaisou~",
+    "confidence": 0.95,
+    "file": "27c3654ac8e6ce45"
+  },
+  "tour:LoveLive! Series 15th Anniversary ラブライブ！フェス 前夜祭 FILM LIVE ～未来へ届けるタイムカプセル～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/7/71/LoveLive%21_Series_15th_Anniversary_Love_Live%21_Fes_Eve_Celebration_FILM_LIVE_~Mirai_e_Todokeru_Time_Capsule~_Logo.png/revision/latest/scale-to-width-down/400?cb=20261010083508",
+    "source": "LoveLive! Series 15th Anniversary Love Live! Fes Eve Celebration: FILM LIVE ~Mirai e Todokeru Time Capsule~",
+    "confidence": 0.95,
+    "file": "7d6f3bc8de501546"
+  },
+  "tour:いきづらい部！ナンバリングじゃないライブ！～やっちゃえ！スクールアイドル～": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/8/8b/Ikizurai-Bu%21_Non-Numbered_Live_~Yacchae%21_School_Idol~_Logo.jpg/revision/latest/scale-to-width-down/400?cb=20261118102112",
+    "source": "Ikizurai-Bu! Non-Numbered Live ~Yacchae! School Idol~",
+    "confidence": 0.95,
+    "file": "6342009cb77f4ece"
+  },
+  "tour:Guilty Kiss Musical Performance 漆黒のWanted Ghost": {
+    "scope": "tour",
+    "image": "https://static.wikia.nocookie.net/love-live/images/0/06/Guilty_Kiss_Musical_Performance_Shikkoku_no_Wanted_Ghost_Key_Visual.jpg/revision/latest/scale-to-width-down/282?cb=20260424091646",
+    "source": "Guilty Kiss Musical Performance Shikkoku no Wanted Ghost",
+    "confidence": 0.886,
+    "file": "7796d439bf0626ca"
   }
 }
