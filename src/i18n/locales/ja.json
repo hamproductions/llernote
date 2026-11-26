@@ -674,7 +674,13 @@
     "copy_image": "画像をコピー",
     "image_copied": "画像をコピーしました",
     "copy_text": "テキストをコピー",
-    "text_copied": "テキストをコピーしました"
+    "text_copied": "テキストをコピーしました",
+    "retire": "除外",
+    "retire_hint": "このランキングと今後のランキングから除外します。元に戻すか、開始画面から復元できます。",
+    "retired_toast": "「{{ title }}」を除外しました",
+    "retired_count": "除外中 {{ count }} 件",
+    "restore": "復元",
+    "restore_all": "すべて復元"
   },
   "setlistdle": {
     "daily": "今日の一問",

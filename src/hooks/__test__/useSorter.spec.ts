@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { useSorter } from '../useSorter';
-import { initSort, step } from '../../utils/sort';
+import { collectItems, initSort, step } from '../../utils/sort';
 
 describe('useSorter', () => {
   beforeAll(() => {
@@ -529,6 +529,41 @@ describe('useSorter', () => {
       expect(result.current.progress).toBeGreaterThanOrEqual(0);
       expect(result.current.progress).toBeLessThanOrEqual(1);
       expect(Number.isFinite(result.current.progress)).toBe(true);
+    });
+  });
+
+  describe('remove', () => {
+    it('drops an item, is undoable, and leaves the comparison count alone', () => {
+      const { result } = renderHook(() => useSorter(['a', 'b', 'c', 'd'], 'test-remove'));
+      act(() => {
+        result.current.init();
+      });
+      act(() => {
+        result.current.left();
+      });
+      expect(result.current.comparisonsCount).toBe(2);
+
+      const victim = result.current.state!.mergeState!.leftArr![0]![0]!;
+      act(() => {
+        result.current.remove((item) => item === victim);
+      });
+      expect(collectItems(result.current.state!).has(victim)).toBe(false);
+      expect(result.current.comparisonsCount).toBe(2);
+
+      let restored: string[] = [];
+      act(() => {
+        restored = result.current.undo();
+      });
+      expect(restored).toEqual([victim]);
+      expect(collectItems(result.current.state!).has(victim)).toBe(true);
+      expect(result.current.comparisonsCount).toBe(2);
+
+      // Undoing a real comparison restores nothing and does un-count it.
+      act(() => {
+        restored = result.current.undo();
+      });
+      expect(restored).toEqual([]);
+      expect(result.current.comparisonsCount).toBe(1);
     });
   });
 });
