@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box } from 'styled-system/jsx';
 import { useLiveThumb } from '~/hooks/useData';
+import { useIsLandscape } from '~/hooks/useIsLandscape';
 import type { Performance } from '~/types';
 
 export function EventThumb({
@@ -12,6 +13,8 @@ export function EventThumb({
 }) {
   const thumb = useLiveThumb(performance, tourOnly);
   const [failed, setFailed] = useState(false);
+  // A wide logo cropped to this portrait slot keeps only its middle letters; fit it whole.
+  const { landscape, imgProps } = useIsLandscape(thumb?.image);
 
   useEffect(() => {
     setFailed(false);
@@ -26,7 +29,8 @@ export function EventThumb({
         alt=""
         loading="lazy"
         referrerPolicy="no-referrer"
-        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+        {...imgProps}
+        style={{ objectFit: landscape ? 'contain' : 'cover', width: '100%', height: '100%' }}
         onError={() => setFailed(true)}
       />
     </Box>
