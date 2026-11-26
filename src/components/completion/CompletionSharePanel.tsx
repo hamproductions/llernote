@@ -91,7 +91,7 @@ export function CompletionSharePanel({
           >
             {t('completion.image_preview')}
           </styled.summary>
-          {imagePreviewOpen && <CompletionCard {...card} />}
+          {imagePreviewOpen && <CompletionCard {...card} short={exportNames.exportShort} />}
         </styled.details>
         <styled.details color="fg.muted" fontSize="xs">
           <styled.summary cursor="pointer" display="flex" alignItems="center" minH="11">
