@@ -34,7 +34,7 @@ export const eventernoteEventUrl = (href: string) => `https://www.eventernote.co
 
 export const fetchEventernoteUserEvents = async (userId: string): Promise<EventernoteEvent[]> => {
   const response = await fetch(
-    `${eventernoteApiBase()}/api/events/user/${encodeURIComponent(userId)}`
+    `${eventernoteApiBase()}/api/events/user/${encodeURIComponent(userId)}?includeArtists=0`
   );
   const body = (await response.json().catch(() => undefined)) as EventernoteResponse | undefined;
   if (!response.ok || !body?.success || !body.data) {
