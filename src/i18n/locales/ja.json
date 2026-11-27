@@ -460,7 +460,11 @@
     "eventernote": "EventerNoteで探す",
     "image_generated": "画像を生成しました",
     "copy_failed": "コピーに失敗しました",
-    "ll_fans": "LL-Fansで見る"
+    "ll_fans": "LL-Fansで見る",
+    "copy": "コピー",
+    "copy_choices": "コピーの種類",
+    "image": "画像",
+    "abbreviated": "略称"
   },
   "settings": {
     "title": "設定",
@@ -685,7 +689,10 @@
     "retired_toast": "「{{ title }}」を除外しました",
     "retired_count": "除外中 {{ count }} 件",
     "restore": "復元",
-    "restore_all": "すべて復元"
+    "restore_all": "すべて復元",
+    "no_attended_title": "まだ参加したライブがありません",
+    "no_attended_text": "ランキングするには参加したライブが必要です。イベンターノートからインポートするか、参加したイベントを登録してください。",
+    "register_events": "イベントを登録"
   },
   "nicknameQuiz": {
     "title": "略称クイズ",

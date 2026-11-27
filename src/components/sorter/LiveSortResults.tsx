@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaDownload, FaLink, FaRegClipboard, FaRegFileLines } from 'react-icons/fa6';
 import { HStack, Stack } from 'styled-system/jsx';
-import { Button } from '~/components/ui/button';
 import { LiveSortRankingGrid } from './LiveSortRankingGrid';
 import { SectionHeading } from '~/components/layout/SectionHeading';
-import { AbbreviateSwitch } from '~/components/export/AbbreviateSwitch';
+import { CopySplitButton } from '~/components/export/CopySplitButton';
+import { ImageMenu } from '~/components/export/ImageMenu';
 import { OffscreenStage, useOffscreenCapture } from '~/components/export/useOffscreenCapture';
 import { useToaster } from '~/context/ToasterContext';
 import { useAbbreviatedExport } from '~/hooks/useAbbreviations';
@@ -84,39 +84,46 @@ export function LiveSortResults({ ranking, unit, readOnly }: LiveSortResultsProp
         <SectionHeading>{t('sort.results_title')}</SectionHeading>
         {!readOnly && (
           <HStack gap="2" flexWrap="wrap">
-            <Button variant="outline" size="sm" onClick={onCopyLink}>
-              <FaLink />
-              {t('sort.copy_link')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => void onCopyText(ranking)}>
-              <FaRegFileLines />
-              {t('sort.copy_text')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!ready}
-              onClick={() => void onCopyText(shortRanking(ranking, short), ' ')}
-            >
-              <FaRegFileLines />
-              {t('sort.copy_text_short')}
-            </Button>
-            <AbbreviateSwitch checked={abbreviate} onChange={setAbbreviate} />
-            {canCopyImage && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onCopyImage}
-                disabled={copying || pending}
-              >
-                <FaRegClipboard />
-                {t('sort.copy_image')}
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={onSaveImage} disabled={saving || pending}>
-              <FaDownload />
-              {t('sort.save_image')}
-            </Button>
+            <CopySplitButton
+              options={[
+                {
+                  id: 'text',
+                  label: t('sort.copy_text'),
+                  icon: <FaRegFileLines />,
+                  onCopy: () => onCopyText(ranking)
+                },
+                {
+                  id: 'text-short',
+                  label: t('sort.copy_text_short'),
+                  icon: <FaRegFileLines />,
+                  disabled: !ready,
+                  onCopy: () => onCopyText(shortRanking(ranking, short), ' ')
+                },
+                { id: 'link', label: t('sort.copy_link'), icon: <FaLink />, onCopy: onCopyLink }
+              ]}
+            />
+            <ImageMenu
+              busy={saving || copying || pending}
+              exportNames={{ abbreviate, setAbbreviate }}
+              actions={[
+                ...(canCopyImage
+                  ? [
+                      {
+                        id: 'copy',
+                        label: t('sort.copy_image'),
+                        icon: <FaRegClipboard />,
+                        onSelect: () => void onCopyImage()
+                      }
+                    ]
+                  : []),
+                {
+                  id: 'save',
+                  label: t('sort.save_image'),
+                  icon: <FaDownload />,
+                  onSelect: () => void onSaveImage()
+                }
+              ]}
+            />
           </HStack>
         )}
       </HStack>

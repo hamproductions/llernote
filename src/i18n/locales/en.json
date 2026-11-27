@@ -464,7 +464,11 @@
     "eventernote": "Find on EventerNote",
     "image_generated": "Image generated",
     "copy_failed": "Copy failed",
-    "ll_fans": "View on LL-Fans"
+    "ll_fans": "View on LL-Fans",
+    "copy": "Copy",
+    "copy_choices": "Copy options",
+    "image": "Image",
+    "abbreviated": "Short"
   },
   "settings": {
     "title": "Settings",
@@ -703,7 +707,10 @@
     "retired_toast": "Retired “{{ title }}”",
     "retired_count": "{{ count }} retired",
     "restore": "Restore",
-    "restore_all": "Restore all"
+    "restore_all": "Restore all",
+    "no_attended_title": "No attended lives yet",
+    "no_attended_text": "Ranking needs lives you've attended. Import them from Eventernote or register the events you went to.",
+    "register_events": "Register events"
   },
   "nicknameQuiz": {
     "title": "Nickname Quiz",

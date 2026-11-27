@@ -31,7 +31,7 @@ import { useArtists, usePerformances, useSeries } from '~/hooks/useData';
 import { useSongs } from '~/hooks/useSongData';
 import { useMyPickItems } from '~/hooks/useMyPickItems';
 import { useAbbreviatedExport } from '~/hooks/useAbbreviations';
-import { AbbreviateSwitch } from '~/components/export/AbbreviateSwitch';
+import { ImageMenu } from '~/components/export/ImageMenu';
 import { setMyPick, setMyPickCell, setMyPickConfig } from '~/utils/attendance/storage';
 import { localizedName } from '~/utils/names';
 import { decodeMyPick, encodeMyPick, myPickShareUrl } from '~/utils/mypick-share';
@@ -445,23 +445,21 @@ export default function Page() {
                 {t('mypick.share_x')}
               </Button>
             )}
-            <AbbreviateSwitch
-              checked={exportNames.abbreviate}
-              onChange={exportNames.setAbbreviate}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={exporting || exportNames.pending}
-              onClick={downloadImage}
-              gap="2"
+            <ImageMenu
+              busy={exporting || exportNames.pending}
+              exportNames={exportNames}
+              actions={[
+                {
+                  id: 'download',
+                  label: t('mypick.download_image'),
+                  icon: <FaDownload size={12} />,
+                  onSelect: downloadImage
+                }
+              ]}
               borderColor="mypick.actionBorder"
               color="mypick.text"
               bgColor="mypick.actionMuted"
-            >
-              <FaDownload size={12} />
-              {t('mypick.download_image')}
-            </Button>
+            />
             {!shared && (
               <Button
                 size="sm"
