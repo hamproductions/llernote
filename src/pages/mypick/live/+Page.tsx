@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaDownload, FaLink, FaMusic, FaPlus, FaRotateLeft } from 'react-icons/fa6';
+import { FaMusic, FaPlus } from 'react-icons/fa6';
 import { HStack, Stack } from 'styled-system/jsx';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -9,7 +9,7 @@ import { Metadata } from '~/components/layout/Metadata';
 import { PickDialog, type PickItem } from '~/components/mypick/PickDialog';
 import { LivePickerDialog } from '~/components/mypick/LivePickerDialog';
 import { LiveMyPickBoard, type BoardCard } from '~/components/mypick/LiveMyPickBoard';
-import { EXPORT_BG } from '~/components/mypick/MyPickGrid';
+import { EXPORT_BG } from '~/components/mypick/mypick-theme';
 import { useArtistById, usePerformanceById, useSeriesById } from '~/hooks/useData';
 import { useSetlists } from '~/hooks/useSetlists';
 import { useSongById } from '~/hooks/useSongData';
@@ -20,6 +20,10 @@ import { getPicUrl } from '~/utils/assets';
 import { hasSongThumb } from '~/utils/song-thumbs';
 import { songArtistIds } from '~/utils/mypick-options';
 import { downloadElementAsImage } from '~/utils/share';
+import { shortLiveBoard } from '~/utils/mypick-live-export';
+import { useAbbreviatedExport, useAbbreviations } from '~/hooks/useAbbreviations';
+import { LiveMyPickActions } from '~/components/mypick/LiveMyPickActions';
+import { OffscreenStage, useOffscreenCapture } from '~/components/export/useOffscreenCapture';
 import { statePerformanceIds, liveHeader } from '~/utils/mypick-live';
 import {
   BUILTIN_AWARDS,
@@ -29,7 +33,8 @@ import {
   getLiveSongEntriesForPerformances
 } from '~/utils/mypick-live';
 import { encodeMyPickLive, myPickLiveShareUrl } from '~/utils/mypick-live-share';
-import type { Artist, Performance, Song } from '~/types';
+import type { Performance, Song } from '~/types';
+import type { ShortNames } from '~/utils/abbreviations';
 import type { MyPickLiveState, MyPickValue } from '~/types/mypick-live';
 
 type PickTarget =
@@ -51,8 +56,10 @@ export default function Page() {
   const [livePickerOpen, setLivePickerOpen] = useState(false);
   const [pickTarget, setPickTarget] = useState<PickTarget | null>(null);
   const [newAwardLabel, setNewAwardLabel] = useState('');
+  const { songAliases } = useAbbreviations();
+  const exportNames = useAbbreviatedExport();
+  const { visibleRef, cloneRef, cloneWidth, target } = useOffscreenCapture(exportNames.abbreviate);
   const [exporting, setExporting] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
   const lastPickTargetRef = useRef<PickTarget | null>(null);
 
   const performanceIdsKey = statePerformanceIds(state).join(',');
@@ -87,11 +94,17 @@ export default function Page() {
       }
     : null;
 
-  const songSub = (song: Song): string =>
+  const artistLabel = (artistId: string, short?: ShortNames) => {
+    const artist = artistById.get(artistId);
+    if (!artist) return undefined;
+    const label = localizedName(i18n.language, artist.name, artist.englishName);
+    return short?.name(artist.name, label) ?? label;
+  };
+
+  const songSub = (song: Song, short?: ShortNames): string =>
     songArtistIds(song, artistById)
-      .map((id) => artistById.get(id))
-      .filter((a): a is Artist => Boolean(a))
-      .map((a) => localizedName(i18n.language, a.name, a.englishName))
+      .map((id) => artistLabel(id, short))
+      .filter(Boolean)
       .join('・');
 
   const songImage = (song: Song): string | undefined =>
@@ -99,6 +112,7 @@ export default function Page() {
 
   const toSongOption = (song: Song): PickItem => ({
     id: song.id,
+    aliases: songAliases(song.id),
     label: localizedName(i18n.language, song.name, song.englishName),
     sub: songSub(song),
     image: songImage(song),
@@ -109,11 +123,18 @@ export default function Page() {
   const songOptions = useMemo(
     () => entries.map((entry) => toSongOption(entry.song)),
     // oxlint-disable-next-line exhaustive-deps
-    [entries, artistById, i18n.language]
+    [entries, artistById, i18n.language, songAliases]
   );
   const costumeOptions = useMemo<PickItem[]>(
-    () => costumes.map((c) => ({ id: c.id, label: c.name, sub: c.songName, image: c.image })),
-    [costumes]
+    () =>
+      costumes.map((c) => ({
+        id: c.id,
+        label: c.name,
+        sub: c.songName,
+        image: c.image,
+        aliases: c.songId ? songAliases(c.songId) : []
+      })),
+    [costumes, songAliases]
   );
 
   const resolvePicked = (value: MyPickValue | undefined): BoardCard['picked'] | undefined => {
@@ -277,12 +298,13 @@ export default function Page() {
   };
 
   const downloadImage = async () => {
-    if (!boardRef.current || exporting) return;
+    const element = target();
+    if (!element || exporting) return;
     setExporting(true);
     await new Promise((resolve) => setTimeout(resolve, 60));
     try {
       await downloadElementAsImage(
-        boardRef.current,
+        element,
         `mypick-live-${performanceIds[0] ?? 'live'}.png`,
         EXPORT_BG
       );
@@ -357,39 +379,14 @@ export default function Page() {
             <FaMusic /> {hasLive ? t('mypick_live.change_live') : t('mypick_live.choose_live')}
           </Button>
           {hasLive && hasSongs && (
-            <>
-              <Button
-                onClick={() => void shareUrl()}
-                variant="outline"
-                gap="2"
-                borderColor="mypick.actionBorder"
-                color="mypick.text"
-                bgColor="mypick.actionMuted"
-              >
-                <FaLink /> {t('mypick_live.share_url')}
-              </Button>
-              <Button
-                onClick={() => void downloadImage()}
-                variant="outline"
-                disabled={exporting}
-                gap="2"
-                borderColor="mypick.actionBorder"
-                color="mypick.text"
-                bgColor="mypick.actionMuted"
-              >
-                <FaDownload /> {t('mypick_live.download_image')}
-              </Button>
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                gap="2"
-                borderColor="mypick.actionBorder"
-                color="mypick.text"
-                bgColor="mypick.actionMuted"
-              >
-                <FaRotateLeft /> {t('mypick_live.reset')}
-              </Button>
-            </>
+            <LiveMyPickActions
+              abbreviate={exportNames.abbreviate}
+              onAbbreviateChange={exportNames.setAbbreviate}
+              downloadDisabled={exporting || exportNames.pending}
+              onShare={() => void shareUrl()}
+              onDownload={() => void downloadImage()}
+              onReset={handleReset}
+            />
           )}
         </HStack>
 
@@ -413,18 +410,41 @@ export default function Page() {
         ) : (
           <>
             <LiveMyPickBoard
-              ref={boardRef}
+              ref={visibleRef}
               liveName={liveName}
               liveSub={liveSub}
               awards={awardCards}
               units={unitCards}
-              editable={!exporting}
-              exporting={exporting}
+              editable={!exporting || exportNames.abbreviate}
+              exporting={exporting && !exportNames.abbreviate}
               onPick={handlePick}
               onClear={handleClear}
               onRemove={handleRemoveAward}
               accentColor={accent}
             />
+
+            {cloneWidth > 0 && (
+              <OffscreenStage width={cloneWidth}>
+                <LiveMyPickBoard
+                  ref={cloneRef}
+                  {...shortLiveBoard(
+                    { liveName, awards: awardCards, units: unitCards },
+                    {
+                      performances,
+                      liveState,
+                      songById,
+                      costumes,
+                      songSub,
+                      artistLabel,
+                      short: exportNames.short
+                    }
+                  )}
+                  liveSub={liveSub}
+                  exporting
+                  accentColor={accent}
+                />
+              </OffscreenStage>
+            )}
 
             <HStack gap="2" maxW="md">
               <Input

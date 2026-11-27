@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCircleExclamation } from 'react-icons/fa6';
 import { Box, HStack, Stack } from 'styled-system/jsx';
-import { SetlistItemRow } from '~/components/events/EventDetailDialog';
+import { SetlistItemRow } from '~/components/events/SetlistItemRow';
 import { Tabs } from '~/components/ui/tabs';
 import { Text } from '~/components/ui/styled/text';
 import { useDetail } from '~/components/detail/DetailStack';

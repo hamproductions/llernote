@@ -4,6 +4,8 @@ import { Box, Grid, HStack, Stack } from 'styled-system/jsx';
 import { localizedName } from '~/utils/names';
 import { Text } from '~/components/ui/text';
 import type { computeCompletion } from '~/utils/completion';
+import type { ShortNames } from '~/utils/abbreviations';
+import type { Song } from '~/types';
 
 export function CompletionCard({
   imageRef,
@@ -12,7 +14,8 @@ export function CompletionCard({
   color,
   date,
   includeRemote,
-  result
+  result,
+  short
 }: {
   imageRef?: RefObject<HTMLDivElement | null>;
   compact?: boolean;
@@ -21,6 +24,7 @@ export function CompletionCard({
   date: string;
   includeRemote: boolean;
   result: ReturnType<typeof computeCompletion>;
+  short?: ShortNames;
 }) {
   const { t, i18n } = useTranslation();
   const rgb = color.match(/[a-f\d]{2}/gi)?.map((part) => {
@@ -29,6 +33,8 @@ export function CompletionCard({
   }) ?? [0, 0, 0];
   const luminance = rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
   const foreground = luminance > 0.179 ? '#000000' : '#ffffff';
+  const songName = (song: Song) =>
+    short?.song(song) ?? localizedName(i18n.language, song.name, song.englishName);
   const collected = result.catalog.filter((song) => result.heard.has(song.id));
   const highlights = [...(collected.length ? collected : result.catalog)]
     .sort(
@@ -149,7 +155,7 @@ export function CompletionCard({
               {highlights.slice(0, 3).map((song) => (
                 <HStack key={song.id} gap="4" justifyContent="space-between" alignItems="start">
                   <Text minW="0" fontSize="sm" fontWeight="medium" overflowWrap="anywhere">
-                    {localizedName(i18n.language, song.name, song.englishName)}
+                    {songName(song)}
                   </Text>
                   <Text flexShrink={0} fontSize="xs">
                     {result.heard.get(song.id)} / {result.performed.get(song.id)}
@@ -166,7 +172,7 @@ export function CompletionCard({
               {unheard.slice(0, 3).map((song) => (
                 <HStack key={song.id} gap="4" justifyContent="space-between" alignItems="start">
                   <Text minW="0" fontSize="sm" fontWeight="medium" overflowWrap="anywhere">
-                    {localizedName(i18n.language, song.name, song.englishName)}
+                    {songName(song)}
                   </Text>
                   <Text flexShrink={0} maxW="32" fontSize="xs" textAlign="right">
                     {result.performed.has(song.id)
@@ -270,7 +276,7 @@ export function CompletionCard({
             {highlights.map((song) => (
               <HStack key={song.id} gap="3" justifyContent="space-between" alignItems="start">
                 <Text minW="0" fontSize="sm" fontWeight="medium">
-                  {localizedName(i18n.language, song.name, song.englishName)}
+                  {songName(song)}
                 </Text>
                 <Text flexShrink={0} color="fg.muted" fontSize="xs">
                   {result.heard.get(song.id)} / {result.performed.get(song.id)}
@@ -287,7 +293,7 @@ export function CompletionCard({
             {unheard.map((song) => (
               <HStack key={song.id} gap="3" justifyContent="space-between" alignItems="start">
                 <Text minW="0" fontSize="sm" fontWeight="medium">
-                  {localizedName(i18n.language, song.name, song.englishName)}
+                  {songName(song)}
                 </Text>
                 <Text flexShrink={0} maxW="32" color="fg.muted" fontSize="xs" textAlign="right">
                   {result.performed.has(song.id)

@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { FaCheck, FaDownload, FaLink, FaPlus } from 'react-icons/fa6';
+import { FaCheck, FaPlus } from 'react-icons/fa6';
 import { Box, Grid, HStack, Stack, Wrap, styled } from 'styled-system/jsx';
 import { CompletionCard } from '~/components/completion/CompletionCard';
+import { CompletionSharePanel } from '~/components/completion/CompletionSharePanel';
 import { Metadata } from '~/components/layout/Metadata';
 import { NativeSelect } from '~/components/events/NativeSelect';
 import { Button } from '~/components/ui/button';
@@ -13,6 +14,7 @@ import { Text } from '~/components/ui/text';
 import { Link } from '~/components/ui/link';
 import { useDetail } from '~/components/detail/DetailStack';
 import { useAttendance } from '~/hooks/useAttendance';
+import { useAbbreviatedExport, useAbbreviations } from '~/hooks/useAbbreviations';
 import { performanceById, series, sortedPerformances } from '~/data/core';
 import { loadSongData } from '~/data/songs';
 import { loadSetlists } from '~/data/setlists';
@@ -58,11 +60,11 @@ export default function Page() {
   const [selectedOnly, setSelectedOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [exporting, setExporting] = useState(false);
-  const [sharingOpen, setSharingOpen] = useState(false);
-  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const [sharedSongId, setSharedSongId] = useState<string>();
   const imageRef = useRef<HTMLDivElement>(null);
+  const { songAliases, eventAliases } = useAbbreviations();
+  const exportNames = useAbbreviatedExport();
 
   useEffect(() => {
     let active = true;
@@ -137,7 +139,8 @@ export default function Page() {
           id: p.id,
           name: [p.tourName, p.performanceName, p.concertName, p.date, p.venue]
             .filter(Boolean)
-            .join(' ')
+            .join(' '),
+          aliases: eventAliases(p.eventId)
         },
         query
       )
@@ -145,7 +148,7 @@ export default function Page() {
   const visibleSongs =
     result?.catalog.filter(
       (song) =>
-        fuzzySearch(song, query) &&
+        fuzzySearch({ ...song, aliases: songAliases(song.id) }, query) &&
         (!songStatus ||
           (songStatus === 'never'
             ? !result.performed.has(song.id)
@@ -665,85 +668,15 @@ export default function Page() {
                       )}
                     </Stack>
                   )}
-                  <Button
-                    variant="outline"
-                    aria-expanded={sharingOpen}
-                    aria-controls="completion-sharing"
-                    onClick={() => setSharingOpen((open) => !open)}
-                    hideFrom="lg"
-                    minH="11"
-                  >
-                    <FaLink />
-                    {t('completion.sharing')}
-                  </Button>
-                  <Stack
-                    id="completion-sharing"
-                    display={{ base: sharingOpen ? 'flex' : 'none', lg: 'flex' }}
-                    gap="2"
-                  >
-                    <Grid gap="2" gridTemplateColumns="minmax(0, 1fr) auto">
-                      <Button
-                        onClick={saveImage}
-                        disabled={exporting}
-                        minH="11"
-                        color="white"
-                        bgColor="accent.10"
-                        _hover={{ bgColor: 'accent.9' }}
-                      >
-                        <FaDownload />
-                        {t(exporting ? 'completion.exporting' : 'completion.download')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={copyLink}
-                        aria-label={t('completion.copy')}
-                        title={t('completion.copy')}
-                        minH="11"
-                      >
-                        <FaLink />
-                      </Button>
-                    </Grid>
-                    <HStack gap="2" justifyContent="space-between">
-                      <Link href={sharePath} minH="11" fontSize="sm">
-                        {t('completion.preview')}
-                      </Link>
-                      <Text role="status" fontSize="xs">
-                        {notice}
-                      </Text>
-                    </HStack>
-                    <styled.details
-                      onToggle={(event) => setImagePreviewOpen(event.currentTarget.open)}
-                    >
-                      <styled.summary
-                        cursor="pointer"
-                        display="flex"
-                        alignItems="center"
-                        minH="11"
-                        fontSize="sm"
-                      >
-                        {t('completion.image_preview')}
-                      </styled.summary>
-                      {imagePreviewOpen && (
-                        <CompletionCard
-                          title={title}
-                          date={date}
-                          includeRemote={includeRemote}
-                          result={result}
-                          color={seriesColor}
-                        />
-                      )}
-                    </styled.details>
-                    <styled.details color="fg.muted" fontSize="xs">
-                      <styled.summary cursor="pointer" display="flex" alignItems="center" minH="11">
-                        {t('completion.method_label')}
-                      </styled.summary>
-                      <Stack gap="2" pb="3">
-                        <Text>{t('completion.method', { date })}</Text>
-                        <Text>{t('completion.performance_method')}</Text>
-                        <Text>{t('completion.privacy')}</Text>
-                      </Stack>
-                    </styled.details>
-                  </Stack>
+                  <CompletionSharePanel
+                    card={{ title, date, includeRemote, result, color: seriesColor }}
+                    sharePath={sharePath}
+                    exporting={exporting}
+                    notice={notice}
+                    exportNames={exportNames}
+                    onSave={saveImage}
+                    onCopy={copyLink}
+                  />
                 </Stack>
               </Grid>
             </>
@@ -773,6 +706,7 @@ export default function Page() {
             date={date}
             includeRemote={includeRemote}
             result={result}
+            short={exportNames.exportShort}
             color={seriesColor}
           />
         </Box>

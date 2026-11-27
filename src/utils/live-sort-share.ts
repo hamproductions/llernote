@@ -1,5 +1,6 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
-import type { SortUnit } from './live-sort';
+import type { SortCandidate, SortUnit } from './live-sort';
+import type { ShortNames } from './abbreviations';
 
 export interface LiveSortShareData {
   unit: SortUnit;
@@ -46,18 +47,33 @@ export const decodeLiveSortResults = (encoded: string): LiveSortShareData | null
  * Plain-text ranking for pasting into a post. Tied lives share a rank number, so the
  * numbering skips the way the rendered list does (1, 2, 2, 4).
  */
-export const formatLiveSortText = (ranking: { title: string; subtitle?: string }[][]): string => {
+export const formatLiveSortText = (
+  ranking: { title: string; subtitle?: string }[][],
+  separator = ' / '
+): string => {
   const lines: string[] = [];
   let rank = 1;
   for (const bucket of ranking) {
     for (const candidate of bucket) {
-      const name = [candidate.title, candidate.subtitle].filter(Boolean).join(' / ');
+      const name = [candidate.title, candidate.subtitle].filter(Boolean).join(separator);
       lines.push(`${rank}. ${name}`);
     }
     rank += bucket.length;
   }
   return lines.join('\n');
 };
+
+export const shortRanking = (ranking: SortCandidate[][], short: ShortNames) =>
+  ranking.map((bucket) =>
+    bucket.map((candidate) => {
+      const performance = candidate.performances[0]!;
+      return {
+        ...candidate,
+        title: short.event(performance),
+        subtitle: candidate.subtitle && (short.performance(performance) || candidate.subtitle)
+      };
+    })
+  );
 
 export const liveSortShareUrl = (encoded: string) =>
   `${window.location.origin}${window.location.pathname}?d=${encodeURIComponent(encoded)}`;

@@ -66,5 +66,7 @@ export const copyTextToClipboard = async (text: string) => {
   await navigator.clipboard.writeText(text);
 };
 
-export const formatEventShareText = (performance: Performance) =>
-  `${performance.date} ${performance.tourName} @ ${performance.venue}`;
+export const formatEventShareText = (
+  performance: Performance,
+  tourName: string = performance.tourName
+) => `${performance.date} ${tourName} @ ${performance.venue}`;

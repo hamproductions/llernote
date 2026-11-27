@@ -16,6 +16,8 @@ import {
 } from '~/data/core';
 import { loadSongData } from '~/data/songs';
 import { loadSetlists } from '~/data/setlists';
+import { loadAbbreviations } from '~/data/abbreviations';
+import { createAbbreviations, EMPTY_ABBREVIATIONS } from '~/utils/abbreviations';
 import { isWatched, type Scope } from '~/utils/attendance/witness';
 import type { Performance, Song } from '~/types';
 import type { AttendanceMap } from '~/utils/attendance/storage';
@@ -100,6 +102,11 @@ const statsPerformanceFilter = (
   return true;
 };
 
+const noAliases = createAbbreviations(EMPTY_ABBREVIATIONS);
+
+const loadSearchAliases = async (search: string) =>
+  search.trim() ? loadAbbreviations().catch(() => noAliases) : noAliases;
+
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
   const setlistData = await loadSetlists();
@@ -113,6 +120,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
 
   if (request.type === 'events') {
     const { filters, attendanceMap, scope } = request.payload;
+    const { eventAliases } = await loadSearchAliases(filters.search);
     const performanceCharacters = buildPerformanceCharacterMap(
       setlistsForScope(scope),
       songById,
@@ -122,7 +130,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       performancesForScope(scope),
       filters,
       attendanceMap,
-      performanceCharacters
+      performanceCharacters,
+      eventAliases
     );
     const response: WorkerResponse = {
       id: request.id,
@@ -164,6 +173,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   }
 
   const { records, filters, scope } = request.payload;
+  const { songAliases } = await loadSearchAliases(filters.search);
   const perfById = performanceByIdForScope(scope);
   const sls = setlistsForScope(scope);
   // Personal tallies span ALL performances and split into witnessed (in-person) vs
@@ -176,7 +186,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const heardCount = (songId: string) => tallyById.get(songId)?.count ?? 0;
   const performedCount = (songId: string) => performedById.get(songId)?.count ?? 0;
   const allSongs = [...songById.values()];
-  const filtered = filterSongs(allSongs, filters, artistById, heardCount).sort(
+  const filtered = filterSongs(allSongs, filters, artistById, heardCount, songAliases).sort(
     (a, b) =>
       performedCount(b.id) - performedCount(a.id) ||
       (b.releasedOn ?? '').localeCompare(a.releasedOn ?? '')
@@ -185,7 +195,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     allSongs,
     { ...filters, heard: undefined },
     artistById,
-    heardCount
+    heardCount,
+    songAliases
   );
   const heardInScope = scopeSongs.filter((song) => heardCount(song.id) > 0).length;
   const response: WorkerResponse = {

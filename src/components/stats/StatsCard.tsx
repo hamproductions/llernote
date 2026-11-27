@@ -5,6 +5,7 @@ import { Text } from '~/components/ui/text';
 import { useSeriesById } from '~/hooks/useData';
 import { getSeriesShortName } from '~/utils/series-short';
 import type { StatsSummary } from '~/utils/stats';
+import type { ShortNames } from '~/utils/abbreviations';
 
 function StatNumber({ label, value }: { label: string; value: string | number }) {
   return (
@@ -93,160 +94,160 @@ function MonthHeatmap({ byMonth, years }: { byMonth: Map<string, number>; years:
   );
 }
 
-export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary }>(function StatsCard(
-  { stats },
-  ref
-) {
-  const { t } = useTranslation();
-  const seriesById = useSeriesById();
+export const StatsCard = forwardRef<HTMLDivElement, { stats: StatsSummary; short?: ShortNames }>(
+  function StatsCard({ stats, short }, ref) {
+    const { t } = useTranslation();
+    const seriesById = useSeriesById();
 
-  return (
-    <Box
-      ref={ref}
-      borderColor="border.default"
-      borderRadius="l3"
-      borderWidth="1px"
-      w="full"
-      maxW="xl"
-      p="6"
-      bgColor="bg.default"
-    >
-      <Stack gap="5">
-        <HStack justifyContent="space-between" alignItems="baseline">
-          <Text color="accent.default" fontSize="xl" fontWeight="bold">
-            {t('stats.share_title')}
-          </Text>
-          <Text color="fg.subtle" fontSize="xs">
-            {t('stats.generated_by')}
-          </Text>
-        </HStack>
-        <Grid gap="2" gridTemplateColumns="repeat(3, 1fr)">
-          <StatNumber label={t('stats.witnessed')} value={stats.witnessedCount} />
-          <StatNumber label={t('stats.watched')} value={stats.watchedCount} />
-          <StatNumber label={t('stats.songs_witnessed')} value={stats.songsWitnessed} />
-        </Grid>
-        <Grid gap="2" gridTemplateColumns="repeat(2, 1fr)">
-          <StatNumber label={t('stats.unique_songs')} value={stats.uniqueSongs} />
-          <StatNumber label={t('stats.venues_visited')} value={stats.venuesVisited} />
-        </Grid>
-        {(
-          [
-            ['stats.first_event', stats.firstEvent],
-            ['stats.latest_event', stats.latestEvent]
-          ] as const
-        )
-          .filter(([, event], index) =>
-            index === 1 ? event && event.id !== stats.firstEvent?.id : event
+    return (
+      <Box
+        ref={ref}
+        borderColor="border.default"
+        borderRadius="l3"
+        borderWidth="1px"
+        w="full"
+        minW={short ? 'lg' : undefined}
+        maxW="xl"
+        p="6"
+        bgColor="bg.default"
+      >
+        <Stack gap="5">
+          <HStack justifyContent="space-between" alignItems="baseline">
+            <Text color="accent.default" fontSize="xl" fontWeight="bold">
+              {t('stats.share_title')}
+            </Text>
+            <Text color="fg.subtle" fontSize="xs">
+              {t('stats.generated_by')}
+            </Text>
+          </HStack>
+          <Grid gap="2" gridTemplateColumns="repeat(3, 1fr)">
+            <StatNumber label={t('stats.witnessed')} value={stats.witnessedCount} />
+            <StatNumber label={t('stats.watched')} value={stats.watchedCount} />
+            <StatNumber label={t('stats.songs_witnessed')} value={stats.songsWitnessed} />
+          </Grid>
+          <Grid gap="2" gridTemplateColumns="repeat(2, 1fr)">
+            <StatNumber label={t('stats.unique_songs')} value={stats.uniqueSongs} />
+            <StatNumber label={t('stats.venues_visited')} value={stats.venuesVisited} />
+          </Grid>
+          {(
+            [
+              ['stats.first_event', stats.firstEvent],
+              ['stats.latest_event', stats.latestEvent]
+            ] as const
           )
-          .map(([labelKey, event]) => (
-            <Stack key={labelKey} gap="1">
-              <Text color="fg.muted" fontSize="xs">
-                {t(labelKey)}
+            .filter(([, event], index) =>
+              index === 1 ? event && event.id !== stats.firstEvent?.id : event
+            )
+            .map(([labelKey, event]) => (
+              <Stack key={labelKey} gap="1">
+                <Text color="fg.muted" fontSize="xs">
+                  {t(labelKey)}
+                </Text>
+                <Text fontSize="sm" fontWeight="medium">
+                  {event!.date} {short?.event(event!) ?? event!.tourName}
+                </Text>
+              </Stack>
+            ))}
+          {stats.byYear.length > 0 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('stats.heatmap')}
               </Text>
-              <Text fontSize="sm" fontWeight="medium">
-                {event!.date} {event!.tourName}
-              </Text>
+              <MonthHeatmap byMonth={stats.byMonth} years={stats.byYear.map((y) => y.year)} />
             </Stack>
-          ))}
-        {stats.byYear.length > 0 && (
-          <Stack gap="2">
-            <Text fontSize="sm" fontWeight="semibold">
-              {t('stats.heatmap')}
-            </Text>
-            <MonthHeatmap byMonth={stats.byMonth} years={stats.byYear.map((y) => y.year)} />
-          </Stack>
-        )}
-        {stats.byYear.length > 0 && (
-          <Stack gap="2">
-            <Text fontSize="sm" fontWeight="semibold">
-              {t('stats.by_year')}
-            </Text>
-            <BarList
-              items={stats.byYear.map((y) => ({ key: y.year, label: y.year, count: y.count }))}
-              max={Math.max(...stats.byYear.map((y) => y.count))}
-            />
-          </Stack>
-        )}
-        {stats.bySeries.length > 0 && (
-          <Stack gap="2">
-            <Text fontSize="sm" fontWeight="semibold">
-              {t('stats.by_series')}
-            </Text>
-            <BarList
-              items={stats.bySeries.map((s) => ({
-                key: s.seriesId,
-                label: getSeriesShortName(
-                  s.seriesId,
-                  seriesById.get(s.seriesId)?.name ?? s.seriesId
-                ),
-                count: s.count,
-                color: seriesById.get(s.seriesId)?.color
-              }))}
-              max={Math.max(...stats.bySeries.map((s) => s.count))}
-            />
-          </Stack>
-        )}
-        {stats.byVenue.length > 0 && (
-          <Stack gap="2">
-            <Text fontSize="sm" fontWeight="semibold">
-              {t('stats.by_venue')}
-            </Text>
-            <BarList
-              items={stats.byVenue.slice(0, 5).map((v) => ({
-                key: v.venueId ?? v.venue,
-                label: v.venue,
-                count: v.count
-              }))}
-              max={Math.max(...stats.byVenue.map((v) => v.count))}
-            />
-          </Stack>
-        )}
-        {stats.byCity.length > 0 && (
-          <Stack gap="2">
-            <Text fontSize="sm" fontWeight="semibold">
-              {t('stats.by_city')}
-            </Text>
-            <BarList
-              items={stats.byCity.slice(0, 5).map((v) => ({
-                key: v.city,
-                label: v.city,
-                count: v.count
-              }))}
-              max={Math.max(...stats.byCity.map((v) => v.count))}
-            />
-          </Stack>
-        )}
-        {stats.byCategory.length > 1 && (
-          <Stack gap="2">
-            <Text fontSize="sm" fontWeight="semibold">
-              {t('events.category')}
-            </Text>
-            <BarList
-              items={stats.byCategory.map((c) => ({
-                key: c.category,
-                label: t(`events.category_${c.category}` as 'events.category_live'),
-                count: c.count
-              }))}
-              max={Math.max(...stats.byCategory.map((c) => c.count))}
-            />
-          </Stack>
-        )}
-        {stats.byWatchType.length > 1 && (
-          <Stack gap="2">
-            <Text fontSize="sm" fontWeight="semibold">
-              {t('stats.by_type')}
-            </Text>
-            <BarList
-              items={stats.byWatchType.map((w) => ({
-                key: w.watchType,
-                label: t(`events.watched_${w.watchType}` as 'events.watched_live'),
-                count: w.count
-              }))}
-              max={Math.max(...stats.byWatchType.map((w) => w.count))}
-            />
-          </Stack>
-        )}
-      </Stack>
-    </Box>
-  );
-});
+          )}
+          {stats.byYear.length > 0 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('stats.by_year')}
+              </Text>
+              <BarList
+                items={stats.byYear.map((y) => ({ key: y.year, label: y.year, count: y.count }))}
+                max={Math.max(...stats.byYear.map((y) => y.count))}
+              />
+            </Stack>
+          )}
+          {stats.bySeries.length > 0 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('stats.by_series')}
+              </Text>
+              <BarList
+                items={stats.bySeries.map((s) => ({
+                  key: s.seriesId,
+                  label: getSeriesShortName(
+                    s.seriesId,
+                    seriesById.get(s.seriesId)?.name ?? s.seriesId
+                  ),
+                  count: s.count,
+                  color: seriesById.get(s.seriesId)?.color
+                }))}
+                max={Math.max(...stats.bySeries.map((s) => s.count))}
+              />
+            </Stack>
+          )}
+          {stats.byVenue.length > 0 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('stats.by_venue')}
+              </Text>
+              <BarList
+                items={stats.byVenue.slice(0, 5).map((v) => ({
+                  key: v.venueId ?? v.venue,
+                  label: v.venue,
+                  count: v.count
+                }))}
+                max={Math.max(...stats.byVenue.map((v) => v.count))}
+              />
+            </Stack>
+          )}
+          {stats.byCity.length > 0 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('stats.by_city')}
+              </Text>
+              <BarList
+                items={stats.byCity.slice(0, 5).map((v) => ({
+                  key: v.city,
+                  label: v.city,
+                  count: v.count
+                }))}
+                max={Math.max(...stats.byCity.map((v) => v.count))}
+              />
+            </Stack>
+          )}
+          {stats.byCategory.length > 1 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('events.category')}
+              </Text>
+              <BarList
+                items={stats.byCategory.map((c) => ({
+                  key: c.category,
+                  label: t(`events.category_${c.category}` as 'events.category_live'),
+                  count: c.count
+                }))}
+                max={Math.max(...stats.byCategory.map((c) => c.count))}
+              />
+            </Stack>
+          )}
+          {stats.byWatchType.length > 1 && (
+            <Stack gap="2">
+              <Text fontSize="sm" fontWeight="semibold">
+                {t('stats.by_type')}
+              </Text>
+              <BarList
+                items={stats.byWatchType.map((w) => ({
+                  key: w.watchType,
+                  label: t(`events.watched_${w.watchType}` as 'events.watched_live'),
+                  count: w.count
+                }))}
+                max={Math.max(...stats.byWatchType.map((w) => w.count))}
+              />
+            </Stack>
+          )}
+        </Stack>
+      </Box>
+    );
+  }
+);

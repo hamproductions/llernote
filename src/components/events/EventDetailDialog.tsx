@@ -1,320 +1,38 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FaArrowUpRightFromSquare,
-  FaCheck,
-  FaChevronLeft,
-  FaCircleInfo,
-  FaCopy,
-  FaStar,
-  FaXTwitter,
-  FaXmark
-} from 'react-icons/fa6';
+import { FaCheck, FaChevronLeft, FaCopy, FaStar, FaXmark } from 'react-icons/fa6';
 import { Box, HStack, Stack, Wrap } from 'styled-system/jsx';
 import { Dialog } from '~/components/ui/dialog';
 import { IconButton } from '~/components/ui/icon-button';
 import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { Textarea } from '~/components/ui/textarea';
-import { Badge } from '~/components/ui/badge';
 import { SeriesBadge } from './SeriesBadge';
 import { CategoryBadge } from './CategoryBadge';
 import { AttendanceButtons } from './AttendanceButtons';
 import { NativeSelect } from './NativeSelect';
 import { VenueText } from './VenueText';
-import { SongThumb } from '~/components/songs/SongThumb';
+import { EventShareActions } from './EventShareActions';
+import { SetlistDiffDialog } from './SetlistDiffDialog';
+import { SetlistItemRow } from './SetlistItemRow';
 import { SetlistBar } from '~/components/setlist/SetlistBar';
 import { buildSetlistFlow } from '~/utils/setlist-flow';
 import { useAttendance } from '~/hooks/useAttendance';
-import { useArtistById } from '~/hooks/useData';
 import { performanceById as allPerformanceById, sortedPerformances } from '~/data/core';
 import { useSongById } from '~/hooks/useSongData';
 import { useAllSetlists } from '~/hooks/useSetlists';
-import { useToaster } from '~/context/ToasterContext';
+import { useAbbreviations } from '~/hooks/useAbbreviations';
+import { useCopyText } from '~/hooks/useCopyText';
 import { daysFromToday, isFutureEvent } from '~/utils/event-filter';
-import { localizedName } from '~/utils/names';
-import {
-  copyTextToClipboard,
-  eventernoteSearchUrl,
-  formatEventShareText,
-  llFansEventUrl,
-  xShareUrl
-} from '~/utils/share';
-import { hasSongThumb } from '~/utils/song-thumbs';
+import { formatSetlistText, numberSongs } from '~/utils/setlist-text';
 import {
   buildWitnessBySong,
   buildSetlistInsights,
-  compareSetlists,
-  songWitnessInfo,
-  type SongSetlistInsight
+  songWitnessInfo
 } from '~/utils/setlist-insights';
 import { isWitnessed } from '~/utils/attendance/witness';
-import type { Performance, SetlistItem } from '~/types';
+import type { Performance } from '~/types';
 import type { WatchType } from '~/types/attendance';
-
-type SetlistPerformanceOption = {
-  value: string;
-  date: string;
-  title: string;
-  subtitle: string;
-  venue: string;
-  isSameTour: boolean;
-  searchText: string;
-};
-
-function SetlistPerformancePicker({
-  label,
-  value,
-  options,
-  currentPerformanceId,
-  previousPerformanceId,
-  onChange
-}: {
-  label: string;
-  value: string;
-  options: SetlistPerformanceOption[];
-  currentPerformanceId: string;
-  previousPerformanceId?: string;
-  onChange: (value: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [query, setQuery] = useState('');
-  const normalizedQuery = query.trim().toLowerCase();
-  const selected = options.find((option) => option.value === value);
-  const filteredOptions = useMemo(() => {
-    const matches = normalizedQuery
-      ? options.filter((option) => option.searchText.includes(normalizedQuery))
-      : options.filter((option) => option.isSameTour);
-    const fallbackMatches = normalizedQuery || matches.length > 0 ? matches : options;
-    return fallbackMatches.slice(0, normalizedQuery ? 50 : 20);
-  }, [normalizedQuery, options]);
-
-  return (
-    <Stack
-      gap="2"
-      borderColor="border.subtle"
-      borderRadius="l2"
-      borderWidth="1px"
-      minW="0"
-      p="3"
-      bgColor="bg.canvas"
-    >
-      <HStack gap="2" justifyContent="space-between" alignItems="center">
-        <Text color="fg.muted" fontSize="xs" fontWeight="semibold">
-          {label}
-        </Text>
-        <HStack gap="1">
-          {previousPerformanceId && (
-            <Button size="xs" variant="ghost" onClick={() => onChange(previousPerformanceId)}>
-              {t('events.setlist_picker_previous')}
-            </Button>
-          )}
-          <Button size="xs" variant="ghost" onClick={() => onChange(currentPerformanceId)}>
-            {t('events.setlist_picker_current')}
-          </Button>
-        </HStack>
-      </HStack>
-
-      {selected && (
-        <Stack gap="0.5" borderRadius="l2" py="2" px="3" bgColor="bg.subtle">
-          <Text fontSize="xs" fontWeight="semibold" lineClamp={2}>
-            {selected.title}
-          </Text>
-          <Text color="fg.muted" fontSize="2xs" lineClamp={2}>
-            {selected.date} · {selected.subtitle}
-            {selected.venue ? ` · ${selected.venue}` : ''}
-          </Text>
-        </Stack>
-      )}
-
-      <Input
-        size="sm"
-        value={query}
-        aria-label={t('events.setlist_picker_search')}
-        placeholder={t('events.setlist_picker_search')}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-
-      <Stack gap="1" maxH="64" pr="1" overflowY="auto">
-        {filteredOptions.map((option) => {
-          const isSelected = option.value === value;
-          return (
-            <Button
-              key={option.value}
-              size="sm"
-              variant={isSelected ? 'subtle' : 'ghost'}
-              onClick={() => onChange(option.value)}
-              justifyContent="flex-start"
-              h="auto"
-              py="2"
-              px="2"
-              textAlign="left"
-            >
-              <Stack gap="0.5" alignItems="stretch" minW="0">
-                <Text fontSize="xs" fontWeight={isSelected ? 'semibold' : 'medium'} lineClamp={2}>
-                  {option.title}
-                </Text>
-                <Text color="fg.muted" fontSize="2xs" lineClamp={2}>
-                  {option.date} · {option.subtitle}
-                  {option.venue ? ` · ${option.venue}` : ''}
-                </Text>
-              </Stack>
-            </Button>
-          );
-        })}
-        {filteredOptions.length === 0 && (
-          <Text py="3" px="2" color="fg.muted" fontSize="xs">
-            {t('common.no_results')}
-          </Text>
-        )}
-      </Stack>
-
-      <Text color="fg.subtle" fontSize="2xs">
-        {normalizedQuery
-          ? t('events.setlist_picker_filtered_hint', { count: filteredOptions.length })
-          : t('events.setlist_picker_relevant_hint')}
-      </Text>
-    </Stack>
-  );
-}
-
-export function SetlistItemRow({
-  item,
-  index,
-  showArtists,
-  witnessInfo,
-  setlistInsight,
-  performedBeforeCount,
-  onSelectSong
-}: {
-  item: SetlistItem;
-  index: number;
-  showArtists: boolean;
-  witnessInfo?: { count: number; isFirst: boolean; daysSinceSeen?: number };
-  setlistInsight?: SongSetlistInsight;
-  performedBeforeCount?: number;
-  onSelectSong?: (songId: string) => void;
-}) {
-  const { t, i18n } = useTranslation();
-  const songById = useSongById();
-  const artistById = useArtistById();
-  if (item.type !== 'song') {
-    return (
-      <HStack gap="2" alignItems="center" py="0.5">
-        <Box minW="8" />
-        <Badge size="sm" variant="outline" flexShrink={0} color="fg.muted">
-          {item.title ?? item.customSongName ?? item.type.toUpperCase()}
-        </Badge>
-        {item.remarks && (
-          <Text color="fg.muted" fontSize="xs" lineClamp={2}>
-            {item.remarks}
-          </Text>
-        )}
-      </HStack>
-    );
-  }
-  const song = item.songId ? songById.get(item.songId) : undefined;
-  const songLabel = song
-    ? localizedName(i18n.language, song.name, song.englishName)
-    : (item.customSongName ?? '');
-  const artistNames = [
-    ...new Set(
-      (song?.artists ?? [])
-        .map((a) => artistById.get(a.id))
-        .filter(Boolean)
-        .map((a) => localizedName(i18n.language, a!.name, a!.englishName))
-    )
-  ].join('・');
-  const hasLine2 =
-    Boolean(item.remarks) ||
-    setlistInsight?.daysSincePreviousPerformance !== undefined ||
-    performedBeforeCount !== undefined ||
-    (showArtists && Boolean(artistNames));
-  return (
-    <HStack gap="2.5" alignItems="center" py="1.5">
-      <Text
-        flexShrink={0}
-        minW="7"
-        color="fg.subtle"
-        fontSize="sm"
-        fontVariantNumeric="tabular-nums"
-        textAlign="right"
-      >
-        {index}.
-      </Text>
-      {song && hasSongThumb(song.id) && <SongThumb songId={song.id} />}
-      <Stack flex="1" gap="0.5" minW="0">
-        <HStack gap="1.5" minW="0" flexWrap="wrap">
-          <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
-            {songLabel}
-          </Text>
-          {setlistInsight?.isDebut && (
-            <Badge size="sm" variant="solid">
-              {t('events.song_debut')}
-            </Badge>
-          )}
-          {witnessInfo?.isFirst ? (
-            <Badge size="sm" variant="subtle">
-              {t('events.first_witness')}
-            </Badge>
-          ) : (
-            witnessInfo?.daysSinceSeen !== undefined && (
-              <Text
-                color="fg.subtle"
-                fontSize="2xs"
-                fontVariantNumeric="tabular-nums"
-                whiteSpace="nowrap"
-              >
-                {t('events.song_days_since_witness', { count: witnessInfo.daysSinceSeen })}
-              </Text>
-            )
-          )}
-          {witnessInfo && witnessInfo.count > 1 && (
-            <Text
-              color="accent.text"
-              fontSize="xs"
-              fontWeight="semibold"
-              fontVariantNumeric="tabular-nums"
-            >
-              ×{witnessInfo.count}
-            </Text>
-          )}
-        </HStack>
-        {hasLine2 && (
-          <HStack gap="2" minW="0" color="fg.subtle" fontSize="2xs" flexWrap="wrap">
-            {item.remarks && <Text lineClamp={1}>{item.remarks}</Text>}
-            {setlistInsight?.daysSincePreviousPerformance !== undefined && (
-              <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
-                {t('events.song_days_since_previous', {
-                  count: setlistInsight.daysSincePreviousPerformance
-                })}
-              </Text>
-            )}
-            {performedBeforeCount !== undefined && (
-              <Text fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
-                {t('sort.performed_before', { count: performedBeforeCount })}
-              </Text>
-            )}
-            {showArtists && artistNames && <Text lineClamp={1}>{artistNames}</Text>}
-          </HStack>
-        )}
-      </Stack>
-      {song && onSelectSong && (
-        <IconButton
-          aria-label={`${t('events.view_detail')}: ${songLabel}`}
-          title={t('events.view_detail')}
-          variant="ghost"
-          size="xs"
-          onClick={() => onSelectSong(song.id)}
-          flexShrink={0}
-        >
-          <FaCircleInfo />
-        </IconButton>
-      )}
-    </HStack>
-  );
-}
 
 export function EventDetailDialog({
   performance,
@@ -331,8 +49,9 @@ export function EventDetailDialog({
   onNavigate?: (performance: Performance) => void;
   onOpenSong?: (songId: string) => void;
 }) {
-  const { t, i18n } = useTranslation();
-  const { toast } = useToaster();
+  const { t } = useTranslation();
+  const copyText = useCopyText();
+  const { short, ready } = useAbbreviations();
   const { get, records, updateAttendance } = useAttendance();
   const setlists = useAllSetlists();
   const performances = sortedPerformances;
@@ -341,14 +60,10 @@ export function EventDetailDialog({
   const record = performance ? get(performance.id) : undefined;
   const [memo, setMemo] = useState('');
   const [showArtists, setShowArtists] = useState(false);
-  const [diffFromPerformanceId, setDiffFromPerformanceId] = useState('');
-  const [diffToPerformanceId, setDiffToPerformanceId] = useState('');
   const [diffOpen, setDiffOpen] = useState(false);
 
   useEffect(() => {
     setMemo(record?.memo ?? '');
-    setDiffFromPerformanceId('');
-    setDiffToPerformanceId('');
     setDiffOpen(false);
   }, [record?.memo, performance?.id]);
 
@@ -367,16 +82,7 @@ export function EventDetailDialog({
         ? t('events.days_until', { count: days })
         : t('events.days_ago', { count: Math.abs(days) });
 
-  const songNumbers = new Map<string, number>();
-  if (setlist) {
-    let songIndex = 0;
-    for (const item of setlist.items) {
-      if (item.type === 'song') {
-        songIndex += 1;
-        songNumbers.set(item.id, songIndex);
-      }
-    }
-  }
+  const songNumbers = numberSongs(setlist);
   const witnessBySong = (() => {
     if (!isWitnessed(record, performance) || !setlist) return null;
     return buildWitnessBySong(performance, records, allPerformanceById, setlists);
@@ -392,46 +98,7 @@ export function EventDetailDialog({
   const setlistInsights = setlist
     ? buildSetlistInsights(performance, performances, setlists)
     : undefined;
-  const nearestSameTourSetlistPerformance = performances
-    .filter(
-      (candidate) =>
-        candidate.id !== performance.id &&
-        candidate.tourName === performance.tourName &&
-        Boolean(setlists[candidate.id])
-    )
-    .sort((a, b) => {
-      const distanceA = Math.abs(new Date(a.date).getTime() - new Date(performance.date).getTime());
-      const distanceB = Math.abs(new Date(b.date).getTime() - new Date(performance.date).getTime());
-      return distanceA - distanceB || a.date.localeCompare(b.date) || a.id.localeCompare(b.id);
-    })[0];
-  const defaultDiffFromPerformanceId =
-    nearestSameTourSetlistPerformance?.id ?? setlistInsights?.previousPerformance?.id ?? '';
-  const selectedDiffFromPerformanceId = diffFromPerformanceId || defaultDiffFromPerformanceId;
-  const selectedDiffToPerformanceId = diffToPerformanceId || performance.id;
-  const setlistDiff = compareSetlists(
-    setlists[selectedDiffFromPerformanceId],
-    setlists[selectedDiffToPerformanceId]
-  );
-  const setlistPerformanceOptions: SetlistPerformanceOption[] = performances
-    .filter((candidate) => setlists[candidate.id])
-    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
-    .map((candidate) => {
-      const title = candidate.tourName;
-      const subtitle = [candidate.concertName, candidate.performanceName].filter(Boolean).join(' ');
-      const venue = candidate.venue;
-      return {
-        value: candidate.id,
-        date: candidate.date,
-        title,
-        subtitle,
-        venue,
-        isSameTour: candidate.tourName === performance.tourName,
-        searchText: [candidate.date, title, subtitle, venue, candidate.note]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-      };
-    });
+  const hasComparableSetlists = performances.filter((p) => setlists[p.id]).length > 1;
   const siblingPerformances = onNavigate
     ? performances
         .filter((candidate) => candidate.tourName === performance.tourName)
@@ -439,22 +106,6 @@ export function EventDetailDialog({
     : [];
   const formatDaysSincePrevious = (count: number | undefined) =>
     count === undefined ? undefined : t('events.days_since_previous', { count });
-  const formatSongName = (songId: string) => {
-    const song = songById.get(songId);
-    return song ? localizedName(i18n.language, song.name, song.englishName) : songId;
-  };
-  const selectedDiffFromLabel = (() => {
-    const selected = setlistPerformanceOptions.find(
-      (option) => option.value === selectedDiffFromPerformanceId
-    );
-    return selected ? `${selected.date} ${selected.title}` : t('events.setlist_diff_from');
-  })();
-  const selectedDiffToLabel = (() => {
-    const selected = setlistPerformanceOptions.find(
-      (option) => option.value === selectedDiffToPerformanceId
-    );
-    return selected ? `${selected.date} ${selected.title}` : t('events.setlist_diff_to');
-  })();
   return (
     <>
       <Dialog.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
@@ -595,54 +246,14 @@ export function EventDetailDialog({
                 </Stack>
               )}
 
-              <Wrap gap="2">
-                <Button
-                  size="xs"
-                  variant="outline"
-                  onClick={async () => {
-                    try {
-                      await copyTextToClipboard(formatEventShareText(performance));
-                      toast({ title: t('share.copied'), type: 'success' });
-                    } catch {
-                      toast({ title: t('share.copy_failed'), type: 'error' });
-                    }
-                  }}
-                >
-                  <FaCopy />
-                  {t('share.copy_text')}
-                </Button>
-                <Button asChild size="xs" variant="outline">
-                  <a
-                    href={xShareUrl(`${formatEventShareText(performance)} #LLerNote`)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <FaXTwitter />
-                    {t('share.share_x')}
-                  </a>
-                </Button>
-                <Button asChild size="xs" variant="outline">
-                  <a href={eventernoteSearchUrl(performance)} target="_blank" rel="noreferrer">
-                    <FaArrowUpRightFromSquare />
-                    {t('share.eventernote')}
-                  </a>
-                </Button>
-                {llFansEventUrl(performance) && (
-                  <Button asChild size="xs" variant="outline">
-                    <a href={llFansEventUrl(performance)} target="_blank" rel="noreferrer">
-                      <FaArrowUpRightFromSquare />
-                      {t('share.ll_fans')}
-                    </a>
-                  </Button>
-                )}
-              </Wrap>
+              <EventShareActions performance={performance} />
 
               <Stack gap="2">
                 <HStack gap="2" justifyContent="space-between" flexWrap="wrap">
                   <Text fontWeight="semibold">{t('events.setlist')}</Text>
                   {setlist && (
-                    <HStack gap="1">
-                      {setlistPerformanceOptions.length > 1 && (
+                    <HStack gap="1" flexWrap="wrap">
+                      {hasComparableSetlists && (
                         <Button size="xs" variant="outline" onClick={() => setDiffOpen(true)}>
                           {t('events.setlist_diff_mode')}
                         </Button>
@@ -657,27 +268,23 @@ export function EventDetailDialog({
                       <Button
                         size="xs"
                         variant="ghost"
-                        onClick={async () => {
-                          const lines = [
-                            formatEventShareText(performance),
-                            ...setlist.items.map((item) => {
-                              if (item.type !== 'song') {
-                                return `-- ${item.title ?? item.type.toUpperCase()}`;
-                              }
-                              const song = item.songId ? songById.get(item.songId) : undefined;
-                              return `${String(songNumbers.get(item.id) ?? '-').padStart(2, '0')}. ${song?.name ?? item.customSongName ?? ''}`;
-                            })
-                          ];
-                          try {
-                            await copyTextToClipboard(lines.join('\n'));
-                            toast({ title: t('share.copied'), type: 'success' });
-                          } catch {
-                            toast({ title: t('share.copy_failed'), type: 'error' });
-                          }
-                        }}
+                        onClick={() =>
+                          void copyText(formatSetlistText(performance, setlist, songById))
+                        }
                       >
                         <FaCopy />
                         {t('events.copy_setlist')}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        disabled={!ready}
+                        onClick={() =>
+                          void copyText(formatSetlistText(performance, setlist, songById, short))
+                        }
+                      >
+                        <FaCopy />
+                        {t('events.copy_setlist_short')}
                       </Button>
                     </HStack>
                   )}
@@ -781,120 +388,13 @@ export function EventDetailDialog({
         </Dialog.Positioner>
       </Dialog.Root>
 
-      <Dialog.Root open={diffOpen} onOpenChange={(e) => setDiffOpen(e.open)}>
-        <Dialog.Backdrop zIndex="70" />
-        <Dialog.Positioner zIndex="71">
-          <Dialog.Content w="full" maxW="3xl" maxH="85vh" mx="4" overflowY="auto">
-            <Stack gap="4" p={{ base: '4', md: '6' }}>
-              <Stack gap="1" pr="8">
-                <Dialog.Title>{t('events.setlist_diff_mode')}</Dialog.Title>
-                <Text color="fg.muted" fontSize="sm">
-                  {t('events.setlist_diff_description')}
-                </Text>
-              </Stack>
-
-              <Box display="grid" gap="3" gridTemplateColumns={{ base: '1fr', md: '1fr 1fr' }}>
-                <SetlistPerformancePicker
-                  label={t('events.setlist_diff_from')}
-                  value={selectedDiffFromPerformanceId}
-                  options={setlistPerformanceOptions}
-                  currentPerformanceId={performance.id}
-                  previousPerformanceId={setlistInsights?.previousPerformance?.id}
-                  onChange={setDiffFromPerformanceId}
-                />
-                <SetlistPerformancePicker
-                  label={t('events.setlist_diff_to')}
-                  value={selectedDiffToPerformanceId}
-                  options={setlistPerformanceOptions}
-                  currentPerformanceId={performance.id}
-                  previousPerformanceId={setlistInsights?.previousPerformance?.id}
-                  onChange={setDiffToPerformanceId}
-                />
-              </Box>
-
-              <HStack gap="3" flexWrap="wrap">
-                <Badge size="sm" variant="outline">
-                  {t('events.setlist_shared', { count: setlistDiff.sharedSongIds.length })}
-                </Badge>
-                <Badge size="sm" variant="solid">
-                  {t('events.setlist_added', { count: setlistDiff.addedSongIds.length })}
-                </Badge>
-                <Badge size="sm" variant="outline">
-                  {t('events.setlist_removed', { count: setlistDiff.removedSongIds.length })}
-                </Badge>
-              </HStack>
-
-              <Stack
-                gap="0"
-                borderColor="border.subtle"
-                borderRadius="l2"
-                borderWidth="1px"
-                overflow="hidden"
-              >
-                <HStack
-                  gap="2"
-                  borderBottomWidth="1px"
-                  borderBottomColor="border.subtle"
-                  py="2"
-                  px="3"
-                  bgColor="bg.subtle"
-                >
-                  <Text flex="1" color="fg.muted" fontSize="2xs" lineClamp={1}>
-                    − {selectedDiffFromLabel}
-                  </Text>
-                  <Text flex="1" color="fg.muted" fontSize="2xs" lineClamp={1}>
-                    + {selectedDiffToLabel}
-                  </Text>
-                </HStack>
-                {setlistDiff.rows.map((row, rowIndex) => (
-                  <HStack
-                    key={`${row.type}-${row.songId}-${rowIndex}`}
-                    gap="2"
-                    alignItems="center"
-                    borderBottomWidth="1px"
-                    borderBottomColor="border.subtle"
-                    py="1.5"
-                    px="3"
-                    bgColor={
-                      row.type === 'added'
-                        ? 'green.950/35'
-                        : row.type === 'removed'
-                          ? 'red.950/35'
-                          : 'transparent'
-                    }
-                  >
-                    <Text
-                      minW="4"
-                      color={
-                        row.type === 'added'
-                          ? 'green.300'
-                          : row.type === 'removed'
-                            ? 'red.300'
-                            : 'fg.subtle'
-                      }
-                      fontFamily="mono"
-                      fontSize="sm"
-                    >
-                      {row.type === 'added' ? '+' : row.type === 'removed' ? '-' : ' '}
-                    </Text>
-                    <Text minW="8" color="fg.subtle" fontFamily="mono" fontSize="xs">
-                      {String(rowIndex + 1).padStart(2, '0')}
-                    </Text>
-                    <Text fontSize="sm" lineClamp={1}>
-                      {formatSongName(row.songId)}
-                    </Text>
-                  </HStack>
-                ))}
-              </Stack>
-            </Stack>
-            <Dialog.CloseTrigger asChild position="absolute" top="2" right="2">
-              <IconButton aria-label={t('common.close')} variant="ghost" size="sm">
-                <FaXmark />
-              </IconButton>
-            </Dialog.CloseTrigger>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+      <SetlistDiffDialog
+        key={performance.id}
+        performance={performance}
+        previousPerformanceId={setlistInsights?.previousPerformance?.id}
+        open={diffOpen}
+        onOpenChange={setDiffOpen}
+      />
     </>
   );
 }
