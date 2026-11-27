@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FaDownload, FaLink } from 'react-icons/fa6';
 import { Grid, HStack, Stack, styled } from 'styled-system/jsx';
 import { CompletionCard } from './CompletionCard';
-import { AbbreviateSwitch } from '~/components/export/AbbreviateSwitch';
+import { ImageMenu } from '~/components/export/ImageMenu';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { Link } from '~/components/ui/link';
@@ -51,17 +51,24 @@ export function CompletionSharePanel({
         gap="2"
       >
         <Grid gap="2" gridTemplateColumns="minmax(0, 1fr) auto">
-          <Button
-            onClick={onSave}
-            disabled={exporting || exportNames.pending}
+          <ImageMenu
+            busy={exporting || exportNames.pending}
+            exportNames={exportNames}
+            actions={[
+              {
+                id: 'download',
+                label: t('completion.download'),
+                icon: <FaDownload />,
+                onSelect: onSave
+              }
+            ]}
+            variant="solid"
+            size="md"
             minH="11"
             color="white"
             bgColor="accent.10"
             _hover={{ bgColor: 'accent.9' }}
-          >
-            <FaDownload />
-            {t(exporting ? 'completion.exporting' : 'completion.download')}
-          </Button>
+          />
           <Button
             variant="outline"
             onClick={onCopy}
@@ -72,7 +79,6 @@ export function CompletionSharePanel({
             <FaLink />
           </Button>
         </Grid>
-        <AbbreviateSwitch checked={exportNames.abbreviate} onChange={exportNames.setAbbreviate} />
         <HStack gap="2" justifyContent="space-between">
           <Link href={sharePath} minH="11" fontSize="sm">
             {t('completion.preview')}

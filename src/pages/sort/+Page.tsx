@@ -14,6 +14,7 @@ import { SortTimer } from '~/components/sorter/SortTimer';
 import { LiveSortCard } from '~/components/sorter/LiveSortCard';
 import { LiveSortFiltersBar } from '~/components/sorter/LiveSortFiltersBar';
 import { LiveSortResults } from '~/components/sorter/LiveSortResults';
+import { NoAttendancePrompt } from '~/components/sorter/NoAttendancePrompt';
 import { RetiredCandidatesPanel } from '~/components/sorter/RetiredCandidatesPanel';
 import { useLocalStorage } from '~/hooks/useLocalStorage';
 import {
@@ -53,6 +54,7 @@ function SortPage({
 
   const {
     state,
+    attendedCount,
     isEnded,
     progress,
     comparisonsCount,
@@ -162,6 +164,8 @@ function SortPage({
                 {t(`sort.unit_${unit}_hint`)}
               </Text>
             </HStack>
+
+            {attendedCount === 0 && <NoAttendancePrompt />}
 
             <LiveSortFiltersBar filters={filters} onChange={setFilters} />
 

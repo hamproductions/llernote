@@ -58,7 +58,6 @@ const PRIMARY_ITEMS: NavItem[] = [
   { path: '/calendar', key: 'navigation.calendar', icon: FaCalendarDays },
   { path: '/venues', key: 'navigation.venues', icon: FaMapLocationDot },
   { path: '/songs', key: 'navigation.songs', icon: FaMusic },
-  { path: '/sort', key: 'navigation.sort', icon: FaScaleBalanced },
   { path: '/costumes', key: 'navigation.costumes', icon: FaShirt }
 ];
 
@@ -79,6 +78,7 @@ const NAV_GROUPS: NavGroup[] = [
     key: 'navigation.group_create',
     icon: FaWandMagicSparkles,
     items: [
+      { path: '/sort', key: 'navigation.sort', icon: FaScaleBalanced },
       { path: '/create', key: 'completion.title', icon: FaMusic },
       { path: '/mypick', key: 'navigation.mypick', exact: true, icon: FaStar },
       { path: '/mypick/live', key: 'navigation.mypick_live', icon: FaTrophy },

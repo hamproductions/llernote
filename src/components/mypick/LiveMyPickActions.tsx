@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { FaDownload, FaLink, FaRotateLeft } from 'react-icons/fa6';
 import { Button } from '~/components/ui/button';
-import { AbbreviateSwitch } from '~/components/export/AbbreviateSwitch';
+import { ImageMenu } from '~/components/export/ImageMenu';
 
 const SECONDARY = {
   variant: 'outline',
@@ -32,10 +32,20 @@ export function LiveMyPickActions({
       <Button onClick={onShare} {...SECONDARY}>
         <FaLink /> {t('mypick_live.share_url')}
       </Button>
-      <AbbreviateSwitch checked={abbreviate} onChange={onAbbreviateChange} />
-      <Button onClick={onDownload} disabled={downloadDisabled} {...SECONDARY}>
-        <FaDownload /> {t('mypick_live.download_image')}
-      </Button>
+      <ImageMenu
+        busy={downloadDisabled}
+        exportNames={{ abbreviate, setAbbreviate: onAbbreviateChange }}
+        actions={[
+          {
+            id: 'download',
+            label: t('mypick_live.download_image'),
+            icon: <FaDownload />,
+            onSelect: onDownload
+          }
+        ]}
+        size="md"
+        {...SECONDARY}
+      />
       <Button onClick={onReset} {...SECONDARY}>
         <FaRotateLeft /> {t('mypick_live.reset')}
       </Button>

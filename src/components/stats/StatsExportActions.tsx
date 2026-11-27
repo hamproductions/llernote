@@ -1,9 +1,9 @@
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCopy, FaDownload } from 'react-icons/fa6';
+import { FaDownload } from 'react-icons/fa6';
 import { Wrap } from 'styled-system/jsx';
-import { Button } from '~/components/ui/button';
-import { AbbreviateSwitch } from '~/components/export/AbbreviateSwitch';
+import { CopySplitButton } from '~/components/export/CopySplitButton';
+import { ImageMenu } from '~/components/export/ImageMenu';
 import { useAttendance } from '~/hooks/useAttendance';
 import { usePerformances } from '~/hooks/useData';
 import { useCopyText } from '~/hooks/useCopyText';
@@ -26,7 +26,7 @@ export function StatsExportActions({
   const { records } = useAttendance();
   const performances = usePerformances();
   const copyText = useCopyText();
-  const { abbreviate, setAbbreviate, ready, short, pending } = exportNames;
+  const { ready, short, pending } = exportNames;
 
   const history = (names?: ShortNames) => {
     const performanceById = new Map(performances.map((p) => [p.id, p]));
@@ -49,33 +49,38 @@ export function StatsExportActions({
 
   return (
     <Wrap gap="2" alignItems="center">
-      <AbbreviateSwitch checked={abbreviate} onChange={setAbbreviate} />
-      <Button
-        size="sm"
-        disabled={pending}
-        onClick={async () => {
-          if (cardRef.current) {
-            await downloadElementAsImage(cardRef.current, 'llernote-stats.png');
-            toast({ title: t('share.image_generated'), type: 'success' });
+      <CopySplitButton
+        options={[
+          {
+            id: 'history',
+            label: t('settings.copy_history'),
+            onCopy: () => copyText(history())
+          },
+          {
+            id: 'history-short',
+            label: t('settings.copy_history_short'),
+            disabled: !ready,
+            onCopy: () => copyText(history(short))
           }
-        }}
-      >
-        <FaDownload />
-        {t('share.download_image')}
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => void copyText(history())}>
-        <FaCopy />
-        {t('settings.copy_history')}
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={!ready}
-        onClick={() => void copyText(history(short))}
-      >
-        <FaCopy />
-        {t('settings.copy_history_short')}
-      </Button>
+        ]}
+      />
+      <ImageMenu
+        busy={pending}
+        exportNames={exportNames}
+        actions={[
+          {
+            id: 'download',
+            label: t('share.download_image'),
+            icon: <FaDownload />,
+            onSelect: () => {
+              if (!cardRef.current) return;
+              void downloadElementAsImage(cardRef.current, 'llernote-stats.png').then(() =>
+                toast({ title: t('share.image_generated'), type: 'success' })
+              );
+            }
+          }
+        ]}
+      />
     </Wrap>
   );
 }

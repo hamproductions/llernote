@@ -264,6 +264,7 @@ export const useLiveSortData = (filters: LiveSortFilters, unit: SortUnit) => {
 
   return {
     ...sorter,
+    attendedCount: attendedIds.size,
     candidates,
     candidateById,
     songOrdinals,
